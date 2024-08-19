@@ -3,8 +3,8 @@ const router = new Router();
 
 router.get("/", (req, res) => {
   const data = {
-    contact: "n0step.xyz",
-    documentation: "soon",
+    contact: "https//n0step.xyz",
+    documentation: "https://statsvlr-docs.vercel.app/",
   };
   res.json(data);
 });
