@@ -22,6 +22,7 @@ app.use("/api/v1/players", require("./versions/v1/routes/players"));
 app.use("/api/v1/events", require("./versions/v1/routes/events"));
 app.use("/api/v1/matches", require("./versions/v1/routes/matches"));
 app.use("/api/v1/results", require("./versions/v1/routes/results"));
+app.use("/api/v1/news", require("./versions/v1/routes/news"))
 
 // Starting server
 app.listen(app.get("port"), () => {
