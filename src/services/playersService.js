@@ -275,13 +275,38 @@ async function getPlayerById(id) {
       pastTeams.push(team);
     });
 
-  // Combine player, team, and social information into a single object
+  let agents = [];
+  $(".player-summary-container-1 .wf-card.mod-table.mod-dark table tbody tr").each((i, el) => {
+    const agentName = $(el).find("td").eq(0).find("img").attr("alt").trim();
+    const matchesPlayed = $(el).find("td").eq(1).text().trim();
+    const winRate = $(el).find("td").eq(2).text().trim();
+    const averageCombatScore = $(el).find("td").eq(3).text().trim();
+    const averageDamagePerRound = $(el).find("td").eq(4).text().trim();
+    const killsPerRound = $(el).find("td").eq(5).text().trim();
+    const firstKills = $(el).find("td").eq(6).text().trim();
+    const clutchSuccessRate = $(el).find("td").eq(7).text().trim();
+
+    const agent = {
+      agentName,
+      matchesPlayed,
+      winRate,
+      averageCombatScore,
+      averageDamagePerRound,
+      killsPerRound,
+      firstKills,
+      clutchSuccessRate,
+    };
+
+    agents.push(agent);
+  });
+
   const data = {
     info: player,
     team,
     results,
     pastTeams,
     socials,
+    agents,
   };
 
   return data;
