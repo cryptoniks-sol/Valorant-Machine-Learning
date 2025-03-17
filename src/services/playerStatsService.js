@@ -11,7 +11,7 @@ async function getPlayerStats(playerName) {
   const url = `${vlrgg_url}/stats`;
   const $ = await request({ uri: url, transform: (body) => cheerio.load(body) });
 
-  const stats = [];
+  let playerStats = null;
 
   $("table tbody tr").each((index, element) => {
     const player = $(element).find("td.mod-player .text-of").text().trim();
@@ -24,29 +24,32 @@ async function getPlayerStats(playerName) {
       .map((_, img) => $(img).attr("src").split("/").pop().replace(".png", ""))
       .get();
 
-    const data = $(element).find("td.mod-color-sq span").map((_, span) => $(span).text().trim()).get();
+    const data = $(element).find("td").map((_, td) => $(td).text().trim()).get();
 
     const [
-      rating, acs, kd, kast, adr, kpr, apr, fkpr, fdpr, hs, cl,
-      clRatio, kmax, kills, deaths, assists, fk, fd
+      _, // Skip Player column
+      __, // Skip Agents column
+      roundsPlayed,
+      rating, acs, kd, kast, adr, kpr, apr, fkpr, fdpr, hs, cl, clRatio, kmax, kills, deaths, assists, fk, fd
     ] = data;
 
-    stats.push({
+    playerStats = {
       player,
       country,
       agents,
       stats: {
+        roundsPlayed,
         rating, acs, kd, kast, adr, kpr, apr, fkpr, fdpr, hs, cl,
         clRatio, kmax, kills, deaths, assists, fk, fd
       }
-    });
+    };
   });
 
-  if (stats.length === 0) {
+  if (!playerStats) {
     throw new Error("Player not found");
   }
 
-  return stats[0];
+  return playerStats;
 }
 
 module.exports = {
