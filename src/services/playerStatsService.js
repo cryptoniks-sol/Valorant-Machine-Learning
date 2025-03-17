@@ -12,17 +12,23 @@ async function getPlayerStats(playerName) {
   const $ = await request({ uri: url, transform: (body) => cheerio.load(body) });
 
   const stats = [];
-  
+
   $("table tbody tr").each((index, element) => {
     const player = $(element).find("td.mod-player .text-of").text().trim();
     if (player.toLowerCase() !== playerName.toLowerCase()) return;
 
     const country = $(element).find(".stats-player-country").text().trim();
-    const agents = $(element).find("td.mod-agents img").map((_, img) => $(img).attr("src")).get();
-    const data = $(element).find("td.mod-color-sq span").map((_, span) => $(span).text().trim()).get();
     
+    const agents = $(element)
+      .find("td.mod-agents img")
+      .map((_, img) => $(img).attr("src").split("/").pop().replace(".png", ""))
+      .get();
+
+    const data = $(element).find("td.mod-color-sq span").map((_, span) => $(span).text().trim()).get();
+
     const [
-      rating, acs, kd, kast, adr, kpr, apr, fkpr, fdpr, hs, cl, clRatio, kmax, kills, deaths, assists, fk, fd
+      rating, acs, kd, kast, adr, kpr, apr, fkpr, fdpr, hs, cl,
+      clRatio, kmax, kills, deaths, assists, fk, fd
     ] = data;
 
     stats.push({
@@ -30,7 +36,8 @@ async function getPlayerStats(playerName) {
       country,
       agents,
       stats: {
-        rating, acs, kd, kast, adr, kpr, apr, fkpr, fdpr, hs, cl, clRatio, kmax, kills, deaths, assists, fk, fd
+        rating, acs, kd, kast, adr, kpr, apr, fkpr, fdpr, hs, cl,
+        clRatio, kmax, kills, deaths, assists, fk, fd
       }
     });
   });
