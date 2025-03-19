@@ -7,18 +7,14 @@ const { vlrgg_url } = require("../constants");
  * @returns {Object} An object containing match details including team names, countries, match status, event name, tournament name, match image URL, and match ETA.
  */
 async function getMatches() {
-  // Send a request to the specified URL and parse the HTML response using cheerio
   const $ = await request({
     uri: `${vlrgg_url}/matches`,
     transform: (body) => cheerio.load(body),
   });
 
-  // Array to store match objects
   const matches = [];
 
-  // Iterate over each match item on the page and extract relevant information
   $(".wf-module-item.match-item").each((index, element) => {
-    // Extract team names and remove unnecessary whitespace and characters
     const team1AndTeam2 = $(element)
       .find(".match-item-vs-team-name")
       .text()
@@ -29,7 +25,6 @@ async function getMatches() {
       .map((item) => item.trim())
       .filter((item) => item !== "");
 
-    // Extract country codes for both teams
     const countryElements = $(element).find(".match-item-vs-team .flag");
     const countryTeam1 = countryElements
       .eq(0)
@@ -52,7 +47,6 @@ async function getMatches() {
       .map((item) => item.trim())
       .filter((item) => item !== "");
 
-    // Extract match status, event name, tournament name, match image URL, match ETA, and match ID
     const status = $(element).find(".ml-status").text().trim();
     const event = $(element).find(".match-item-event-series").text().trim();
     const tournament = $(element)
@@ -82,7 +76,6 @@ async function getMatches() {
     timestamp = Math.floor(timestamp / 1000);
     const utcString = newDate.toUTCString();
 
-    // Create match object and push it to the matches array
     matches.push({
       id,
       teams: [
@@ -108,7 +101,6 @@ async function getMatches() {
     });
   });
 
-  // Return an object containing the number of matches and the matches array
   return {
     size: matches.length,
     matches,

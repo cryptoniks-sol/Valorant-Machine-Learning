@@ -11,7 +11,6 @@ async function getMatchHistory(teamId) {
   while (true) {
     const url = `${vlrgg_url}/team/matches/${teamId}/?page=${page}`;
       
-    // clean: user agent will be removed once data is debugged
     try {
       const html = await request({
         uri: url,
