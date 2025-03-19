@@ -3,7 +3,8 @@ const catchError = require("../utils/catchError");
 
 const getRankings = async (req, res) => {
   try {
-    const rankings = await rankingsService.getRankings();
+    const region = req.query.region;
+    const rankings = await rankingsService.getRankings(region);
 
     res.status(200).json({
       status: "OK",
