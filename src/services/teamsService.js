@@ -11,13 +11,11 @@ const { vlrgg_url } = require("../constants");
  * @returns {object} An object containing teams' information and pagination details.
  */
 async function getTeams(pagination, region) {
-  // Calculate the start and end indices based on pagination
   const startIndex =
     pagination.limit !== "all" ? (pagination.page - 1) * pagination.limit : 0;
   const endIndex =
     pagination.limit !== "all" ? pagination.page * pagination.limit : undefined;
 
-  // Send a request to get the HTML content of the rankings page for the specified region
   const $ = await request({
     uri: `${vlrgg_url}/rankings/${region}`,
     transform: (body) => cheerio.load(body),
@@ -26,12 +24,10 @@ async function getTeams(pagination, region) {
   const teams = [];
 
   if (region === "all") {
-    // For the "all" region, parse the teams' data from the table rows
     $("tr")
       .has("td")
       .slice(startIndex, endIndex !== undefined ? endIndex : undefined)
       .map((i, el) => {
-        // Extract team information from the table row
         const name = $(el).find("td").first().next().attr("data-sort-value");
         const id = $(el)
           .find("td")
@@ -64,14 +60,12 @@ async function getTeams(pagination, region) {
         teams.push(team);
       });
   } else {
-    // For other specific regions, parse the teams' data from a different section of the page
     $(".mod-scroll")
       .find(".fa-certificate")
       .parent()
       .parent()
       .slice(startIndex, endIndex !== undefined ? endIndex : undefined)
       .map((i, el) => {
-        // Extract team information from the corresponding section
         const name = $(el).find("a").first().attr("data-sort-value");
         const id = $(el).find("a").first().attr("href").split("/")[2];
         const url = vlrgg_url + $(el).find("a").first().attr("href");
@@ -97,14 +91,12 @@ async function getTeams(pagination, region) {
       });
   }
 
-  // Get the total number of pages
   const totalElements =
     region === "all"
       ? $("tr").has("td").length
       : $(".mod-scroll").find(".fa-certificate").parent().parent().length;
   const totalPages = Math.ceil(totalElements / pagination.limit);
 
-  // Check if there is a next page
   const hasNextPage = pagination.page < totalPages;
 
   return {
@@ -156,16 +148,27 @@ async function getTeamById(id) {
       : "https:" + $(".team-header").find(".team-header-logo img").attr("src"),
   };
 
-  console.log(info.logo);
+  const rating = $(".rating-num").text().trim().replace(/\s+/g, ' ');
 
-  // Extract roster information
+  const countryRanking = {
+    rank: $(".team-rating-info-section.mod-rank .rank-num.mod-")
+      .text()
+      .trim()
+      .replace(/\s+/g, ' ')
+      .split(' ')[0],
+    country: $(".team-rating-info-section.mod-rank .rating-txt")
+      .text()
+      .trim()
+      .replace(/\s+/g, ' ')
+      .split(' ')[0],
+    };
+
   $(".wf-card")
     .find(".team-roster-item")
     .map((i, el) => {
       roster.push(el);
     });
 
-  // Extract events information
   $(".team-summary-container-2")
     .find(".wf-card")
     .has(".team-event-item")
@@ -202,10 +205,8 @@ async function getTeamById(id) {
       events.push(event);
     });
 
-  // Separate players and staff members in the roster
   roster.forEach((el) => {
     if ($(el).has(".wf-tag").text()) {
-      // Staff member
       const staffMember = {
         id: $(el).find("a").attr("href").split("/")[2],
         url: vlrgg_url + $(el).find("a").attr("href"),
@@ -260,7 +261,6 @@ async function getTeamById(id) {
     }
   });
 
-  // Extract upcoming matches information
   $(".mod-tbd")
     .parent()
     .map((i, el) => {
@@ -322,7 +322,6 @@ async function getTeamById(id) {
       upcoming.push(match);
     });
 
-  // Extract past matches information
   $matches(".m-item-result")
     .not(".m-item-games-result")
     .parent()
@@ -401,6 +400,8 @@ async function getTeamById(id) {
 
   const team = {
     info,
+    rating,
+    countryRanking,
     players,
     staff,
     inactive,
