@@ -1,4 +1,14 @@
-# StatsVLR-API
+# Valorant Predictor USING StatsVLR-API
+
+# To get Startet
+
+pip install -r requirements.txt
+
+npm start - API
+
+python3 team_specific_predictor.py --team1 "Trust In Plug" --team1_region "na" --team2 "M80" --team2_region "na" --advanced
+
+Python3 bets.py betting_predictions/Shopify_Rebellion_Black_vs_Winthrop_University_20250417_124603_betting.json --bankroll 1000
 
 ## ✨ Features
 
@@ -109,3 +119,10 @@ All API requests should be prefixed with:
 ```
 http://localhost:5000/api/v1/
 ```
+pip install -r requirements.txt
+
+npm start - API
+
+python3 team_specific_predictor.py --team1 "Trust In Plug" --team1_region "na" --team2 "M80" --team2_region "na" --advanced
+
+python3 bets.py --team1 "Team Heretics" --team2 "M80" --team1_odds 1.85 --team2_odds 1.95 --bankroll 1000

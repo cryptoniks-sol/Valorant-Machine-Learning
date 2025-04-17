@@ -3,7 +3,7 @@ const catchError = require("../utils/catchError");
 
 const getTeams = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = req.query.limit || 10;
+  const limit = Math.min(req.query.limit || 10, 300);
   const pagination = {
     page,
     limit,
