@@ -1,0 +1,1493 @@
+{
+    "match": "Cubert Academy vs TSM",
+    "prediction_time": "2025-04-17 13:44:35",
+    "predicted_winner": "Cubert Academy",
+    "win_probability": 0.5576650187326105,
+    "team1_stats": {
+        "matches": 13,
+        "wins": 9,
+        "losses": 4,
+        "win_rate": 0.6923076923076923,
+        "total_score": 20,
+        "total_opponent_score": 12,
+        "avg_score": 1.5384615384615385,
+        "avg_opponent_score": 0.9230769230769231,
+        "score_differential": 0.6153846153846154,
+        "recent_form": 0.6,
+        "opponent_stats": {
+            "Winthrop University": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 3,
+                "win_rate": 0.5,
+                "avg_score": 1.5,
+                "avg_opponent_score": 1.5,
+                "score_differential": 0.0
+            },
+            "Burger Boyz": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "M80": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 2,
+                "win_rate": 0.5,
+                "avg_score": 1.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 0.0
+            },
+            "ENVY": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "QoR": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Trust In Plug": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "RANKERS": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 0,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 0.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -2.0
+            },
+            "SaD Esports": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Ambrosia": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 2,
+                "win_rate": 0.5,
+                "avg_score": 1.5,
+                "avg_opponent_score": 1.0,
+                "score_differential": 0.5
+            },
+            "Nightblood Gaming": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            }
+        },
+        "map_stats": {
+            "Unknown": {
+                "played": 13,
+                "wins": 9,
+                "win_rate": 0.6923076923076923
+            }
+        }
+    },
+    "team2_stats": {
+        "matches": 273,
+        "wins": 194,
+        "losses": 79,
+        "win_rate": 0.7106227106227107,
+        "total_score": 391,
+        "total_opponent_score": 203,
+        "avg_score": 1.4322344322344323,
+        "avg_opponent_score": 0.7435897435897436,
+        "score_differential": 0.6886446886446886,
+        "recent_form": 0.6,
+        "opponent_stats": {
+            "Ambrosia": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "YFP": {
+                "matches": 6,
+                "wins": 4,
+                "total_score": 9,
+                "total_opponent_score": 5,
+                "win_rate": 0.6666666666666666,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.8333333333333334,
+                "score_differential": 0.6666666666666666
+            },
+            "M80": {
+                "matches": 9,
+                "wins": 1,
+                "total_score": 5,
+                "total_opponent_score": 16,
+                "win_rate": 0.1111111111111111,
+                "avg_score": 0.5555555555555556,
+                "avg_opponent_score": 1.7777777777777777,
+                "score_differential": -1.222222222222222
+            },
+            "QoR": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.5
+            },
+            "Winthrop University": {
+                "matches": 4,
+                "wins": 2,
+                "total_score": 5,
+                "total_opponent_score": 4,
+                "win_rate": 0.5,
+                "avg_score": 1.25,
+                "avg_opponent_score": 1.0,
+                "score_differential": 0.25
+            },
+            "RANKERS": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 0,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 0.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -2.0
+            },
+            "Trust In Plug": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.5
+            },
+            "Blue Otter": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 0,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 0.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -2.0
+            },
+            "washed": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Lemonade Stand": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 3,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.0
+            },
+            "All Knights": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.0
+            },
+            "2Game Esports": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.0
+            },
+            "RETA Esports": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.0
+            },
+            "Galorys": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Moist x Shopify": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 3,
+                "win_rate": 0.5,
+                "avg_score": 1.0,
+                "avg_opponent_score": 1.5,
+                "score_differential": -0.5
+            },
+            "Oxygen Esports": {
+                "matches": 4,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 6,
+                "win_rate": 0.25,
+                "avg_score": 0.75,
+                "avg_opponent_score": 1.5,
+                "score_differential": -0.75
+            },
+            "Blinn": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.5
+            },
+            "SaD Esports": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 3,
+                "win_rate": 0.5,
+                "avg_score": 1.5,
+                "avg_opponent_score": 1.5,
+                "score_differential": 0.0
+            },
+            "FLUFFY AIMERS": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.0
+            },
+            "Turtle Troop": {
+                "matches": 2,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 4,
+                "win_rate": 0.0,
+                "avg_score": 0.5,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.5
+            },
+            "Dough Bros": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "BackOutsideBoys": {
+                "matches": 11,
+                "wins": 4,
+                "total_score": 9,
+                "total_opponent_score": 14,
+                "win_rate": 0.36363636363636365,
+                "avg_score": 0.8181818181818182,
+                "avg_opponent_score": 1.2727272727272727,
+                "score_differential": -0.4545454545454545
+            },
+            "FaZe Clan": {
+                "matches": 8,
+                "wins": 6,
+                "total_score": 16,
+                "total_opponent_score": 6,
+                "win_rate": 0.75,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.75,
+                "score_differential": 1.25
+            },
+            "Moist Moguls": {
+                "matches": 2,
+                "wins": 0,
+                "total_score": 0,
+                "total_opponent_score": 4,
+                "win_rate": 0.0,
+                "avg_score": 0.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -2.0
+            },
+            "Disguised": {
+                "matches": 3,
+                "wins": 3,
+                "total_score": 6,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.3333333333333333,
+                "score_differential": 1.6666666666666667
+            },
+            "Shopify Rebellion Black": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 4,
+                "win_rate": 0.5,
+                "avg_score": 1.5,
+                "avg_opponent_score": 2.0,
+                "score_differential": -0.5
+            },
+            "OREsports": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "The Guard": {
+                "matches": 3,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 4,
+                "win_rate": 0.3333333333333333,
+                "avg_score": 1.0,
+                "avg_opponent_score": 1.3333333333333333,
+                "score_differential": -0.33333333333333326
+            },
+            "MAD Lions": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Sentinels": {
+                "matches": 9,
+                "wins": 3,
+                "total_score": 8,
+                "total_opponent_score": 13,
+                "win_rate": 0.3333333333333333,
+                "avg_score": 0.8888888888888888,
+                "avg_opponent_score": 1.4444444444444444,
+                "score_differential": -0.5555555555555556
+            },
+            "T1": {
+                "matches": 7,
+                "wins": 6,
+                "total_score": 14,
+                "total_opponent_score": 5,
+                "win_rate": 0.8571428571428571,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.7142857142857143,
+                "score_differential": 1.2857142857142856
+            },
+            "NSIC": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "BASILISK": {
+                "matches": 3,
+                "wins": 3,
+                "total_score": 6,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "No future life is over": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Rizz Academy": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Des Moines DMG": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "City Boys": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 5,
+                "total_opponent_score": 2,
+                "win_rate": 1.0,
+                "avg_score": 2.5,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.5
+            },
+            "Nearest Airport": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.5
+            },
+            "TSM Academy": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.5
+            },
+            "Version1": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Knights Academy": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "XSET": {
+                "matches": 2,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 4,
+                "win_rate": 0.0,
+                "avg_score": 0.5,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.5
+            },
+            "Ghost Gaming": {
+                "matches": 3,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 6,
+                "win_rate": 0.0,
+                "avg_score": 0.3333333333333333,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.6666666666666667
+            },
+            "100 Thieves": {
+                "matches": 9,
+                "wins": 6,
+                "total_score": 13,
+                "total_opponent_score": 11,
+                "win_rate": 0.6666666666666666,
+                "avg_score": 1.4444444444444444,
+                "avg_opponent_score": 1.2222222222222223,
+                "score_differential": 0.2222222222222221
+            },
+            "NRG Esports": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 3,
+                "win_rate": 0.5,
+                "avg_score": 1.0,
+                "avg_opponent_score": 1.5,
+                "score_differential": -0.5
+            },
+            "Luminosity": {
+                "matches": 4,
+                "wins": 3,
+                "total_score": 6,
+                "total_opponent_score": 4,
+                "win_rate": 0.75,
+                "avg_score": 1.5,
+                "avg_opponent_score": 1.0,
+                "score_differential": 0.5
+            },
+            "Cosmic Divide": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "IlluZion": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Discord Kitties uwu": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Cloud9 Academy": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Levitate": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 3,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.5
+            },
+            "Aspyre x Swarm": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Synergy": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Lenny Time": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.0
+            },
+            "Unknown": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Zero MarksMen Silver": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 1,
+                "win_rate": 0.5,
+                "avg_score": 0.5,
+                "avg_opponent_score": 0.5,
+                "score_differential": 0.0
+            },
+            "Yasei": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Teal Seam": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 0,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 0.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -2.0
+            },
+            "Moonrise": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "UNLV Rebel Gaming": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Renegades": {
+                "matches": 6,
+                "wins": 6,
+                "total_score": 11,
+                "total_opponent_score": 3,
+                "win_rate": 1.0,
+                "avg_score": 1.8333333333333333,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.3333333333333333
+            },
+            "Team Reckaroo": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Vireo.pro": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "FYL": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Boba Boys": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Gen.G": {
+                "matches": 14,
+                "wins": 11,
+                "total_score": 22,
+                "total_opponent_score": 8,
+                "win_rate": 0.7857142857142857,
+                "avg_score": 1.5714285714285714,
+                "avg_opponent_score": 0.5714285714285714,
+                "score_differential": 1.0
+            },
+            "Stasis": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Built By Gamers": {
+                "matches": 5,
+                "wins": 4,
+                "total_score": 8,
+                "total_opponent_score": 2,
+                "win_rate": 0.8,
+                "avg_score": 1.6,
+                "avg_opponent_score": 0.4,
+                "score_differential": 1.2000000000000002
+            },
+            "Complexity": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 3,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.0
+            },
+            "Run it Down": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "GunsForHire": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Thanos Mug Academy": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Omni Performance SD": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Akrew": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 0,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 0.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -2.0
+            },
+            "SoaR": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Knights": {
+                "matches": 1,
+                "wins": 0,
+                "total_score": 1,
+                "total_opponent_score": 2,
+                "win_rate": 0.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 2.0,
+                "score_differential": -1.0
+            },
+            "Berzerkers": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Girl Kissers": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Rise": {
+                "matches": 3,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 2,
+                "win_rate": 0.6666666666666666,
+                "avg_score": 1.3333333333333333,
+                "avg_opponent_score": 0.6666666666666666,
+                "score_differential": 0.6666666666666666
+            },
+            "ENVY": {
+                "matches": 3,
+                "wins": 2,
+                "total_score": 5,
+                "total_opponent_score": 2,
+                "win_rate": 0.6666666666666666,
+                "avg_score": 1.6666666666666667,
+                "avg_opponent_score": 0.6666666666666666,
+                "score_differential": 1.0
+            },
+            "DarkZero Esports": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Andbox": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 3,
+                "win_rate": 0.5,
+                "avg_score": 1.0,
+                "avg_opponent_score": 1.5,
+                "score_differential": -0.5
+            },
+            "Squirtle Squad": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "303 Esports": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Team Mystic": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Noble": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 2,
+                "win_rate": 0.5,
+                "avg_score": 1.5,
+                "avg_opponent_score": 1.0,
+                "score_differential": 0.5
+            },
+            "FBM": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Immortals": {
+                "matches": 9,
+                "wins": 6,
+                "total_score": 11,
+                "total_opponent_score": 6,
+                "win_rate": 0.6666666666666666,
+                "avg_score": 1.2222222222222223,
+                "avg_opponent_score": 0.6666666666666666,
+                "score_differential": 0.5555555555555557
+            },
+            "Soniqs": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Resonate": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "FIU Valorant": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Barely Acceptable": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "ez5": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Reformed": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Akuma Esports Black": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Spot Up": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Penguin Sledding": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "TradeLikePros": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "LGI": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Dignitas": {
+                "matches": 3,
+                "wins": 1,
+                "total_score": 3,
+                "total_opponent_score": 4,
+                "win_rate": 0.3333333333333333,
+                "avg_score": 1.0,
+                "avg_opponent_score": 1.3333333333333333,
+                "score_differential": -0.33333333333333326
+            },
+            "Slimy Boogermen": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "D2E Gold": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "ATK Mode": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Balanced Esports": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Rated Gaming": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Cloud9": {
+                "matches": 7,
+                "wins": 4,
+                "total_score": 8,
+                "total_opponent_score": 6,
+                "win_rate": 0.5714285714285714,
+                "avg_score": 1.1428571428571428,
+                "avg_opponent_score": 0.8571428571428571,
+                "score_differential": 0.2857142857142857
+            },
+            "Moon Raccoons": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Take Flyte": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "NBP": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Morning Light": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Homeless": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 3,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.0
+            },
+            "Bloom": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 1.0
+            },
+            "Team Crushed": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Oxygen Supremacy": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "100 Blifted": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 4,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Charlotte Phoenix": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 3,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.5
+            },
+            "Echo 8": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 3,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.5
+            },
+            "Spectral": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "MIXUP": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "together we are terrific": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 2,
+                "win_rate": 0.5,
+                "avg_score": 1.0,
+                "avg_opponent_score": 1.0,
+                "score_differential": 0.0
+            },
+            "China Nguyen": {
+                "matches": 2,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 1,
+                "win_rate": 0.5,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.5,
+                "score_differential": 0.5
+            },
+            "303 Esports Orange": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Rugratz": {
+                "matches": 2,
+                "wins": 2,
+                "total_score": 3,
+                "total_opponent_score": 1,
+                "win_rate": 1.0,
+                "avg_score": 1.5,
+                "avg_opponent_score": 0.5,
+                "score_differential": 1.0
+            },
+            "Intensity": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Sinfvl": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Way 2 French": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            },
+            "Seeker Esports": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "6Kings": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Team Mendo": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 2,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 2.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 2.0
+            },
+            "Team dizzy": {
+                "matches": 1,
+                "wins": 1,
+                "total_score": 1,
+                "total_opponent_score": 0,
+                "win_rate": 1.0,
+                "avg_score": 1.0,
+                "avg_opponent_score": 0.0,
+                "score_differential": 1.0
+            }
+        },
+        "map_stats": {
+            "Unknown": {
+                "played": 273,
+                "wins": 194,
+                "win_rate": 0.7106227106227107
+            }
+        }
+    },
+    "h2h_stats": {
+        "team1_h2h_matches": 0,
+        "team1_h2h_wins": 0,
+        "team1_h2h_win_rate": 0,
+        "team2_h2h_matches": 0,
+        "team2_h2h_wins": 0,
+        "team2_h2h_win_rate": 0,
+        "total_h2h_matches": 0
+    },
+    "feature_importance": {
+        "Feature": {
+            "0": "team1_matches",
+            "1": "team1_wins",
+            "2": "team1_win_rate",
+            "3": "team1_avg_score",
+            "4": "team1_score_diff",
+            "5": "team2_matches",
+            "6": "team2_wins",
+            "7": "team2_win_rate",
+            "8": "team2_avg_score",
+            "9": "team2_score_diff"
+        },
+        "Importance": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 0,
+            "7": 0,
+            "8": 0,
+            "9": 0
+        }
+    }
+}

@@ -1,0 +1,159 @@
+{
+    "match": "Shopify Rebellion Black vs Winthrop University",
+    "prediction_time": "2025-04-17 13:38:27",
+    "predicted_winner": "Shopify Rebellion Black",
+    "win_probability": 0.6560260033591441,
+    "team1_stats": {
+        "name": "Shopify Rebellion Black",
+        "matches": 176,
+        "wins": 80,
+        "losses": 96,
+        "win_rate": 0.45454545454545453,
+        "avg_score": 1.1193181818181819,
+        "avg_opponent_score": 1.2272727272727273,
+        "score_differential": -0.10795454545454541,
+        "recent_form": 0.8,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "team2_stats": {
+        "name": "Winthrop University",
+        "matches": 181,
+        "wins": 119,
+        "losses": 62,
+        "win_rate": 0.6574585635359116,
+        "avg_score": 1.5027624309392265,
+        "avg_opponent_score": 0.8895027624309392,
+        "score_differential": 0.6132596685082873,
+        "recent_form": 0.4,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "h2h_stats": {
+        "total_h2h_matches": 2,
+        "team1_h2h_wins": 2,
+        "team2_h2h_wins": 0,
+        "team1_h2h_win_rate": 1.0,
+        "team2_h2h_win_rate": 0.0
+    },
+    "feature_importance": {
+        "team1_h2h_win_rate": 0.18373572859201465,
+        "team2_score_diff": 0.16870083255381735,
+        "win_rate_diff": 0.16090288305053907,
+        "team2_win_rate": 0.14004157058831304,
+        "team2_avg_score": 0.09571434493467323,
+        "avg_score_diff": 0.08858987154542892,
+        "team1_h2h_wins": 0.04622714994531575,
+        "team2_wins": 0.04324373094338974,
+        "team2_matches": 0.03260154639090721,
+        "h2h_matches": 0.02220905097443126
+    },
+    "stat_differentials": {
+        "win_rate": -0.20291310899045706,
+        "avg_score": -0.3834442491210446,
+        "avg_opponent_score": 0.3377699648417881,
+        "score_differential": -0.7212142139628327,
+        "recent_form": 0.4,
+        "ranking": 0,
+        "rating": 0
+    },
+    "performance_trends": {
+        "team1": {
+            "last_5_win_rate": 0.8,
+            "last_5_wins": 4.0,
+            "last_5_losses": 1.0,
+            "last_5_avg_score": 2.0,
+            "last_5_avg_opp_score": 1.0,
+            "last_5_score_diff": 1.0,
+            "last_10_win_rate": 0.8,
+            "last_10_wins": 8.0,
+            "last_10_losses": 2.0,
+            "last_10_avg_score": 1.8,
+            "last_10_avg_opp_score": 0.8,
+            "last_10_score_diff": 1.0,
+            "last_20_win_rate": 0.65,
+            "last_20_wins": 13.0,
+            "last_20_losses": 7.0,
+            "last_20_avg_score": 1.5,
+            "last_20_avg_opp_score": 1.0,
+            "last_20_score_diff": 0.5,
+            "recency_weighted_win_rate": 0.47689120310649263
+        },
+        "team2": {
+            "last_5_win_rate": 0.4,
+            "last_5_wins": 2.0,
+            "last_5_losses": 3.0,
+            "last_5_avg_score": 1.8,
+            "last_5_avg_opp_score": 1.6,
+            "last_5_score_diff": 0.19999999999999996,
+            "last_10_win_rate": 0.6,
+            "last_10_wins": 6.0,
+            "last_10_losses": 4.0,
+            "last_10_avg_score": 1.7,
+            "last_10_avg_opp_score": 1.2,
+            "last_10_score_diff": 0.5,
+            "last_20_win_rate": 0.6,
+            "last_20_wins": 12.0,
+            "last_20_losses": 8.0,
+            "last_20_avg_score": 1.6,
+            "last_20_avg_opp_score": 1.1,
+            "last_20_score_diff": 0.5,
+            "recency_weighted_win_rate": 0.6565387015565876
+        }
+    },
+    "map_performance": {
+        "team1": {
+            "Unknown": {
+                "played": 176,
+                "wins": 80,
+                "win_rate": 0.45454545454545453
+            }
+        },
+        "team2": {
+            "Unknown": {
+                "played": 181,
+                "wins": 119,
+                "win_rate": 0.6574585635359116
+            }
+        },
+        "differentials": {
+            "Unknown": -0.20291310899045706
+        }
+    },
+    "event_performance": {
+        "team1": {
+            "lan": {
+                "matches": 13,
+                "wins": 4,
+                "win_rate": 0.3076923076923077
+            },
+            "online": {
+                "matches": 163,
+                "wins": 76,
+                "win_rate": 0.4662576687116564
+            }
+        },
+        "team2": {
+            "lan": {
+                "matches": 16,
+                "wins": 10,
+                "win_rate": 0.625
+            },
+            "online": {
+                "matches": 165,
+                "wins": 109,
+                "win_rate": 0.6606060606060606
+            }
+        }
+    },
+    "betting_indicators": {
+        "expected_map_count": 2.4782369732290865,
+        "team1_2_0_probability": 0.2540337391563884,
+        "team2_2_0_probability": 0.2540337391563884,
+        "team1_win_map_probability": 0.8668025351254155,
+        "team2_win_map_probability": 0.8668025351254155,
+        "over_2_5_maps_probability": 0.6127687959690271,
+        "under_2_5_maps_probability": 0.3872312040309729,
+        "confidence_level": "High"
+    }
+}

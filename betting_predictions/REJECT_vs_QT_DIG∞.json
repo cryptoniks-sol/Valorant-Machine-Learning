@@ -1,0 +1,159 @@
+{
+    "match": "REJECT vs QT DIG\u221e",
+    "prediction_time": "2025-04-17 20:30:31",
+    "predicted_winner": "QT DIG\u221e",
+    "win_probability": 0.75718462583898,
+    "team1_stats": {
+        "name": "REJECT",
+        "matches": 168,
+        "wins": 95,
+        "losses": 73,
+        "win_rate": 0.5654761904761905,
+        "avg_score": 1.1964285714285714,
+        "avg_opponent_score": 0.9166666666666666,
+        "score_differential": 0.27976190476190477,
+        "recent_form": 0.4,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "team2_stats": {
+        "name": "QT DIG\u221e",
+        "matches": 80,
+        "wins": 31,
+        "losses": 49,
+        "win_rate": 0.3875,
+        "avg_score": 0.9875,
+        "avg_opponent_score": 1.375,
+        "score_differential": -0.38749999999999996,
+        "recent_form": 0.4,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "h2h_stats": {
+        "total_h2h_matches": 0,
+        "team1_h2h_wins": 0,
+        "team2_h2h_wins": 0,
+        "team1_h2h_win_rate": 0.0,
+        "team2_h2h_win_rate": 0.0
+    },
+    "feature_importance": {
+        "win_rate_diff": 0.18884884483538886,
+        "team2_score_diff": 0.17672921376480918,
+        "team2_win_rate": 0.15816113080156724,
+        "team1_h2h_win_rate": 0.15595179998059033,
+        "team2_avg_score": 0.08423497321482552,
+        "avg_score_diff": 0.07479843244822644,
+        "team1_h2h_wins": 0.051290965615981586,
+        "team2_wins": 0.04090926054558354,
+        "team2_matches": 0.0356922722616925,
+        "h2h_matches": 0.022810651944236326
+    },
+    "stat_differentials": {
+        "win_rate": 0.17797619047619045,
+        "avg_score": 0.20892857142857135,
+        "avg_opponent_score": -0.45833333333333337,
+        "score_differential": 0.6672619047619047,
+        "recent_form": 0.0,
+        "ranking": 0,
+        "rating": 0
+    },
+    "performance_trends": {
+        "team1": {
+            "last_5_win_rate": 0.4,
+            "last_5_wins": 2.0,
+            "last_5_losses": 3.0,
+            "last_5_avg_score": 1.2,
+            "last_5_avg_opp_score": 1.6,
+            "last_5_score_diff": -0.40000000000000013,
+            "last_10_win_rate": 0.5,
+            "last_10_wins": 5.0,
+            "last_10_losses": 5.0,
+            "last_10_avg_score": 1.4,
+            "last_10_avg_opp_score": 1.4,
+            "last_10_score_diff": 0.0,
+            "last_20_win_rate": 0.65,
+            "last_20_wins": 13.0,
+            "last_20_losses": 7.0,
+            "last_20_avg_score": 1.55,
+            "last_20_avg_opp_score": 1.15,
+            "last_20_score_diff": 0.40000000000000013,
+            "recency_weighted_win_rate": 0.5724597057486209
+        },
+        "team2": {
+            "last_5_win_rate": 0.4,
+            "last_5_wins": 2.0,
+            "last_5_losses": 3.0,
+            "last_5_avg_score": 1.0,
+            "last_5_avg_opp_score": 1.4,
+            "last_5_score_diff": -0.3999999999999999,
+            "last_10_win_rate": 0.2,
+            "last_10_wins": 2.0,
+            "last_10_losses": 8.0,
+            "last_10_avg_score": 0.8,
+            "last_10_avg_opp_score": 1.7,
+            "last_10_score_diff": -0.8999999999999999,
+            "last_20_win_rate": 0.3,
+            "last_20_wins": 6.0,
+            "last_20_losses": 14.0,
+            "last_20_avg_score": 0.85,
+            "last_20_avg_opp_score": 1.55,
+            "last_20_score_diff": -0.7000000000000001,
+            "recency_weighted_win_rate": 0.3787992665449858
+        }
+    },
+    "map_performance": {
+        "team1": {
+            "Unknown": {
+                "played": 168,
+                "wins": 95,
+                "win_rate": 0.5654761904761905
+            }
+        },
+        "team2": {
+            "Unknown": {
+                "played": 80,
+                "wins": 31,
+                "win_rate": 0.3875
+            }
+        },
+        "differentials": {
+            "Unknown": 0.17797619047619045
+        }
+    },
+    "event_performance": {
+        "team1": {
+            "lan": {
+                "matches": 13,
+                "wins": 6,
+                "win_rate": 0.46153846153846156
+            },
+            "online": {
+                "matches": 155,
+                "wins": 89,
+                "win_rate": 0.5741935483870968
+            }
+        },
+        "team2": {
+            "lan": {
+                "matches": 0,
+                "wins": 0,
+                "win_rate": 0.0
+            },
+            "online": {
+                "matches": 80,
+                "wins": 31,
+                "win_rate": 0.3875
+            }
+        }
+    },
+    "betting_indicators": {
+        "expected_map_count": 2.3217784081814417,
+        "team1_2_0_probability": 0.38512041879270736,
+        "team2_2_0_probability": 0.38512041879270736,
+        "team1_win_map_probability": 0.8764988677859313,
+        "team2_win_map_probability": 0.8764988677859313,
+        "over_2_5_maps_probability": 0.49137844899322397,
+        "under_2_5_maps_probability": 0.5086215510067761,
+        "confidence_level": "High"
+    }
+}

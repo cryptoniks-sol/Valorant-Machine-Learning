@@ -1,14 +1,28 @@
 # Valorant Predictor USING StatsVLR-API
 
-# To get Startet
+# To get Started
 
 pip install -r requirements.txt
 
 npm start - API
 
-python3 team_specific_predictor.py --team1 "Trust In Plug" --team1_region "na" --team2 "M80" --team2_region "na" --advanced
+python3 main.py --team1 "QoR" --team1_region "na" --team2 "ENVY" --team2_region "na" --advanced
 
-Python3 bets.py betting_predictions/Shopify_Rebellion_Black_vs_Winthrop_University_20250417_124603_betting.json --bankroll 1000
+python3 team_specific_predictor.py --team1 "G2 Esports" --team1_region "na" --team2 "Cloud9" --team2_region "na" --advanced
+
+python3 prediction_pipeline.py predict --team1 "Nightblood Gaming" --team2 "YFP" --team1_region "na" --team2_region "na" --advanced
+python3 main.py --team1 "Titan Esports Club" --team1_region "ch" --team2 "Dragon Ranger Gaming" --team2_region "ch" --advanced
+
+python3 main.py --team1 "Nova Esports" --team1_region "ch" --team2 "Trace Esports" --team2_region "ch" --advanced
+
+python3 result_tracker_enhanced.py record betting_predictions/Nightblood_Gaming_vs_YFP.json "YFP"
+python3 prediction_pipeline.py retrain --weighting "both" --model_type "ensemble"
+---ANALYZE PERFORMANCE---
+python3 prediction_pipeline.py analyze --period "3m" --report
+
+---BETS--
+
+Python3 bets.py betting_predictions/FURIA_vs_MIBR.json --bankroll 64
 
 ## ✨ Features
 
@@ -30,6 +44,9 @@ curl -X GET http://localhost:5000/api/v1/teams/{teamid}
 
 # Get match history of a specific team
 curl -X GET http://localhost:5000/api/v1/match-history/{teamid}
+
+#Get match information about a specific match (team players, kd, )
+curl -X GET http://localhost:5000/api/v1/match-details/{teamid}
 ```
 
 ## 📚 API Endpoints

@@ -1,0 +1,9 @@
+match_id,match_date,prediction_date,team1,team2,predicted_winner,actual_winner,win_probability,prediction_correct,model_version,notes,team1_score,team2_score,map,total_rounds,team1_attack_rounds_won,team1_defense_rounds_won,team2_attack_rounds_won,team2_defense_rounds_won,team1_avg_acs,team2_avg_acs,team1_avg_kills,team2_avg_kills,team1_avg_deaths,team2_avg_deaths,team1_avg_assists,team2_avg_assists,date,event,tournament
+GIANTX_vs_FNATIC_20250417,2025-04-17,2025-04-17 13:47:25,GIANTX,FNATIC,GIANTX,FNATIC,0.6493536864573753,False,1.0,,,,,,,,,,,,,,,,,,,,
+GIANTX_vs_FNATIC_20250417,2025-04-17,2025-04-17 13:47:25,GIANTX,FNATIC,GIANTX,FNATIC,0.6493536864573753,False,1.0,,,,,,,,,,,,,,,,,,,,
+474004,2025-04-17,2025-04-17 13:44:35,Cubert Academy,TSM,Cubert Academy,TSM,0.5576650187326105,False,1.0,,0.0,2.0,,2.0,0.0,0.0,0.0,0.0,,,,,,,,,2025/04/17,VCL 25 NA ACE: Stage 2,
+474004,2025-04-17,2025-04-17 13:44:35,Cubert Academy,TSM,Cubert Academy,TSM,0.5576650187326105,False,1.0,,0.0,2.0,,2.0,0.0,0.0,0.0,0.0,,,,,,,,,2025/04/17,VCL 25 NA ACE: Stage 2,
+474006,2025-04-17,2025-04-17 14:49:00,QoR,ENVY,ENVY,ENVY,0.5201117873885857,True,1.0,,0.0,2.0,,2.0,0.0,0.0,0.0,0.0,,,,,,,,,2025/04/17,VCL 25 NA ACE: Stage 2,
+474005,2025-04-17,2025-04-17 13:38:27,Shopify Rebellion Black,Winthrop University,Shopify Rebellion Black,Winthrop Univeristy,0.6560260033591441,False,1.0,,1.0,2.0,,3.0,0.0,0.0,0.0,0.0,,,,,,,,,2025/04/17,VCL 25 NA ACE: Stage 2,
+470523,2025-04-17,2025-04-17 14:00:53,LEVIATÁN Academy,9z Team,9z Team,LEVIATÁN Academy,0.6241175277977404,False,1.0,,3.0,2.0,,5.0,0.0,0.0,0.0,0.0,,,,,,,,,2025/04/17,VCL 25 LAS ACE: S1,
+474007,2025-04-17,2025-04-17 16:50:15,Nightblood Gaming,YFP,YFP,YFP,0.6949969231988444,True,1.0,,0.0,2.0,,2.0,0.0,0.0,0.0,0.0,,,,,,,,,2025/04/17,VCL 25 NA ACE: Stage 2,

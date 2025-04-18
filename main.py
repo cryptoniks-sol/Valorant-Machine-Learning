@@ -2318,9 +2318,14 @@ def main():
         team2_event_performance=team2_event_performance if 'team2_event_performance' in locals() else None
     )
     
+    # Replace spaces with underscores in team names
+    team1_name_clean = team1_name.replace(" ", "_")
+    team2_name_clean = team2_name.replace(" ", "_")
+
+
     # Save the betting JSON to a separate file
     os.makedirs("betting_predictions", exist_ok=True)
-    betting_json_path = f"betting_predictions/{team1_name}_vs_{team2_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_betting.json"
+    betting_json_path = f"betting_predictions/{team1_name_clean}_vs_{team2_name_clean}.json"
     with open(betting_json_path, 'w') as f:
         json.dump(betting_json, f, indent=4, default=str)
     

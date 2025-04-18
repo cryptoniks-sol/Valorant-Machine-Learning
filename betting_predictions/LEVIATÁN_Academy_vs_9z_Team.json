@@ -1,0 +1,159 @@
+{
+    "match": "LEVIAT\u00c1N Academy vs 9z Team",
+    "prediction_time": "2025-04-17 14:00:53",
+    "predicted_winner": "9z Team",
+    "win_probability": 0.6241175277977404,
+    "team1_stats": {
+        "name": "LEVIAT\u00c1N Academy",
+        "matches": 49,
+        "wins": 31,
+        "losses": 18,
+        "win_rate": 0.6326530612244898,
+        "avg_score": 1.489795918367347,
+        "avg_opponent_score": 0.8979591836734694,
+        "score_differential": 0.5918367346938777,
+        "recent_form": 1.0,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "team2_stats": {
+        "name": "9z Team",
+        "matches": 192,
+        "wins": 112,
+        "losses": 80,
+        "win_rate": 0.5833333333333334,
+        "avg_score": 1.2552083333333333,
+        "avg_opponent_score": 1.015625,
+        "score_differential": 0.23958333333333326,
+        "recent_form": 0.6,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "h2h_stats": {
+        "total_h2h_matches": 2,
+        "team1_h2h_wins": 1,
+        "team2_h2h_wins": 1,
+        "team1_h2h_win_rate": 0.5,
+        "team2_h2h_win_rate": 0.5
+    },
+    "feature_importance": {
+        "team1_matches": 0.0,
+        "team1_wins": 0.0,
+        "team1_win_rate": 0.0,
+        "team1_avg_score": 0.0,
+        "team1_score_diff": 0.0,
+        "team2_matches": 0.0,
+        "team2_wins": 0.0,
+        "team2_win_rate": 0.0,
+        "team2_avg_score": 0.0,
+        "team2_score_diff": 0.0
+    },
+    "stat_differentials": {
+        "win_rate": 0.04931972789115646,
+        "avg_score": 0.23458758503401378,
+        "avg_opponent_score": -0.11766581632653061,
+        "score_differential": 0.3522534013605444,
+        "recent_form": 0.4,
+        "ranking": 0,
+        "rating": 0
+    },
+    "performance_trends": {
+        "team1": {
+            "last_5_win_rate": 1.0,
+            "last_5_wins": 5.0,
+            "last_5_losses": 0.0,
+            "last_5_avg_score": 2.0,
+            "last_5_avg_opp_score": 0.0,
+            "last_5_score_diff": 2.0,
+            "last_10_win_rate": 0.8,
+            "last_10_wins": 8.0,
+            "last_10_losses": 2.0,
+            "last_10_avg_score": 1.9,
+            "last_10_avg_opp_score": 0.5,
+            "last_10_score_diff": 1.4,
+            "last_20_win_rate": 0.65,
+            "last_20_wins": 13.0,
+            "last_20_losses": 7.0,
+            "last_20_avg_score": 1.6,
+            "last_20_avg_opp_score": 0.85,
+            "last_20_score_diff": 0.7500000000000001,
+            "recency_weighted_win_rate": 0.64874645866315
+        },
+        "team2": {
+            "last_5_win_rate": 0.6,
+            "last_5_wins": 3.0,
+            "last_5_losses": 2.0,
+            "last_5_avg_score": 1.6,
+            "last_5_avg_opp_score": 1.2,
+            "last_5_score_diff": 0.40000000000000013,
+            "last_10_win_rate": 0.7,
+            "last_10_wins": 7.0,
+            "last_10_losses": 3.0,
+            "last_10_avg_score": 1.7,
+            "last_10_avg_opp_score": 0.9,
+            "last_10_score_diff": 0.7999999999999999,
+            "last_20_win_rate": 0.6,
+            "last_20_wins": 12.0,
+            "last_20_losses": 8.0,
+            "last_20_avg_score": 1.45,
+            "last_20_avg_opp_score": 1.05,
+            "last_20_score_diff": 0.3999999999999999,
+            "recency_weighted_win_rate": 0.5810344473396315
+        }
+    },
+    "map_performance": {
+        "team1": {
+            "Unknown": {
+                "played": 49,
+                "wins": 31,
+                "win_rate": 0.6326530612244898
+            }
+        },
+        "team2": {
+            "Unknown": {
+                "played": 192,
+                "wins": 112,
+                "win_rate": 0.5833333333333334
+            }
+        },
+        "differentials": {
+            "Unknown": 0.04931972789115646
+        }
+    },
+    "event_performance": {
+        "team1": {
+            "lan": {
+                "matches": 0,
+                "wins": 0,
+                "win_rate": 0.0
+            },
+            "online": {
+                "matches": 49,
+                "wins": 31,
+                "win_rate": 0.6326530612244898
+            }
+        },
+        "team2": {
+            "lan": {
+                "matches": 20,
+                "wins": 4,
+                "win_rate": 0.2
+            },
+            "online": {
+                "matches": 172,
+                "wins": 108,
+                "win_rate": 0.627906976744186
+            }
+        }
+    },
+    "betting_indicators": {
+        "expected_map_count": 2.566186615387561,
+        "team1_2_0_probability": 0.21778021508613984,
+        "team2_2_0_probability": 0.21778021508613984,
+        "team1_win_map_probability": 0.8688391817288512,
+        "team2_win_map_probability": 0.8688391817288512,
+        "over_2_5_maps_probability": 0.6510589666427113,
+        "under_2_5_maps_probability": 0.3489410333572886,
+        "confidence_level": "Moderate"
+    }
+}

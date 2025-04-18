@@ -1,0 +1,180 @@
+{
+    "match": "Cubert Academy vs TSM",
+    "prediction_time": "2025-04-17 13:44:35",
+    "predicted_winner": "Cubert Academy",
+    "win_probability": 0.5576650187326105,
+    "team1_stats": {
+        "name": "Cubert Academy",
+        "matches": 13,
+        "wins": 9,
+        "losses": 4,
+        "win_rate": 0.6923076923076923,
+        "avg_score": 1.5384615384615385,
+        "avg_opponent_score": 0.9230769230769231,
+        "score_differential": 0.6153846153846154,
+        "recent_form": 0.6,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "team2_stats": {
+        "name": "TSM",
+        "matches": 273,
+        "wins": 194,
+        "losses": 79,
+        "win_rate": 0.7106227106227107,
+        "avg_score": 1.4322344322344323,
+        "avg_opponent_score": 0.7435897435897436,
+        "score_differential": 0.6886446886446886,
+        "recent_form": 0.6,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "h2h_stats": {
+        "total_h2h_matches": 0,
+        "team1_h2h_wins": 0,
+        "team2_h2h_wins": 0,
+        "team1_h2h_win_rate": 0.0,
+        "team2_h2h_win_rate": 0.0
+    },
+    "feature_importance": {
+        "team1_matches": 0.0,
+        "team1_wins": 0.0,
+        "team1_win_rate": 0.0,
+        "team1_avg_score": 0.0,
+        "team1_score_diff": 0.0,
+        "team2_matches": 0.0,
+        "team2_wins": 0.0,
+        "team2_win_rate": 0.0,
+        "team2_avg_score": 0.0,
+        "team2_score_diff": 0.0
+    },
+    "stat_differentials": {
+        "win_rate": -0.01831501831501836,
+        "avg_score": 0.1062271062271063,
+        "avg_opponent_score": 0.17948717948717952,
+        "score_differential": -0.07326007326007322,
+        "recent_form": 0.0,
+        "ranking": 0,
+        "rating": 0
+    },
+    "performance_trends": {
+        "team1": {
+            "last_5_win_rate": 0.6,
+            "last_5_wins": 3.0,
+            "last_5_losses": 2.0,
+            "last_5_avg_score": 1.4,
+            "last_5_avg_opp_score": 1.2,
+            "last_5_score_diff": 0.19999999999999996,
+            "last_10_win_rate": 0.7,
+            "last_10_wins": 7.0,
+            "last_10_losses": 3.0,
+            "last_10_avg_score": 1.5,
+            "last_10_avg_opp_score": 1.0,
+            "last_10_score_diff": 0.5,
+            "recency_weighted_win_rate": 0.7036345533355265
+        },
+        "team2": {
+            "last_5_win_rate": 0.6,
+            "last_5_wins": 3.0,
+            "last_5_losses": 2.0,
+            "last_5_avg_score": 1.4,
+            "last_5_avg_opp_score": 0.8,
+            "last_5_score_diff": 0.5999999999999999,
+            "last_10_win_rate": 0.7,
+            "last_10_wins": 7.0,
+            "last_10_losses": 3.0,
+            "last_10_avg_score": 1.5,
+            "last_10_avg_opp_score": 0.7,
+            "last_10_score_diff": 0.8,
+            "last_20_win_rate": 0.55,
+            "last_20_wins": 11.0,
+            "last_20_losses": 9.0,
+            "last_20_avg_score": 1.3,
+            "last_20_avg_opp_score": 1.05,
+            "last_20_score_diff": 0.25,
+            "recency_weighted_win_rate": 0.6782042880859686
+        }
+    },
+    "map_performance": {
+        "team1": {
+            "Unknown": {
+                "played": 13,
+                "wins": 9,
+                "win_rate": 0.6923076923076923
+            }
+        },
+        "team2": {
+            "Unknown": {
+                "played": 273,
+                "wins": 194,
+                "win_rate": 0.7106227106227107
+            }
+        },
+        "differentials": {
+            "Unknown": -0.01831501831501836
+        }
+    },
+    "event_performance": {
+        "team1": {
+            "lan": {
+                "matches": 0,
+                "wins": 0,
+                "win_rate": 0.0
+            },
+            "online": {
+                "matches": 13,
+                "wins": 9,
+                "win_rate": 0.6923076923076923
+            }
+        },
+        "team2": {
+            "lan": {
+                "matches": 0,
+                "wins": 0,
+                "win_rate": 0.0
+            },
+            "online": {
+                "matches": 273,
+                "wins": 194,
+                "win_rate": 0.7106227106227107
+            }
+        }
+    },
+    "betting_indicators": {
+        "expected_map_count": 2.7004099627018157,
+        "team1_2_0_probability": 0.16729950561978316,
+        "team2_2_0_probability": 0.16729950561978316,
+        "team1_win_map_probability": 0.8672995056197832,
+        "team2_win_map_probability": 0.8672995056197832,
+        "over_2_5_maps_probability": 0.7000000000000001,
+        "under_2_5_maps_probability": 0.3,
+        "confidence_level": "Moderate"
+    },
+    "actual_winner": "TSM",
+    "prediction_correct": false,
+    "match_date": "2025-04-17",
+    "notes": "",
+    "model_version": "1.0",
+    "match_performance": {
+        "team1_score": 0,
+        "team2_score": 2,
+        "map": "",
+        "total_rounds": 2,
+        "team1_attack_rounds_won": 0,
+        "team1_defense_rounds_won": 0,
+        "team2_attack_rounds_won": 0,
+        "team2_defense_rounds_won": 0,
+        "team1_avg_acs": null,
+        "team2_avg_acs": null,
+        "team1_avg_kills": null,
+        "team2_avg_kills": null,
+        "team1_avg_deaths": null,
+        "team2_avg_deaths": null,
+        "team1_avg_assists": null,
+        "team2_avg_assists": null,
+        "match_id": "474004",
+        "date": "2025/04/17",
+        "event": "VCL 25 NA ACE: Stage 2",
+        "tournament": ""
+    }
+}
