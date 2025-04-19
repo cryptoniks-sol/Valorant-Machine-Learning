@@ -1,7 +1,12 @@
-from valorant_predictor import ValorantPredictorSystem
-import pandas as pd
-from datetime import datetime
+# predictall.py
+import os
 import json
+import pandas as pd
+import datetime
+from pprint import pprint
+
+# Import the main predictor system class
+from valorant_predictor.predictor_system import ValorantPredictorSystem
 
 def predict_all_upcoming_matches():
     """
@@ -63,7 +68,7 @@ def predict_all_upcoming_matches():
     df = pd.DataFrame(prediction_data)
     
     # Save to CSV
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     csv_filename = f"valorant_predictions_{timestamp}.csv"
     df.to_csv(csv_filename, index=False)
     print(f"\nSaved predictions to {csv_filename}")
@@ -74,29 +79,7 @@ def predict_all_upcoming_matches():
         json.dump(upcoming_predictions, f, indent=4)
     print(f"Saved detailed predictions to {json_filename}")
     
-    # Print overall statistics
-    print("\nPrediction Statistics:")
-    print(f"Total matches: {len(prediction_data)}")
-    
-    confidence_groups = df.groupby('confidence_level').size()
-    print("\nConfidence level distribution:")
-    for level, count in confidence_groups.items():
-        print(f"{level}: {count} matches")
-    
-    # Print closest matches (around 50-50 odds)
-    closest_matches = df.iloc[(df['confidence'] - 0.5).abs().argsort()[:3]]
-    print("\nClosest matches (near 50-50 odds):")
-    for _, match in closest_matches.iterrows():
-        print(f"{match['team1_name']} vs {match['team2_name']}: {match['team1_win_probability']:.2f} - {match['team2_win_probability']:.2f}")
-    
-    # Print most confident predictions
-    most_confident = df.sort_values('confidence', ascending=False).head(3)
-    print("\nMost confident predictions:")
-    for _, match in most_confident.iterrows():
-        print(f"{match['winner_name']} to win against {match['team1_name'] if match['winner_name'] == match['team2_name'] else match['team2_name']} (Confidence: {match['confidence']:.2f})")
-    
     return df, upcoming_predictions
 
-# Execute the function if run directly
 if __name__ == "__main__":
     predict_all_upcoming_matches()
