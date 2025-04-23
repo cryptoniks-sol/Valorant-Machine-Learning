@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-04-23 00:31:32",
+  "bankroll": 100.0,
+  "value_bets": [
+    {
+      "match": "T1 Academy vs SLT",
+      "bet_type": "Moneyline",
+      "pick": "T1 Academy",
+      "model_probability": 0.9068083167076111,
+      "implied_probability": 0.6756756756756757,
+      "edge": 0.23113264103193543,
+      "odds": 1.48,
+      "confidence": 0.9068083167076111,
+      "kelly_bet_size": 0.17816474412878355,
+      "recommended_bet": 17.816474412878357,
+      "key_factors": [],
+      "team_stats": {
+        "win_rate": 0.7,
+        "recent_form": 0.6,
+        "avg_player_rating": 1.0,
+        "star_player": "DH"
+      },
+      "h2h_data": {}
+    }
+  ]
+}

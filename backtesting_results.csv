@@ -1,0 +1,7 @@
+date,team1,team2,predicted_winner,actual_winner,confidence,correct
+2025/04/10,Team Heretics,Team Vitality,Team Vitality,Team Heretics,0.8004202395677567,False
+2025/02/07,Team Heretics,Team Vitality,Team Vitality,Team Vitality,0.8004202395677567,True
+2025/04/04,FNATIC,Team Vitality,FNATIC,FNATIC,0.8016306161880493,True
+2025/04/10,Team Vitality,Team Heretics,Team Vitality,Team Heretics,0.9042935371398926,False
+2025/04/04,Team Vitality,FNATIC,FNATIC,FNATIC,0.7713761180639267,True
+2025/02/07,Team Vitality,Team Heretics,Team Vitality,Team Vitality,0.9042935371398926,True

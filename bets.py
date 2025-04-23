@@ -1,701 +1,656 @@
-import json
-import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from datetime import datetime
+import numpy as np
+import json
+from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
+import argparse
+import glob
+import sys
+from typing import Dict, List, Optional, Tuple, Union, Any
+import requests
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.isotonic import IsotonicRegression
+import joblib
+import logging
+from concurrent.futures import ThreadPoolExecutor
+import warnings
+from bs4 import BeautifulSoup
+from dataclasses import dataclass, field
 
-class ValorantBettingAdvisor:
-    def __init__(self, prediction_file_path):
-        """Initialize the betting advisor with prediction data"""
-        with open(prediction_file_path, 'r') as file:
-            self.prediction_data = json.load(file)
-        
-        self.team1_name = self.prediction_data['team1_stats']['name'] if 'name' in self.prediction_data['team1_stats'] else self.prediction_data['match'].split(' vs ')[0]
-        self.team2_name = self.prediction_data['team2_stats']['name'] if 'name' in self.prediction_data['team2_stats'] else self.prediction_data['match'].split(' vs ')[1]
-        
-        # Extract key features from the prediction data
-        self.features = self._extract_features()
-        
-        # Initialize models
-        self.moneyline_model = None
-        self.handicap_model = None
-        self.total_maps_model = None
-        self.win_map_model = None
-        
-        # Training data would be loaded or collected over time
-        # For demonstration, we'll simulate model predictions
-        self._initialize_models()
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("valorant_betting.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Suppress specific warnings
+warnings.filterwarnings('ignore', category=FutureWarning)
+
+
+@dataclass
+class BetRecord:
+    """Class to track bet history"""
+    match_id: str
+    match: str
+    bet_type: str
+    pick: str
+    odds: float
+    stake: float
+    model_probability: float
+    implied_probability: float
+    edge: float
+    confidence: float
+    timestamp: str
+    result: Optional[str] = None
+    profit_loss: Optional[float] = None
+    notes: Optional[str] = None
+
+
+@dataclass
+class BettingHistory:
+    """Class to manage betting history"""
+    bets: List[BetRecord] = field(default_factory=list)
     
-    def _extract_features(self):
-        """Extract key statistical features from the prediction data"""
-        team1_stats = self.prediction_data['team1_stats']
-        team2_stats = self.prediction_data['team2_stats']
-        h2h_stats = self.prediction_data['h2h_stats']
-        
-        # First, correctly identify the predicted winner
-        predicted_winner = self.prediction_data['predicted_winner']
-        win_probability = self.prediction_data['win_probability']
-        
-        # Determine which team is predicted to win
-        if predicted_winner == self.team1_name:
-            team1_win_prob = win_probability
-            team2_win_prob = 1 - win_probability
-        else:
-            team2_win_prob = win_probability
-            team1_win_prob = 1 - win_probability
-        
-        features = {
-            # Team 1 features
-            'team1_win_rate': team1_stats['win_rate'],
-            'team1_avg_score': team1_stats['avg_score'],
-            'team1_avg_opponent_score': team1_stats['avg_opponent_score'],
-            'team1_score_differential': team1_stats['score_differential'],
-            'team1_recent_form': team1_stats['recent_form'],
-            
-            # Team 2 features
-            'team2_win_rate': team2_stats['win_rate'],
-            'team2_avg_score': team2_stats['avg_score'],
-            'team2_avg_opponent_score': team2_stats['avg_opponent_score'],
-            'team2_score_differential': team2_stats['score_differential'],
-            'team2_recent_form': team2_stats['recent_form'],
-            
-            # Head-to-head features
-            'team1_h2h_win_rate': h2h_stats['team1_h2h_win_rate'],
-            'team2_h2h_win_rate': h2h_stats['team2_h2h_win_rate'],
-            'total_h2h_matches': h2h_stats['total_h2h_matches'],
-            
-            # Comparative features
-            'win_rate_diff': team1_stats['win_rate'] - team2_stats['win_rate'],
-            'avg_score_diff': team1_stats['avg_score'] - team2_stats['avg_score'],
-            'form_diff': team1_stats['recent_form'] - team2_stats['recent_form'],
-            
-            # Predicted win probability for each team - correctly assigned now
-            'team1_win_probability': team1_win_prob,
-            'team2_win_probability': team2_win_prob,
-            
-            # Original prediction data
-            'predicted_winner': predicted_winner,
-            'win_probability': win_probability
-        }
-        
-        return features
-
-    def _initialize_models(self):
-        """
-        Initialize and train predictive models
-        In a real implementation, these would be trained on historical data
-        """
-        # For demonstration, we're using basic models
-        # In practice, you would train these on historical match data and betting outcomes
-        
-        self.moneyline_model = RandomForestClassifier(n_estimators=100, random_state=42)
-        self.handicap_model = RandomForestClassifier(n_estimators=100, random_state=42)
-        self.total_maps_model = RandomForestClassifier(n_estimators=100, random_state=42)
-        self.win_map_model = RandomForestClassifier(n_estimators=100, random_state=42)
-        
-        # In a real implementation, you would:
-        # 1. Load historical data
-        # 2. Create feature sets
-        # 3. Train the models using historical outcomes
-        
-        # For demonstration, we'll simulate trained models
-
-    def _calculate_ev(self, win_probability, odds):
-        """
-        Calculate Expected Value of a bet
-        EV = (probability_of_winning * profit) - (probability_of_losing * stake)
-        Where profit = stake * (odds - 1)
-        """
-        if odds <= 1:
-            return -1  # Invalid odds
-        
-        stake = 1  # Normalized to 1 unit
-        profit = stake * (odds - 1)
-        loss = stake
-        
-        ev = (win_probability * profit) - ((1 - win_probability) * loss)
-        return ev
-
-    def _calculate_kelly_bet(self, win_probability, odds, bankroll, kelly_fraction=0.25):
-        """
-        Calculate bet size using the Kelly Criterion
-        Kelly = (bp - q) / b
-        where:
-        - b = odds - 1 (decimal odds minus 1)
-        - p = probability of winning
-        - q = probability of losing (1 - p)
-        
-        We apply a fraction to be more conservative
-        """
-        if odds <= 1 or win_probability <= 0:
-            return 0
-        
-        b = odds - 1
-        p = win_probability
-        q = 1 - p
-        
-        kelly = (b * p - q) / b
-        
-        # Apply Kelly fraction and bankroll
-        if kelly <= 0:
-            return 0
-        else:
-            return kelly * kelly_fraction * bankroll
-
-    def _predict_win_probability(self, model, feature_importance=None):
-        """
-        Predict win probability using a trained model
-        In a real implementation, this would use the actual model prediction
-        """
-        # For demonstration, we're using the prediction data's win probability
-        # and adjusting based on the model and feature importance
-        
-        base_probability = self.prediction_data['win_probability']
-        
-        # In reality, you would:
-        # features_vector = [list of feature values]
-        # probability = model.predict_proba([features_vector])[0][1]
-        
-        # For demonstration, we'll use reasonable values based on the data
-        return base_probability
-
-    def get_betting_advice(self, odds_dict, bankroll):
-        """
-        Generate betting advice based on odds and prediction data
-        
-        Args:
-            odds_dict: Dictionary containing odds for various bet types
-            bankroll: Total bankroll for calculating bet sizes
-            
-        Returns:
-            List of bet recommendations sorted by EV
-        """
-        recommendations = []
-        
-        # Get the correct win probabilities for each team
-        predicted_winner = self.prediction_data['predicted_winner']
-        win_probability = self.prediction_data['win_probability']
-        
-        # Set probabilities based on predicted winner
-        if predicted_winner == self.team1_name:
-            team1_ml_prob = win_probability
-            team2_ml_prob = 1 - win_probability
-        else:
-            team2_ml_prob = win_probability
-            team1_ml_prob = 1 - win_probability
-        
-        # Now proceed with the original code using the correct probabilities
-        # Team 1 moneyline
-        if 'team1_ml' in odds_dict:
-            team1_ml_ev = self._calculate_ev(team1_ml_prob, odds_dict['team1_ml'])
-            team1_ml_bet = self._calculate_kelly_bet(team1_ml_prob, odds_dict['team1_ml'], bankroll)
-            
-            if team1_ml_ev > 0:
-                recommendations.append({
-                    'bet_type': f"Moneyline: {self.team1_name} to win",
-                    'odds': odds_dict['team1_ml'],
-                    'win_probability': team1_ml_prob,
-                    'expected_value': team1_ml_ev,
-                    'bet_amount': team1_ml_bet,
-                    'reasoning': self._generate_ml_reasoning(self.team1_name, team1_ml_prob)
-                })
-        
-        # Team 2 moneyline
-        if 'team2_ml' in odds_dict:
-            team2_ml_ev = self._calculate_ev(team2_ml_prob, odds_dict['team2_ml'])
-            team2_ml_bet = self._calculate_kelly_bet(team2_ml_prob, odds_dict['team2_ml'], bankroll)
-            
-            if team2_ml_ev > 0:
-                recommendations.append({
-                    'bet_type': f"Moneyline: {self.team2_name} to win",
-                    'odds': odds_dict['team2_ml'],
-                    'win_probability': team2_ml_prob,
-                    'expected_value': team2_ml_ev,
-                    'bet_amount': team2_ml_bet,
-                    'reasoning': self._generate_ml_reasoning(self.team2_name, team2_ml_prob)
-                })
-        
-        # Analyze Map Handicap Bets
-        # Team 1 +1.5 maps
-        if 'team1_plus1_5' in odds_dict:
-            # Probability team1 wins at least 1 map (doesn't get 2-0'd)
-            team1_plus1_5_prob = self._calculate_handicap_probability(self.team1_name, 1.5)
-            team1_plus1_5_ev = self._calculate_ev(team1_plus1_5_prob, odds_dict['team1_plus1_5'])
-            team1_plus1_5_bet = self._calculate_kelly_bet(team1_plus1_5_prob, odds_dict['team1_plus1_5'], bankroll)
-            
-            if team1_plus1_5_ev > 0:
-                recommendations.append({
-                    'bet_type': f"Map Handicap: {self.team1_name} +1.5",
-                    'odds': odds_dict['team1_plus1_5'],
-                    'win_probability': team1_plus1_5_prob,
-                    'expected_value': team1_plus1_5_ev,
-                    'bet_amount': team1_plus1_5_bet,
-                    'reasoning': self._generate_handicap_reasoning(self.team1_name, "+1.5", team1_plus1_5_prob)
-                })
-        
-        # Team 2 +1.5 maps
-        if 'team2_plus1_5' in odds_dict:
-            # Probability team2 wins at least 1 map (doesn't get 2-0'd)
-            team2_plus1_5_prob = self._calculate_handicap_probability(self.team2_name, 1.5)
-            team2_plus1_5_ev = self._calculate_ev(team2_plus1_5_prob, odds_dict['team2_plus1_5'])
-            team2_plus1_5_bet = self._calculate_kelly_bet(team2_plus1_5_prob, odds_dict['team2_plus1_5'], bankroll)
-            
-            if team2_plus1_5_ev > 0:
-                recommendations.append({
-                    'bet_type': f"Map Handicap: {self.team2_name} +1.5",
-                    'odds': odds_dict['team2_plus1_5'],
-                    'win_probability': team2_plus1_5_prob,
-                    'expected_value': team2_plus1_5_ev,
-                    'bet_amount': team2_plus1_5_bet,
-                    'reasoning': self._generate_handicap_reasoning(self.team2_name, "+1.5", team2_plus1_5_prob)
-                })
-        
-        # Team 1 -1.5 maps (win 2-0)
-        if 'team1_minus1_5' in odds_dict:
-            team1_minus1_5_prob = self._calculate_handicap_probability(self.team1_name, -1.5)
-            team1_minus1_5_ev = self._calculate_ev(team1_minus1_5_prob, odds_dict['team1_minus1_5'])
-            team1_minus1_5_bet = self._calculate_kelly_bet(team1_minus1_5_prob, odds_dict['team1_minus1_5'], bankroll)
-            
-            if team1_minus1_5_ev > 0:
-                recommendations.append({
-                    'bet_type': f"Map Handicap: {self.team1_name} -1.5",
-                    'odds': odds_dict['team1_minus1_5'],
-                    'win_probability': team1_minus1_5_prob,
-                    'expected_value': team1_minus1_5_ev,
-                    'bet_amount': team1_minus1_5_bet,
-                    'reasoning': self._generate_handicap_reasoning(self.team1_name, "-1.5", team1_minus1_5_prob)
-                })
-        
-        # Team 2 -1.5 maps (win 2-0)
-        if 'team2_minus1_5' in odds_dict:
-            team2_minus1_5_prob = self._calculate_handicap_probability(self.team2_name, -1.5)
-            team2_minus1_5_ev = self._calculate_ev(team2_minus1_5_prob, odds_dict['team2_minus1_5'])
-            team2_minus1_5_bet = self._calculate_kelly_bet(team2_minus1_5_prob, odds_dict['team2_minus1_5'], bankroll)
-            
-            if team2_minus1_5_ev > 0:
-                recommendations.append({
-                    'bet_type': f"Map Handicap: {self.team2_name} -1.5",
-                    'odds': odds_dict['team2_minus1_5'],
-                    'win_probability': team2_minus1_5_prob,
-                    'expected_value': team2_minus1_5_ev,
-                    'bet_amount': team2_minus1_5_bet,
-                    'reasoning': self._generate_handicap_reasoning(self.team2_name, "-1.5", team2_minus1_5_prob)
-                })
-        
-        # Analyze Over/Under Total Maps
-        if 'over_2_5_maps' in odds_dict:
-            over_2_5_prob = self._calculate_over_under_probability(True)
-            over_2_5_ev = self._calculate_ev(over_2_5_prob, odds_dict['over_2_5_maps'])
-            over_2_5_bet = self._calculate_kelly_bet(over_2_5_prob, odds_dict['over_2_5_maps'], bankroll)
-            
-            if over_2_5_ev > 0:
-                recommendations.append({
-                    'bet_type': "Total Maps: Over 2.5",
-                    'odds': odds_dict['over_2_5_maps'],
-                    'win_probability': over_2_5_prob,
-                    'expected_value': over_2_5_ev,
-                    'bet_amount': over_2_5_bet,
-                    'reasoning': self._generate_over_under_reasoning(True, over_2_5_prob)
-                })
-        
-        if 'under_2_5_maps' in odds_dict:
-            under_2_5_prob = self._calculate_over_under_probability(False)
-            under_2_5_ev = self._calculate_ev(under_2_5_prob, odds_dict['under_2_5_maps'])
-            under_2_5_bet = self._calculate_kelly_bet(under_2_5_prob, odds_dict['under_2_5_maps'], bankroll)
-            
-            if under_2_5_ev > 0:
-                recommendations.append({
-                    'bet_type': "Total Maps: Under 2.5",
-                    'odds': odds_dict['under_2_5_maps'],
-                    'win_probability': under_2_5_prob,
-                    'expected_value': under_2_5_ev,
-                    'bet_amount': under_2_5_bet,
-                    'reasoning': self._generate_over_under_reasoning(False, under_2_5_prob)
-                })
-        
-        # Analyze "Win at least 1 map" bets
-        if 'team1_win_map' in odds_dict:
-            team1_win_map_prob = self._calculate_win_map_probability(self.team1_name)
-            team1_win_map_ev = self._calculate_ev(team1_win_map_prob, odds_dict['team1_win_map'])
-            team1_win_map_bet = self._calculate_kelly_bet(team1_win_map_prob, odds_dict['team1_win_map'], bankroll)
-            
-            if team1_win_map_ev > 0:
-                recommendations.append({
-                    'bet_type': f"{self.team1_name} to win at least 1 map",
-                    'odds': odds_dict['team1_win_map'],
-                    'win_probability': team1_win_map_prob,
-                    'expected_value': team1_win_map_ev,
-                    'bet_amount': team1_win_map_bet,
-                    'reasoning': self._generate_win_map_reasoning(self.team1_name, team1_win_map_prob)
-                })
-        
-        if 'team2_win_map' in odds_dict:
-            team2_win_map_prob = self._calculate_win_map_probability(self.team2_name)
-            team2_win_map_ev = self._calculate_ev(team2_win_map_prob, odds_dict['team2_win_map'])
-            team2_win_map_bet = self._calculate_kelly_bet(team2_win_map_prob, odds_dict['team2_win_map'], bankroll)
-            
-            if team2_win_map_ev > 0:
-                recommendations.append({
-                    'bet_type': f"{self.team2_name} to win at least 1 map",
-                    'odds': odds_dict['team2_win_map'],
-                    'win_probability': team2_win_map_prob,
-                    'expected_value': team2_win_map_ev,
-                    'bet_amount': team2_win_map_bet,
-                    'reasoning': self._generate_win_map_reasoning(self.team2_name, team2_win_map_prob)
-                })
-        
-        # Sort recommendations by expected value (highest to lowest)
-        recommendations.sort(key=lambda x: x['expected_value'], reverse=True)
-        
-        return recommendations
-
-    def _calculate_handicap_probability(self, team_name, handicap):
-        """
-        Calculate probability for handicap bets
-        """
-        # Get the correct win probabilities for each team
-        predicted_winner = self.prediction_data['predicted_winner']
-        win_probability = self.prediction_data['win_probability']
-        
-        # Set probabilities based on predicted winner
-        if predicted_winner == self.team1_name:
-            team1_win_prob = win_probability
-            team2_win_prob = 1 - win_probability
-        else:
-            team2_win_prob = win_probability
-            team1_win_prob = 1 - win_probability
-        
-        # Base probabilities for different map outcomes
-        # Based on model prediction and historical patterns
-        # These would ideally come from trained models in a real implementation
-        
-        # With strong probability split, tighter match is more likely
-        close_match_factor = 1 - abs(team1_win_prob - team2_win_prob) * 2  # Higher when teams are close
-        
-        # Probability of 2-0 vs 2-1 outcomes
-        prob_2_0_if_team1_wins = 0.55 - (close_match_factor * 0.2)  # Less likely 2-0 when teams close
-        prob_2_1_if_team1_wins = 1 - prob_2_0_if_team1_wins
-        
-        prob_0_2_if_team2_wins = 0.55 - (close_match_factor * 0.2)
-        prob_1_2_if_team2_wins = 1 - prob_0_2_if_team2_wins
-        
-        # Calculate specific outcome probabilities
-        prob_2_0 = team1_win_prob * prob_2_0_if_team1_wins
-        prob_2_1 = team1_win_prob * prob_2_1_if_team1_wins
-        prob_0_2 = team2_win_prob * prob_0_2_if_team2_wins
-        prob_1_2 = team2_win_prob * prob_1_2_if_team2_wins
-        
-        # Determine probability based on team and handicap
-        if team_name == self.team1_name:
-            if handicap == 1.5:  # Team 1 +1.5 (needs to win at least 1 map)
-                return prob_2_0 + prob_2_1 + prob_1_2  # All except 0-2
-            elif handicap == -1.5:  # Team 1 -1.5 (needs to win 2-0)
-                return prob_2_0
-        else:  # Team 2
-            if handicap == 1.5:  # Team 2 +1.5 (needs to win at least 1 map)
-                return prob_0_2 + prob_1_2 + prob_2_1  # All except 2-0
-            elif handicap == -1.5:  # Team 2 -1.5 (needs to win 2-0)
-                return prob_0_2
-                
-        return 0.5  # Default fallback
-
-    def _calculate_over_under_probability(self, is_over):
-        """Calculate probability for over/under total maps bets"""
-        # Get the correct win probabilities for each team
-        predicted_winner = self.prediction_data['predicted_winner']
-        win_probability = self.prediction_data['win_probability']
-        
-        # Set probabilities based on predicted winner
-        if predicted_winner == self.team1_name:
-            team1_win_prob = win_probability
-            team2_win_prob = 1 - win_probability
-        else:
-            team2_win_prob = win_probability
-            team1_win_prob = 1 - win_probability
-        
-        # Same logic as handicap probability calculation
-        close_match_factor = 1 - abs(team1_win_prob - team2_win_prob) * 2
-        
-        prob_2_0_if_team1_wins = 0.55 - (close_match_factor * 0.2)
-        prob_2_1_if_team1_wins = 1 - prob_2_0_if_team1_wins
-        
-        prob_0_2_if_team2_wins = 0.55 - (close_match_factor * 0.2)
-        prob_1_2_if_team2_wins = 1 - prob_0_2_if_team2_wins
-        
-        # Calculate specific outcome probabilities
-        prob_2_0 = team1_win_prob * prob_2_0_if_team1_wins
-        prob_2_1 = team1_win_prob * prob_2_1_if_team1_wins
-        prob_0_2 = team2_win_prob * prob_0_2_if_team2_wins
-        prob_1_2 = team2_win_prob * prob_1_2_if_team2_wins
-        
-        # For over 2.5, we need map 3 to be played (2-1 or 1-2)
-        if is_over:
-            return prob_2_1 + prob_1_2
-        else:  # Under 2.5 means 2-0 or 0-2
-            return prob_2_0 + prob_0_2
-
-    def _calculate_win_map_probability(self, team_name):
-        """Calculate probability for 'win at least 1 map' bets"""
-        # Get the correct win probabilities for each team
-        predicted_winner = self.prediction_data['predicted_winner']
-        win_probability = self.prediction_data['win_probability']
-        
-        # Set probabilities based on predicted winner
-        if predicted_winner == self.team1_name:
-            team1_win_prob = win_probability
-            team2_win_prob = 1 - win_probability
-        else:
-            team2_win_prob = win_probability
-            team1_win_prob = 1 - win_probability
-        
-        # This is essentially the same as the +1.5 handicap calculation
-        close_match_factor = 1 - abs(team1_win_prob - team2_win_prob) * 2
-        
-        prob_2_0_if_team1_wins = 0.55 - (close_match_factor * 0.2)
-        prob_2_1_if_team1_wins = 1 - prob_2_0_if_team1_wins
-        
-        prob_0_2_if_team2_wins = 0.55 - (close_match_factor * 0.2)
-        prob_1_2_if_team2_wins = 1 - prob_0_2_if_team2_wins
-        
-        prob_2_0 = team1_win_prob * prob_2_0_if_team1_wins
-        prob_2_1 = team1_win_prob * prob_2_1_if_team1_wins
-        prob_0_2 = team2_win_prob * prob_0_2_if_team2_wins
-        prob_1_2 = team2_win_prob * prob_1_2_if_team2_wins
-        
-        if team_name == self.team1_name:
-            return prob_2_0 + prob_2_1 + prob_1_2  # All except 0-2
-        else:
-            return prob_0_2 + prob_1_2 + prob_2_1  # All except 2-0
-
-    def _generate_ml_reasoning(self, team_name, win_probability):
-        """Generate reasoning for moneyline bets"""
-        if team_name == self.team1_name:
-            team_stats = self.prediction_data['team1_stats']
-            opponent_stats = self.prediction_data['team2_stats']
-            h2h_win_rate = self.prediction_data['h2h_stats']['team1_h2h_win_rate']
-        else:
-            team_stats = self.prediction_data['team2_stats']
-            opponent_stats = self.prediction_data['team1_stats']
-            h2h_win_rate = self.prediction_data['h2h_stats']['team2_h2h_win_rate']
-        
-        reasoning = []
-        
-        # Win rate comparison
-        if team_stats['win_rate'] > opponent_stats['win_rate']:
-            reasoning.append(f"{team_name} has a {team_stats['win_rate']:.1%} win rate, superior to opponent's {opponent_stats['win_rate']:.1%}")
-        
-        # Recent form
-        if team_stats['recent_form'] > 0.5:
-            reasoning.append(f"Strong recent form ({team_stats['recent_form']:.1%} win rate in last 5 matches)")
-        
-        # Score differential
-        if team_stats['score_differential'] > 0:
-            reasoning.append(f"Positive score differential of {team_stats['score_differential']:.2f} per match")
-        
-        # Head-to-head record
-        if h2h_win_rate > 0.5 and self.prediction_data['h2h_stats']['total_h2h_matches'] > 0:
-            reasoning.append(f"Strong head-to-head record ({h2h_win_rate:.1%} win rate)")
-        
-        # Model prediction
-        model_confidence = "high" if abs(win_probability - 0.5) > 0.15 else "moderate"
-        reasoning.append(f"Model gives {model_confidence} confidence with {win_probability:.1%} win probability")
-        
-        return "; ".join(reasoning)
-
-    def _generate_handicap_reasoning(self, team_name, handicap, win_probability):
-        """Generate reasoning for handicap bets"""
-        if team_name == self.team1_name:
-            team_stats = self.prediction_data['team1_stats']
-            opponent_stats = self.prediction_data['team2_stats']
-        else:
-            team_stats = self.prediction_data['team2_stats']
-            opponent_stats = self.prediction_data['team1_stats']
-        
-        reasoning = []
-        
-        if handicap == "+1.5":
-            # For +1.5 handicaps (team needs to win at least 1 map)
-            reasoning.append(f"{team_name} has {win_probability:.1%} chance to win at least one map")
-            
-            if team_stats['win_rate'] > 0.4:
-                reasoning.append(f"Reasonable {team_stats['win_rate']:.1%} overall win rate")
-            
-            # Getting 2-0'd analysis
-            sweep_against_rate = 1 - win_probability
-            reasoning.append(f"Only {sweep_against_rate:.1%} chance of getting swept 0-2")
-            
-        elif handicap == "-1.5":
-            # For -1.5 handicaps (team needs to win 2-0)
-            reasoning.append(f"{team_name} has {win_probability:.1%} chance to win 2-0")
-            
-            if team_stats['win_rate'] > 0.6:
-                reasoning.append(f"Strong {team_stats['win_rate']:.1%} overall win rate")
-                
-            if team_stats['score_differential'] > 0.3:
-                reasoning.append(f"Dominant score differential of {team_stats['score_differential']:.2f}")
-        
-        return "; ".join(reasoning)
-
-    def _generate_over_under_reasoning(self, is_over, win_probability):
-        """Generate reasoning for over/under bets"""
-        # Get the correct win probabilities for each team
-        predicted_winner = self.prediction_data['predicted_winner']
-        pred_win_probability = self.prediction_data['win_probability']
-        
-        # Set probabilities based on predicted winner
-        if predicted_winner == self.team1_name:
-            team1_win_prob = pred_win_probability
-            team2_win_prob = 1 - pred_win_probability
-        else:
-            team2_win_prob = pred_win_probability
-            team1_win_prob = 1 - pred_win_probability
-        
-        team1_name = self.team1_name
-        team2_name = self.team2_name
-        
-        reasoning = []
-        
-        if is_over:
-            # For over 2.5 maps
-            reasoning.append(f"{win_probability:.1%} chance that match goes to 3 maps")
-            
-            # Competitive match analysis
-            if abs(team1_win_prob - team2_win_prob) < 0.1:
-                reasoning.append(f"Evenly matched teams ({team1_win_prob:.1%} vs {team2_win_prob:.1%} win probability)")
-                
-            # Competitiveness in previous matches
-            if self.prediction_data['h2h_stats']['total_h2h_matches'] > 0:
-                reasoning.append(f"{self.prediction_data['h2h_stats']['total_h2h_matches']} previous matches between these teams")
-        else:
-            # For under 2.5 maps
-            reasoning.append(f"{win_probability:.1%} chance that match ends in 2-0 sweep")
-            
-            
-            # Lopsided match analysis
-            if abs(team1_win_prob - 0.5) > 0.15:
-                stronger_team = team1_name if team1_win_prob > team2_win_prob else team2_name
-                reasoning.append(f"Clear favorite in {stronger_team}")
-        
-        return "; ".join(reasoning)
-
-    def _generate_win_map_reasoning(self, team_name, win_probability):
-        """Generate reasoning for 'win at least 1 map' bets"""
-        # Similar to +1.5 handicap reasoning
-        if team_name == self.team1_name:
-            team_stats = self.prediction_data['team1_stats']
-        else:
-            team_stats = self.prediction_data['team2_stats']
-        
-        reasoning = []
-        reasoning.append(f"{team_name} has {win_probability:.1%} chance to win at least one map")
-        
-        if team_stats['win_rate'] > 0.4:
-            reasoning.append(f"Reasonable {team_stats['win_rate']:.1%} overall win rate")
-        
-        if team_stats['recent_form'] > 0.5:
-            reasoning.append(f"In good form recently ({team_stats['recent_form']:.1%} in last 5 matches)")
-        
-        # Analysis of getting swept
-        swept_prob = 1 - win_probability
-        reasoning.append(f"Only {swept_prob:.1%} chance of getting swept 0-2")
-        
-        return "; ".join(reasoning)
-
-    def print_recommendations(self, recommendations):
-            """Print betting recommendations in a formatted way"""
-            if not recommendations:
-                print("\nNo positive EV bets found for this match.")
+    def add_bet(self, bet: BetRecord) -> None:
+        self.bets.append(bet)
+    
+    def update_result(self, match_id: str, bet_type: str, result: str, profit_loss: float) -> None:
+        for bet in self.bets:
+            if bet.match_id == match_id and bet.bet_type == bet_type:
+                bet.result = result
+                bet.profit_loss = profit_loss
                 return
+        logger.warning(f"Bet not found for match_id {match_id} and bet_type {bet_type}")
+    
+    def get_results(self) -> Dict[str, Any]:
+        """Calculate and return betting performance metrics"""
+        if not self.bets:
+            return {"status": "No bets recorded"}
+        
+        total_bets = len([b for b in self.bets if b.result is not None])
+        if total_bets == 0:
+            return {"status": "No settled bets"}
+        
+        wins = len([b for b in self.bets if b.result == "win"])
+        roi = sum([b.profit_loss for b in self.bets if b.profit_loss is not None]) / sum([b.stake for b in self.bets if b.profit_loss is not None])
+        
+        return {
+            "total_bets": total_bets,
+            "wins": wins,
+            "win_rate": wins / total_bets if total_bets > 0 else 0,
+            "roi": roi,
+            "net_profit": sum([b.profit_loss for b in self.bets if b.profit_loss is not None]),
+            "bets_by_type": self._group_by_bet_type()
+        }
+    
+    def _group_by_bet_type(self) -> Dict[str, Dict[str, Any]]:
+        result = {}
+        for bet_type in set([b.bet_type for b in self.bets]):
+            type_bets = [b for b in self.bets if b.bet_type == bet_type and b.result is not None]
+            if not type_bets:
+                continue
             
-            print("\n===== BETTING RECOMMENDATIONS =====")
-            print(f"Match: {self.team1_name} vs {self.team2_name}")
-            print(f"Prediction: {self.prediction_data['predicted_winner']} ({self.prediction_data['win_probability']:.2%} win probability)")
-            print("==================================")
+            wins = len([b for b in type_bets if b.result == "win"])
             
-            for i, rec in enumerate(recommendations, 1):
-                print(f"\n{i}. {rec['bet_type']}")
-                print(f"   Odds: {rec['odds']:.2f}")
-                print(f"   Win Probability: {rec['win_probability']:.2%}")
-                print(f"   Expected Value: {rec['expected_value']:.4f} units per unit wagered")
-                print(f"   Recommended Bet: ${rec['bet_amount']:.2f}")
-                print(f"   Reasoning: {rec['reasoning']}")
-            
-            print("\n==================================")
-            print(f"Total recommended investment: ${sum(rec['bet_amount'] for rec in recommendations):.2f}")
+            result[bet_type] = {
+                "count": len(type_bets),
+                "win_rate": wins / len(type_bets) if len(type_bets) > 0 else 0,
+                "roi": sum([b.profit_loss for b in type_bets if b.profit_loss is not None]) / sum([b.stake for b in type_bets if b.profit_loss is not None])
+            }
+        
+        return result
+    
+    def save(self, filename: str = "betting_history.json") -> None:
+        with open(filename, 'w') as f:
+            json.dump([bet.__dict__ for bet in self.bets], f, indent=2)
+    
+    @classmethod
+    def load(cls, filename: str = "betting_history.json") -> 'BettingHistory':
+        if not os.path.exists(filename):
+            return cls()
+        
+        with open(filename, 'r') as f:
+            bet_dicts = json.load(f)
+        
+        history = cls()
+        for bet_dict in bet_dicts:
+            history.add_bet(BetRecord(**bet_dict))
+        
+        return history
+    
+    def calculate_calibration(self) -> Dict[str, float]:
+        """Calculate probability calibration metrics"""
+        if not self.bets or not any(b.result is not None for b in self.bets):
+            return {"error": "No settled bets to analyze"}
+        
+        probabilities = []
+        outcomes = []
+        
+        for bet in self.bets:
+            if bet.result is not None:
+                probabilities.append(bet.model_probability)
+                outcomes.append(1 if bet.result == "win" else 0)
+        
+        # Group predictions into bins
+        bin_edges = np.linspace(0, 1, 11)  # 10 bins
+        bin_indices = np.digitize(probabilities, bin_edges)
+        
+        bin_sums = np.zeros(10)
+        bin_totals = np.zeros(10)
+        bin_actual = np.zeros(10)
+        
+        for i, bin_idx in enumerate(bin_indices):
+            if bin_idx > 0 and bin_idx <= 10:  # Valid bin
+                bin_idx -= 1  # Adjust index to 0-9
+                bin_sums[bin_idx] += probabilities[i]
+                bin_totals[bin_idx] += 1
+                bin_actual[bin_idx] += outcomes[i]
+        
+        # Calculate average predicted probability and actual frequency per bin
+        bin_avg_pred = np.zeros(10)
+        bin_freq = np.zeros(10)
+        
+        for i in range(10):
+            if bin_totals[i] > 0:
+                bin_avg_pred[i] = bin_sums[i] / bin_totals[i]
+                bin_freq[i] = bin_actual[i] / bin_totals[i]
+        
+        # Calculate calibration metrics
+        valid_bins = bin_totals > 0
+        if not any(valid_bins):
+            return {"error": "No valid calibration bins"}
+        
+        calibration_error = np.mean(np.abs(bin_avg_pred[valid_bins] - bin_freq[valid_bins]))
+        
+        return {
+            "calibration_error": calibration_error,
+            "bins": {
+                "edges": bin_edges.tolist(),
+                "predicted": bin_avg_pred.tolist(),
+                "actual": bin_freq.tolist(),
+                "counts": bin_totals.tolist()
+            }
+        }
 
-def main():
-    """Main function to run the betting advisor"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='Valorant Betting Advisor')
-    parser.add_argument('prediction_file', type=str, help='Path to the prediction JSON file')
-    parser.add_argument('--bankroll', type=float, default=1000, help='Total bankroll for betting (default: $1000)')
-    args = parser.parse_args()
-    
-    # Initialize the betting advisor
-    advisor = ValorantBettingAdvisor(args.prediction_file)
-    
-    # Get user input for odds
-    print("\n===== ENTER BETTING ODDS =====")
-    print("(Enter decimal odds, e.g. 2.5 means a $1 bet returns $2.50)")
-    print("(Leave blank to skip a bet type)\n")
-    
-    odds_dict = {}
-    
-    # Moneyline odds
-    team1_ml = input(f"{advisor.team1_name} to win (moneyline): ")
-    if team1_ml:
-        odds_dict['team1_ml'] = float(team1_ml)
-    
-    team2_ml = input(f"{advisor.team2_name} to win (moneyline): ")
-    if team2_ml:
-        odds_dict['team2_ml'] = float(team2_ml)
-    
-    # Handicap odds
-    team1_plus1_5 = input(f"{advisor.team1_name} +1.5 maps: ")
-    if team1_plus1_5:
-        odds_dict['team1_plus1_5'] = float(team1_plus1_5)
-    
-    team2_plus1_5 = input(f"{advisor.team2_name} +1.5 maps: ")
-    if team2_plus1_5:
-        odds_dict['team2_plus1_5'] = float(team2_plus1_5)
-    
-    team1_minus1_5 = input(f"{advisor.team1_name} -1.5 maps: ")
-    if team1_minus1_5:
-        odds_dict['team1_minus1_5'] = float(team1_minus1_5)
-    
-    team2_minus1_5 = input(f"{advisor.team2_name} -1.5 maps: ")
-    if team2_minus1_5:
-        odds_dict['team2_minus1_5'] = float(team2_minus1_5)
-    
-    # Over/Under odds
-    over_2_5_maps = input("Over 2.5 total maps: ")
-    if over_2_5_maps:
-        odds_dict['over_2_5_maps'] = float(over_2_5_maps)
-    
-    under_2_5_maps = input("Under 2.5 total maps: ")
-    if under_2_5_maps:
-        odds_dict['under_2_5_maps'] = float(under_2_5_maps)
-    
-    # Win at least 1 map odds
-    team1_win_map = input(f"{advisor.team1_name} to win at least 1 map: ")
-    if team1_win_map:
-        odds_dict['team1_win_map'] = float(team1_win_map)
-    
-    team2_win_map = input(f"{advisor.team2_name} to win at least 1 map: ")
-    if team2_win_map:
-        odds_dict['team2_win_map'] = float(team2_win_map)
-    
-    # Get recommendations
-    recommendations = advisor.get_betting_advice(odds_dict, args.bankroll)
-    
-    # Print recommendations
-    advisor.print_recommendations(recommendations)
 
-if __name__ == "__main__":
-    main()
+class OddsScraperBase:
+    """Base class for odds scrapers from different sites"""
+    def __init__(self):
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+    
+    def scrape_odds(self, team1: str, team2: str) -> Dict[str, float]:
+        """Scrape odds for a match - to be implemented by subclasses"""
+        raise NotImplementedError("Subclasses must implement this method")
+
+
+class DummyOddsScraper(OddsScraperBase):
+    """Dummy scraper that returns fixed odds for testing"""
+    def scrape_odds(self, team1: str, team2: str) -> Dict[str, float]:
+        # Return dummy odds for testing
+        return {
+            "moneyline_team1": 2.10,
+            "moneyline_team2": 1.70,
+            "handicap_team1_plus_1.5": 1.20,
+            "handicap_team1_minus_1.5": 3.50,
+            "handicap_team2_plus_1.5": 1.25,
+            "handicap_team2_minus_1.5": 3.20,
+            "total_maps_over_2.5": 1.90,
+            "total_maps_under_2.5": 1.90
+        }
+
+
+class OddsScraperFactory:
+    """Factory for creating odds scrapers"""
+    @staticmethod
+    def create_scraper(scraper_type: str = "dummy") -> OddsScraperBase:
+        if scraper_type.lower() == "dummy":
+            return DummyOddsScraper()
+        else:
+            logger.warning(f"Unknown scraper type: {scraper_type}, using dummy scraper")
+            return DummyOddsScraper()
+
+
+class ValorantBettingAnalyzer:
+    def __init__(self, bankroll: float = 1000.0, odds_scraper: Optional[OddsScraperBase] = None):
+        self.predictions: List[Dict] = []
+        self.odds_data: List[Dict] = []
+        self.value_bets: List[Dict] = []
+        self.confidence_threshold: float = 0.60  # Can be adjusted
+        self.value_threshold: float = 0.10  # 10% edge minimum
+        self.bankroll: float = bankroll  # Starting bankroll in dollars
+        self.kelly_fraction: float = 0.25  # Conservative Kelly criterion
+        self.betting_history: BettingHistory = BettingHistory.load()
+        self.odds_scraper: OddsScraperBase = odds_scraper or OddsScraperFactory.create_scraper()
+        self.calibration_model = None
+        self.tournament_weights: Dict[str, float] = self._initialize_tournament_weights()
+
+    def _initialize_tournament_weights(self) -> Dict[str, float]:
+        """Initialize tournament weights based on importance"""
+        return {
+            "VCT": 1.2,         # Most important tournaments
+            "VCL": 1.0,         # Standard importance
+            "WDG VCL": 1.0,     # Standard importance
+            "Challengers": 0.9,  # Slightly less important
+            "Open": 0.8,         # Less important
+        }
+
+    def load_prediction(self, prediction_file: str) -> Dict:
+        """Load a prediction from a JSON file with validation"""
+        try:
+            with open(prediction_file, 'r') as f:
+                prediction_data = json.load(f)
+            
+            # Validate required fields
+            required_fields = ["prediction", "team_stats"]
+            if not all(field in prediction_data for field in required_fields):
+                logger.error(f"Missing required fields in {prediction_file}")
+                raise ValueError(f"Missing required fields in {prediction_file}")
+            
+            # Apply Bayesian updating if we have new information
+            prediction_data = self._apply_bayesian_update(prediction_data)
+            
+            # Apply probability calibration if we have a calibration model
+            if self.calibration_model is not None:
+                prediction_data = self._calibrate_prediction(prediction_data)
+            
+            self.predictions.append(prediction_data)
+            logger.info(f"Successfully loaded prediction from {prediction_file}")
+            return prediction_data
+        
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON in {prediction_file}")
+            raise ValueError(f"Invalid JSON in {prediction_file}")
+        except Exception as e:
+            logger.error(f"Error loading {prediction_file}: {str(e)}")
+            raise
+
+    def _apply_bayesian_update(self, prediction_data: Dict) -> Dict:
+        """Apply Bayesian updating to predictions based on recent information"""
+        # This is a simplified implementation - a real one would fetch actual new information
+        
+        # Extract initial probabilities
+        team1 = prediction_data["prediction"]["match"].split(" vs ")[0]
+        team2 = prediction_data["prediction"]["match"].split(" vs ")[1]
+        team1_win_prob = prediction_data["prediction"]["team1_win_probability"]
+        team2_win_prob = prediction_data["prediction"]["team2_win_probability"]
+        
+        # Apply tournament weight adjustments
+        tournament_name = next(
+            (tournament for tournament in self.tournament_weights if tournament in prediction_data.get("tournament", "")),
+            None
+        )
+        if tournament_name:
+            tournament_weight = self.tournament_weights[tournament_name]
+            
+            # Apply tournament weight as a modifier to the confidence
+            # This increases or decreases the polarity of the prediction based on tournament importance
+            if team1_win_prob > 0.5:
+                # Team 1 is favored, apply weight
+                team1_win_prob = team1_win_prob ** (1 / tournament_weight)
+                team2_win_prob = 1 - team1_win_prob
+            else:
+                # Team 2 is favored, apply weight
+                team2_win_prob = team2_win_prob ** (1 / tournament_weight)
+                team1_win_prob = 1 - team2_win_prob
+        
+        # Check for recent H2H matchups in betting history
+        recent_matches = [
+            bet for bet in self.betting_history.bets 
+            if (team1 in bet.match and team2 in bet.match) and bet.result is not None
+        ]
+        
+        if recent_matches:
+            # Simple Bayesian update based on recent H2H results
+            for match in recent_matches:
+                # Get outcome
+                team1_won = team1 in match.pick and match.result == "win"
+                team2_won = team2 in match.pick and match.result == "win"
+                
+                # Apply a small Bayesian update - this is simplified
+                if team1_won:
+                    # Increase team1's probability slightly
+                    team1_win_prob = (team1_win_prob * 1.05) / ((team1_win_prob * 1.05) + team2_win_prob)
+                    team2_win_prob = 1 - team1_win_prob
+                elif team2_won:
+                    # Increase team2's probability slightly
+                    team2_win_prob = (team2_win_prob * 1.05) / ((team2_win_prob * 1.05) + team1_win_prob)
+                    team1_win_prob = 1 - team2_win_prob
+        
+        # Adjust for recency bias (form)
+        team1_form = prediction_data["team_stats"][team1].get("recent_form", 0.5)
+        team2_form = prediction_data["team_stats"][team2].get("recent_form", 0.5)
+        
+        # Apply a small form adjustment
+        form_weight = 0.1  # 10% weight to form
+        team1_win_prob = (team1_win_prob * (1 - form_weight)) + (team1_form * form_weight)
+        team2_win_prob = (team2_win_prob * (1 - form_weight)) + (team2_form * form_weight)
+        
+        # Normalize probabilities to ensure they sum to 1
+        total_prob = team1_win_prob + team2_win_prob
+        team1_win_prob = team1_win_prob / total_prob
+        team2_win_prob = team2_win_prob / total_prob
+        
+        # Update the prediction
+        prediction_data["prediction"]["team1_win_probability"] = team1_win_prob
+        prediction_data["prediction"]["team2_win_probability"] = team2_win_prob
+        prediction_data["prediction"]["confidence"] = max(team1_win_prob, team2_win_prob)
+        
+        # Log the adjustments
+        logger.info(f"Applied Bayesian updates to prediction for {team1} vs {team2}")
+        
+        return prediction_data
+
+    def _calibrate_prediction(self, prediction_data: Dict) -> Dict:
+        """Apply probability calibration to the prediction"""
+        if self.calibration_model is None:
+            return prediction_data
+        
+        try:
+            team1_win_prob = prediction_data["prediction"]["team1_win_probability"]
+            # Use an isotonic regression model to calibrate the probability
+            calibrated_prob = self.calibration_model.predict([[team1_win_prob]])[0]
+            
+            prediction_data["prediction"]["team1_win_probability"] = calibrated_prob
+            prediction_data["prediction"]["team2_win_probability"] = 1 - calibrated_prob
+            prediction_data["prediction"]["confidence"] = max(calibrated_prob, 1 - calibrated_prob)
+            
+            logger.info(f"Applied probability calibration: original={team1_win_prob:.4f}, calibrated={calibrated_prob:.4f}")
+            
+            return prediction_data
+        except Exception as e:
+            logger.error(f"Error applying calibration: {str(e)}")
+            return prediction_data
+
+    def fit_calibration_model(self) -> None:
+        """Fit a calibration model based on historical predictions and outcomes"""
+        if not self.betting_history.bets or not any(b.result is not None for b in self.betting_history.bets):
+            logger.warning("Not enough historical data to fit calibration model")
+            return
+        
+        probabilities = []
+        outcomes = []
+        
+        for bet in self.betting_history.bets:
+            if bet.result is not None:
+                probabilities.append(bet.model_probability)
+                outcomes.append(1 if bet.result == "win" else 0)
+        
+        if len(probabilities) < 10:
+            logger.warning("Not enough data points to fit a reliable calibration model")
+            return
+        
+        try:
+            # Reshape for scikit-learn
+            probabilities = np.array(probabilities).reshape(-1, 1)
+            outcomes = np.array(outcomes)
+            
+            # Use isotonic regression for calibration
+            self.calibration_model = IsotonicRegression(out_of_bounds='clip')
+            self.calibration_model.fit(probabilities, outcomes)
+            
+            # Save the model
+            joblib.dump(self.calibration_model, 'calibration_model.pkl')
+            
+            logger.info(f"Fitted calibration model on {len(probabilities)} historical predictions")
+        except Exception as e:
+            logger.error(f"Error fitting calibration model: {str(e)}")
+
+    def load_calibration_model(self, model_path: str = 'calibration_model.pkl') -> bool:
+        """Load a previously saved calibration model"""
+        if not os.path.exists(model_path):
+            logger.info(f"No calibration model found at {model_path}")
+            return False
+        
+        try:
+            self.calibration_model = joblib.load(model_path)
+            logger.info(f"Loaded calibration model from {model_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error loading calibration model: {str(e)}")
+            return False
+
+    def load_predictions_from_directory(self, directory: str) -> List[Dict]:
+        """Load all prediction files from a directory"""
+        prediction_files = glob.glob(os.path.join(directory, "*.json"))
+        if not prediction_files:
+            logger.warning(f"No prediction files found in {directory}")
+            return []
+        
+        logger.info(f"Found {len(prediction_files)} prediction files")
+        
+        # Use ThreadPoolExecutor for parallel loading
+        with ThreadPoolExecutor(max_workers=min(10, len(prediction_files))) as executor:
+            futures = []
+            for file_path in prediction_files:
+                futures.append(executor.submit(self.load_prediction, file_path))
+            
+            # Collect results, handling exceptions
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Error in thread: {e}")
+        
+        return self.predictions
+
+    def add_odds(self, match_id: str, team1: str, team2: str, 
+                 ml_team1: float, ml_team2: float, 
+                 handicap_team1_plus: float, handicap_team1_minus: float, 
+                 handicap_team2_plus: float, handicap_team2_minus: float, 
+                 map_over: float, map_under: float) -> Dict:
+        """Add betting odds for a match using decimal odds format"""
+        odds_entry = {
+            "match_id": match_id,
+            "team1": team1,
+            "team2": team2,
+            "moneyline_team1": ml_team1,
+            "moneyline_team2": ml_team2,
+            "handicap_team1_plus_1.5": handicap_team1_plus,
+            "handicap_team1_minus_1.5": handicap_team1_minus,
+            "handicap_team2_plus_1.5": handicap_team2_plus,
+            "handicap_team2_minus_1.5": handicap_team2_minus,
+            "total_maps_over_2.5": map_over,
+            "total_maps_under_2.5": map_under,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        self.odds_data.append(odds_entry)
+        logger.info(f"Added odds for {team1} vs {team2}")
+        return odds_entry
+
+    def collect_odds_interactively(self) -> bool:
+        """Collect odds for each match prediction interactively with automated scraping option"""
+        if not self.predictions:
+            logger.warning("No predictions loaded. Please load predictions first.")
+            return False
+        
+        logger.info("\nCollecting odds for each match prediction...\n")
+        use_scraper = input("Would you like to try auto-scraping odds? (y/n): ").lower() == 'y'
+        
+        for idx, prediction in enumerate(self.predictions):
+            match = prediction["prediction"]["match"]
+            team1 = match.split(" vs ")[0]
+            team2 = match.split(" vs ")[1]
+            
+            print(f"\nMatch {idx+1}/{len(self.predictions)}: {match}")
+            
+            if use_scraper:
+                try:
+                    logger.info(f"Attempting to scrape odds for {match}")
+                    scraped_odds = self.odds_scraper.scrape_odds(team1, team2)
+                    
+                    # Display scraped odds and ask for confirmation
+                    print("\nScraped odds:")
+                    for key, value in scraped_odds.items():
+                        print(f"{key}: {value}")
+                    
+                    use_these_odds = input("\nUse these odds? (y/n): ").lower() == 'y'
+                    
+                    if use_these_odds:
+                        self.add_odds(
+                            match_id=f"match_{idx}",
+                            team1=team1,
+                            team2=team2,
+                            ml_team1=scraped_odds["moneyline_team1"],
+                            ml_team2=scraped_odds["moneyline_team2"],
+                            handicap_team1_plus=scraped_odds["handicap_team1_plus_1.5"],
+                            handicap_team1_minus=scraped_odds["handicap_team1_minus_1.5"],
+                            handicap_team2_plus=scraped_odds["handicap_team2_plus_1.5"],
+                            handicap_team2_minus=scraped_odds["handicap_team2_minus_1.5"],
+                            map_over=scraped_odds["total_maps_over_2.5"],
+                            map_under=scraped_odds["total_maps_under_2.5"]
+                        )
+                        print(f"Added scraped odds for {match}")
+                        continue
+                    
+                    print("Manual odds entry:")
+                except Exception as e:
+                    logger.error(f"Error scraping odds: {e}")
+                    print("Failed to scrape odds. Falling back to manual entry.")
+            
+            try:
+                # Manual odds entry
+                ml_team1 = float(input(f"Enter moneyline odds for {team1} (decimal format, e.g. 2.40): "))
+                ml_team2 = float(input(f"Enter moneyline odds for {team2} (decimal format, e.g. 1.60): "))
+                
+                # Handicap odds for Team 1
+                handicap_team1_plus = float(input(f"Enter +1.5 map handicap odds for {team1}: "))
+                handicap_team1_minus = float(input(f"Enter -1.5 map handicap odds for {team1}: "))
+                
+                # Handicap odds for Team 2
+                handicap_team2_plus = float(input(f"Enter +1.5 map handicap odds for {team2}: "))
+                handicap_team2_minus = float(input(f"Enter -1.5 map handicap odds for {team2}: "))
+                
+                # Total maps odds
+                map_over = float(input("Enter over 2.5 maps odds: "))
+                map_under = float(input("Enter under 2.5 maps odds: "))
+                
+                # Add odds
+                self.add_odds(
+                    match_id=f"match_{idx}",
+                    team1=team1,
+                    team2=team2,
+                    ml_team1=ml_team1,
+                    ml_team2=ml_team2,
+                    handicap_team1_plus=handicap_team1_plus,
+                    handicap_team1_minus=handicap_team1_minus,
+                    handicap_team2_plus=handicap_team2_plus,
+                    handicap_team2_minus=handicap_team2_minus,
+                    map_over=map_over,
+                    map_under=map_under
+                )
+                print(f"Added odds for {match}")
+                
+            except ValueError as e:
+                logger.error(f"Invalid input: {e}")
+                print(f"Error: Invalid input. Please enter odds as decimals (e.g. 2.40).")
+                retry = input("Would you like to retry this match? (y/n): ")
+                if retry.lower() == 'y':
+                    idx -= 1  # Retry this match
+                else:
+                    print(f"Skipping {match}")
+            
+            except KeyboardInterrupt:
+                logger.info("Odds collection interrupted")
+                print("\nOdds collection interrupted. Processing available data...")
+                break
+        
+        return True
+
+    def _decimal_to_implied_probability(self, decimal_odds: float) -> float:
+        """Convert decimal odds to implied probability"""
+        return 1 / decimal_odds
+
+    def analyze_value_bets(self) -> List[Dict]:
+        """Find value betting opportunities with enhanced analysis"""
+        self.value_bets = []
+        
+        # Load calibration model if available
+        self.load_calibration_model()
+        
+        # First, convert predictions and odds to DataFrames for more efficient processing
+        pred_data = []
+        for prediction in self.predictions:
+            match = prediction["prediction"]["match"]
+            team1 = match.split(" vs ")[0]
+            team2 = match.split(" vs ")[1]
+            
+            pred_data.append({
+                "match": match,
+                "team1": team1,
+                "team2": team2,
+                "team1_win_prob": prediction["prediction"]["team1_win_probability"],
+                "team2_win_prob": prediction["prediction"]["team2_win_probability"],
+                "confidence": prediction["prediction"]["confidence"],
+                "prediction_data": prediction  # Store the full prediction
+            })
+        
+        predictions_df = pd.DataFrame(pred_data)
+        odds_df = pd.DataFrame(self.odds_data)
+        
+        # Merge predictions with odds
+        if odds_df.empty or predictions_df.empty:
+            logger.warning("No odds data or predictions available")
+            return []
+        
+        # Merge on team names
+        analysis_df = pd.merge(
+            predictions_df, 
+            odds_df,
+            how='inner',
+            left_on=['team1', 'team2'],
+            right_on=['team1', 'team2']
+        )
+        
+        if analysis_df.empty:
+            logger.warning("No matches found between predictions and odds")
+            return []
+        
+        logger.info(f"Analyzing {len(analysis_df)} matches for value bets")
+        
+        # Process each match
+        for _, row in analysis_df.iterrows():
+            prediction = row['prediction_data']
+            match = row['match']
+            team1 = row['team1']
+            team2 = row['team2']
+            team1_win_prob = row['team1_win_prob']
+            team2_win_prob = row['team2_win_prob']
+            confidence = row['confidence']
+            match_id = row['match_id']
+            
+            # Calculate map distribution probabilities with enhanced model
+            map_distribution = self._calculate_map_distribution(
+                team1_win_prob, team2_win_prob, team1, team2, prediction
+            )
+            
+            # Extract probabilities from the distribution
+            p_team1_2_0 = map_distribution['team1_2_0']
+            p_team1_2_1 = map_distribution['team1_2_1']
+            p_team2_2_0 = map_distribution['team2_2_0']
+            p_team2_2_1 = map_distribution['team2_2_1']
+            
+            # Calculate derivatives
+            p_over_2_5 = p_team1_2_1 + p_team2_2_1  # Matches that go to 3 maps
+            p_under_2_5 = p_team1_2_0 + p_team2_2_0  # Matches that end in 2 maps
+            
+            # Calculate odds for handicaps
+            p_team1_plus_1_5 = p_team1_2_0 + p_team1_2_1 + p_team2_2_1  # Team 1 wins at least 1 map
+            p_team1_minus_1_5 = p_team1_2_0  # Team 1 wins 2-0
+            p_team2_plus_1_5 = p_team2_2_0 + p_team2_2_1 + p_team1_2_1  # Team 2 wins at least 1 map
+            p_team2_minus_1_5 = p_team2_2_0  # Team 2 wins 2-0
+            
+            # Convert bookmaker odds to probabilities
+            ml_team1_decimal = row["moneyline_team1"]
+            ml_team2_decimal = row["moneyline_team2"]
+            handicap_team1_plus_decimal = row["handicap_team1_plus_1.5"]
+            handicap_team1_minus_decimal = row["handicap_team1_minus_1.5"]
+            handicap_team2_plus_decimal = row["handicap_

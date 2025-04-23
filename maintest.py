@@ -2222,7 +2222,7 @@ class PredictionSystem:
         self.model_loaded = False
     
     def predict_match(self, team1_name, team2_name, team1_region=None, team2_region=None, 
-                     save_results=True, model_type='best', is_lan=None, verbose=True):
+                 save_results=True, model_type='best', is_lan=None, verbose=True):
         """Predict the outcome of a match between two teams."""
         # Get team IDs
         team1_id = self.api.get_team_id(team1_name, team1_region)
@@ -2256,38 +2256,37 @@ class PredictionSystem:
             
             if verbose:
                 logger.info(f"\n============ MATCH PREDICTION ============")
-                logger.info(f"Team 1: {team1_name}")            'team2_avg_acs': team2_stats.get('avg_acs', 0),
-            'team2_recent_avg_acs': team2_stats.get('recent_avg_acs', 0),
+                logger.info(f"Team 1: {team1_name}")
+                logger.info(f"Team 2: {team2_name}")
+                logger.info(f"\nPredicted Winner: {winner}")
+                logger.info(f"Win Probability: {win_probability:.2%}")
             
-            # Team ranking and rating
-            'team1_ranking': team1_details.get('ranking', 9999) if team1_details else 9999,
-            'team2_ranking': team2_details.get('ranking', 9999) if team2_details else 9999,
-            'team1_rating': team1_details.get('rating', 1500) if team1_details else 1500,
-            'team2_rating': team2_details.get('rating', 1500) if team2_details else 1500,
+            # Create prediction result dictionary
+            prediction_result = {
+                'match': f"{team1_name} vs {team2_name}",
+                'prediction_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'predicted_winner': winner,
+                'win_probability': float(win_probability),
+                'team1_name': team1_name,
+                'team2_name': team2_name,
+                'team1_id': team1_id,
+                'team2_id': team2_id,
+                'features': features,
+                'is_lan': is_lan
+            }
             
-            # Head-to-head stats
-            'h2h_matches': h2h_stats.get('total_h2h_matches', 0),
-            'team1_h2h_wins': h2h_stats.get('team1_h2h_wins', 0),
-            'team1_h2h_win_rate': h2h_stats.get('team1_h2h_win_rate', 0.5),
-            'team1_h2h_avg_kd': h2h_stats.get('team1_h2h_avg_kd', 1.0),
-            'team2_h2h_avg_kd': h2h_stats.get('team2_h2h_avg_kd', 1.0),
-            'h2h_kd_differential': h2h_stats.get('kd_differential', 0),
+            # Add to prediction history
+            self.prediction_history.append(prediction_result)
             
-            # Relative strength indicators
-            'ranking_diff': (team1_details.get('ranking', 9999) if team1_details else 9999) - 
-                            (team2_details.get('ranking', 9999) if team2_details else 9999),
-            'rating_diff': (team1_details.get('rating', 1500) if team1_details else 1500) - 
-                           (team2_details.get('rating', 1500) if team2_details else 1500),
-            'win_rate_diff': team1_stats.get('win_rate', 0.5) - team2_stats.get('win_rate', 0.5),
-            'avg_score_diff': team1_stats.get('avg_score', 0) - team2_stats.get('avg_score', 0),
-            'recent_form_diff': team1_stats.get('recent_form', 0.5) - team2_stats.get('recent_form', 0.5),
-            'avg_kd_diff': team1_stats.get('avg_kd', 1.0) - team2_stats.get('avg_kd', 1.0),
-            'recent_kd_diff': team1_stats.get('recent_avg_kd', 1.0) - team2_stats.get('recent_avg_kd', 1.0),
-            'avg_acs_diff': team1_stats.get('avg_acs', 0) - team2_stats.get('avg_acs', 0),
-            'recent_acs_diff': team1_stats.get('recent_avg_acs', 0) - team2_stats.get('recent_avg_acs', 0)
-        }
-        
-        return features
+            # Save prediction
+            if save_results:
+                self._save_prediction(prediction_result)
+            
+            return prediction_result
+            
+        except Exception as e:
+            logger.error(f"Error making prediction: {e}")
+            return None
     
     def create_comprehensive_features(self, team1_id, team2_id, api, all_teams):
         """Create a comprehensive feature set for match prediction."""
@@ -2323,37 +2322,37 @@ class PredictionSystem:
         
         h2h_stats = self.data_processor.calculate_head_to_head(team1_matches, team2_details.get('name', ''), 
                                           team2_matches, team1_details.get('name', ''))
-                        logger.info(f"Team 1: {team1_name}")
-                logger.info(f"Team 2: {team2_name}")
-                logger.info(f"\nPredicted Winner: {winner}")
-                logger.info(f"Win Probability: {win_probability:.2%}")
+        logger.info(f"Team 1: {team1_name}")
+        logger.info(f"Team 2: {team2_name}")
+        logger.info(f"\nPredicted Winner: {winner}")
+        logger.info(f"Win Probability: {win_probability:.2%}")
             
             # Create prediction result dictionary
-            prediction_result = {
-                'match': f"{team1_name} vs {team2_name}",
-                'prediction_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'predicted_winner': winner,
-                'win_probability': float(win_probability),
-                'team1_name': team1_name,
-                'team2_name': team2_name,
-                'team1_id': team1_id,
-                'team2_id': team2_id,
-                'features': features,
-                'is_lan': is_lan
-            }
-            
-            # Add to prediction history
-            self.prediction_history.append(prediction_result)
-            
-            # Save prediction
-            if save_results:
-                self._save_prediction(prediction_result)
-            
-            return prediction_result
-            
-        except Exception as e:
-            logger.error(f"Error making prediction: {e}")
-            return None
+        prediction_result = {
+            'match': f"{team1_name} vs {team2_name}",
+            'prediction_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'predicted_winner': winner,
+            'win_probability': float(win_probability),
+            'team1_name': team1_name,
+            'team2_name': team2_name,
+            'team1_id': team1_id,
+            'team2_id': team2_id,
+            'features': features,
+            'is_lan': is_lan
+        }
+        
+        # Add to prediction history
+        self.prediction_history.append(prediction_result)
+        
+        # Save prediction
+        if save_results:
+            self._save_prediction(prediction_result)
+        
+        return prediction_result
+        
+    except Exception as e:
+        logger.error(f"Error making prediction: {e}")
+        return None
     
     def _save_prediction(self, prediction_result):
         """Save prediction result to file."""

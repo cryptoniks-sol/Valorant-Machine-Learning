@@ -413,6 +413,7 @@ async function getTeamById(id) {
   return team;
 }
 
+
 module.exports = {
   getTeams,
   getTeamById,

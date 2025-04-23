@@ -1,0 +1,70 @@
+{
+    "match": "DRX vs Gen.G",
+    "prediction_time": "2025-04-19 23:43:42",
+    "predicted_winner": "DRX",
+    "win_probability": 0.5221935054205954,
+    "team1_stats": {
+        "name": "DRX",
+        "matches": 207,
+        "wins": 98,
+        "losses": 109,
+        "win_rate": 0.47342995169082125,
+        "avg_score": 1.1304347826086956,
+        "avg_opponent_score": 1.2173913043478262,
+        "score_differential": -0.0869565217391306,
+        "recent_form": 0.6,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "team2_stats": {
+        "name": "Gen.G",
+        "matches": 313,
+        "wins": 193,
+        "losses": 120,
+        "win_rate": 0.6166134185303515,
+        "avg_score": 1.29073482428115,
+        "avg_opponent_score": 0.9265175718849841,
+        "score_differential": 0.364217252396166,
+        "recent_form": 0.6,
+        "ranking": 9999,
+        "rating": 1500
+    },
+    "h2h_stats": {
+        "total_h2h_matches": 11,
+        "team1_h2h_wins": 6,
+        "team2_h2h_wins": 5,
+        "team1_h2h_win_rate": 0.5454545454545454,
+        "team2_h2h_win_rate": 0.45454545454545453
+    },
+    "feature_importance": {
+        "team2_score_diff": 0.18250863462543418,
+        "win_rate_diff": 0.1783659035694315,
+        "team1_h2h_win_rate": 0.1651568276731213,
+        "team2_win_rate": 0.15884972150414348,
+        "team2_avg_score": 0.09495514838552017,
+        "avg_score_diff": 0.07981570771011227,
+        "h2h_matches": 0.042542417990507536,
+        "team2_matches": 0.041195903826804006,
+        "team2_wins": 0.02088270223015795,
+        "team1_h2h_wins": 0.02031951262621991
+    },
+    "stat_differentials": {
+        "win_rate": -0.1431834668395302,
+        "avg_score": -0.16030004167245449,
+        "avg_opponent_score": 0.2908737324628421,
+        "score_differential": -0.4511737741352966,
+        "recent_form": 0.0,
+        "ranking": 0,
+        "rating": 0
+    },
+    "betting_indicators": {
+        "expected_map_count": 2.719373013913518,
+        "team1_2_0_probability": 0.1566580516261786,
+        "team2_2_0_probability": 0.1566580516261786,
+        "team1_win_map_probability": 0.8566580516261786,
+        "team2_win_map_probability": 0.8566580516261786,
+        "over_2_5_maps_probability": 0.7,
+        "under_2_5_maps_probability": 0.29999999999999993,
+        "confidence_level": "Balanced"
+    }
+}

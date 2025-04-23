@@ -8,11 +8,15 @@ const matchDetailsService = require("../services/matchDetailsService");
 const getMatchDetails = async (req, res) => {
   try {
     const { id } = req.params;
+    const { tab } = req.query;  // Extract tab parameter from query string
+    
     if (!id) {
       return res.status(400).json({ status: "ERROR", message: "Match ID is required" });
     }
 
-    const matchDetails = await matchDetailsService.getMatchDetails(id);
+    // Call the service with both parameters
+    const matchDetails = await matchDetailsService.getMatchDetails(id, tab);
+    
     res.status(200).json({
       status: "OK",
       data: matchDetails,

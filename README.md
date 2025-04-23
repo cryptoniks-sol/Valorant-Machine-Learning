@@ -57,7 +57,7 @@ python predictor.py backtest --num-teams 20 --min-date "2023-01-01" --max-date "
 #### Load a Specific Model
 
 ```bash
-python predictor.py load --model-prefix valorant_predictor_advanced_20240418_123456
+python predictor.py load --model-prefix test1_advanced_20240418_123456
 ```
 
 ### Interactive Mode
@@ -65,7 +65,7 @@ python predictor.py load --model-prefix valorant_predictor_advanced_20240418_123
 Run the script without arguments to enter interactive mode:
 
 ```bash
-python predictor.py
+python maintest.py
 ```
 
 This will guide you through the available options with prompts.
@@ -161,3 +161,59 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 For questions or issues, please open an issue on the GitHub repository or contact the maintainer.
+
+python test1.py --predict --team1 "T1 Academy" --team2 "SLT"
+
+python test1.py --train --players --economy --learning-curves
+
+python test1.py --train --players --economy --cross-validate --folds 10 --learning-curves
+
+python test1.py --backtest --cutoff-date 2025/01/01 --bet-amount 100 
+
+python bets.py betting_predictions/T1_Academy_vs_SLT_20250423_002321.json --bankroll 100
+
+python bets.py betting_predictions/Zero_Tenacity_vs_PIXEL_LUMINA_20250421_160309.json --bankroll 100
+
+Basic Training
+bash# Train a standard model with 30 teams
+python test1.py --train --players --economy --test-teams "Sentinels" "Cloud9" "100 Thieves" "LOUD" "Fnatic" "Team Liquid" "G2 Esports" "NRG" "Evil Geniuses" "KRÜ Esports" "FURIA" "MIBR" "Team Heretics" "FUT Esports" "Gen.G" "DRX" "ZETA DIVISION" "DetonatioN" "Paper Rex" "T1" "NAVI" "FPX" "BBL Esports" "Team Secret" "Talon Esports" "Global Esports" "Team Vitality" "Karmine Corp" "Leviatán" "Team Liquid Brazil"
+
+# Train with top 100 teams automatically
+python test1.py --train --players --economy
+Advanced Training with Optimization
+bash# Train with learning curves for overfitting diagnosis
+python test1.py --train --players --economy --learning-curves
+
+# Run complete optimization pipeline
+python test1.py --train --players --economy --optimize
+
+# Train with cross-validation and ensemble modeling (5 folds)
+
+python test1.py --train --players --economy --cross-validatef optimal_features and isinstance(optimal_features[0], int):
+
+# Train with cross-validation and 10 folds
+
+python test1.py --train --players --economy --cross-validate --folds 10 --learning-curves
+
+Match Prediction
+bash# Predict a specific match (will automatically use the best available model)
+python test1.py --predict --team1 "GIANTX" --team2 "Apeks"
+
+Analysis and Evaluation
+bash# Analyze all upcoming matches
+python test1.py --analyze
+
+# Run backtesting
+python test1.py --backtest --cutoff-date 2023/06/01 --confidence 0.60 --bet-amount 100
+
+# Generate learning curves for an existing model
+python test1.py --learning-curves
+
+# Optimize an existing model
+python test1.py --optimize
+Additional Options
+bash# Show detailed progress during operations
+python test1.py --train --players --economy --verbose
+
+# Use specific test teams
+python test1.py --train --players --economy --test-teams "Team1" "Team2"
