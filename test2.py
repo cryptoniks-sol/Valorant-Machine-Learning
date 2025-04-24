@@ -112,7 +112,7 @@ def fetch_team_details(team_id):
     team_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     # Extract the team tag if available - it's in data.info.tag
     team_tag = None
@@ -332,7 +332,7 @@ def fetch_team_match_history(team_id):
     match_history = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return match_history
 
@@ -351,7 +351,7 @@ def fetch_match_details(match_id):
     match_details = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return match_details
 
@@ -367,7 +367,7 @@ def fetch_events():
     events_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return events_data.get('data', [])
 
@@ -383,7 +383,7 @@ def fetch_upcoming_matches():
     matches_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return matches_data.get('data', [])
 
@@ -448,9 +448,13 @@ def parse_match_data(match_history, team_name):
                 match_info['opponent_score'] = int(opponent_team.get('score', 0))
                 match_info['opponent_won'] = not team_won  # Opponent's result is opposite of our team
                 match_info['opponent_country'] = opponent_team.get('country', '')
-                
+             # *** ADD THIS LINE ***
+                match_info['result'] = 'win' if team_won else 'loss'               
+
+
                 print(f"  Determined: {match_info['team_name']} won? {match_info['team_won']}")
                 
+
                 # Fetch match details for deeper statistics
                 match_details = fetch_match_details(match_info['match_id'])
                 if match_details:
@@ -586,6 +590,24 @@ def calculate_team_stats(matches, player_stats=None):
 
 calculate_team_stats_original = calculate_team_stats
 
+def fetch_match_economy_details(match_id):
+    """Fetch economic details for a specific match."""
+    if not match_id:
+        return None
+    
+    print(f"Fetching economy details for match ID: {match_id}")
+    response = requests.get(f"{API_URL}/match-details/{match_id}?tab=economy")
+    
+    if response.status_code != 200:
+        print(f"Error fetching economy details for match {match_id}: {response.status_code}")
+        return None
+    
+    economy_details = response.json()
+
+    # Be nice to the API
+     
+    return economy_details
+
 def calculate_team_stats_with_economy(matches, player_stats=None):
     """Calculate comprehensive statistics for a team from its matches, including economy data."""
     # First use the original function to get base stats
@@ -606,8 +628,13 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         'total_economy_matches': 0
     }
     
-    # Get team tag from the matches if available
-    team_tag = matches[0].get('team_tag') if matches else None
+    # Get team tag or name from the matches if available
+    team_tag = None
+    team_name = None
+    
+    if matches:
+        team_tag = matches[0].get('team_tag')
+        team_name = matches[0].get('team_name')
     
     # Track aggregated economy stats across matches
     total_pistol_won = 0
@@ -629,19 +656,28 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         if not match_id:
             continue
             
-        # Get team name and tag for better matching
-        team_name = match.get('team_name', '')
-        team_tag = match.get('team_tag')
+        # Get team tag and name for better matching
+        team_tag = match.get('team_tag', team_tag)
+        team_name = match.get('team_name', team_name)
             
         # Get economy data
         economy_data = fetch_match_economy_details(match_id)
         if not economy_data or 'data' not in economy_data or 'teams' not in economy_data['data']:
             continue
             
-        # Extract team-specific economy data
-        our_team_metrics = extract_economy_metrics(economy_data, team_tag)
+        # Try to use team_tag first if available
+        team_identifier = team_tag if team_tag else team_name
+        
+        if not team_identifier:
+            print(f"Warning: No team identifier (tag or name) available for match ID: {match_id}")
+            continue
+            
+        # Extract team-specific economy data using the identifier
+        our_team_metrics = extract_economy_metrics(economy_data, team_identifier)
+        
         if not our_team_metrics:
-            print(f"Warning: No economy data found for team '{team_name}'")
+            print(f"Warning: No economy data found for team identifier: {team_identifier}")
+            print(f"Match ID: {match_id}")
             continue
             
         # Aggregate stats
@@ -1901,130 +1937,791 @@ def prepare_data_for_model_with_economy(team1_stats, team2_stats):
     return features
 
 def build_training_dataset_with_economy(team_data_collection):
-    """Build a dataset for model training with economy features from historical match data."""
-    X = []  # Feature vectors
-    y = []  # Labels (1 if team1 won, 0 if team2 won)
+    """Build a training dataset with economy and player features from team data collection."""
+    X = []
+    y = []
+
+        # Add debugging
+    print(f"Building dataset from {len(team_data_collection)} teams")
     
-    print(f"\n======================================================")
-    print(f"BUILDING TRAINING DATASET WITH ECONOMY AND PLAYER FEATURES")
-    print(f"======================================================")
-    print(f"Processing data from {len(team_data_collection)} teams...")
+    # Track team matches for debugging
+    team_match_counts = {}
+    for team_name, team_data in team_data_collection.items():
+        match_count = len(team_data.get('matches', []))
+        team_match_counts[team_name] = match_count
+        print(f"Team: {team_name}, Matches: {match_count}")
     
-    # For each team, loop through their matches
-    economy_count = 0
-    player_stat_count = 0
-    combined_count = 0
+    # Track match pairing attempts
+    pairing_attempts = 0
+    successful_pairings = 0
+
+    # For each team, create positive samples (wins) and negative samples (losses)
+    for team_name, team_data in list(team_data_collection.items())[:1]:  # Just check first team
+        if 'matches' in team_data and team_data['matches']:
+            print("\nDEBUG: Sample match structure:")
+            sample_match = team_data['matches'][0]
+            print(json.dumps(sample_match, indent=2))
+            print("\nAvailable keys in match:", list(sample_match.keys()))
+        
+        # For each match, create a sample
+        for match in team_data['matches']:
+            # Skip matches without opponent name or result
+            if not 'opponent_name' in match or not 'result' in match:
+                print(f"Match for {team_name} missing opponent or result, skipping")
+                continue
+            
+            # Get opponent data
+            opponent_name = match['opponent_name']
+            pairing_attempts += 1
+            
+            if opponent_name not in team_data_collection:
+                print(f"Opponent {opponent_name} not in our dataset, skipping")
+                continue
     
-    # Track what types of data we have per team
+    economy_sample_count = 0
+    player_stats_sample_count = 0
+    both_sample_count = 0
     teams_with_economy = set()
     teams_with_player_stats = set()
     
+    print("\n" + "="*50)
+    print("TRAINING DATASET STATISTICS")
+    print("="*50)
+    
+    # Track different types of features for debugging
+    economy_features = set()
+    player_features = set()
+    map_features = set()
+    
+    # For each team, create positive samples (wins) and negative samples (losses)
     for team_name, team_data in team_data_collection.items():
-        matches = team_data.get('matches', [])
+        # Skip teams with no match data
+        if not 'matches' in team_data or not team_data['matches']:
+            continue
         
-        # Check if team has economy data
-        has_economy = 'pistol_win_rate' in team_data and team_data['pistol_win_rate'] > 0
-        if has_economy:
-            teams_with_economy.add(team_name)
-            
-        # Check if team has player data
-        has_player_stats = 'avg_player_rating' in team_data and team_data['avg_player_rating'] > 0
-        if has_player_stats:
-            teams_with_player_stats.add(team_name)
-            
-        print(f"\nProcessing {len(matches)} matches for {team_name}")
-        print(f"  - Has economy data: {has_economy}")
-        print(f"  - Has player stats: {has_player_stats}")
-        
-        for match in matches:
-            # Get opponent name
-            opponent_name = match.get('opponent_name')
-            
-            # Skip if we don't have data for the opponent
-            if opponent_name not in team_data_collection:
-                print(f"  Skipping match against {opponent_name} - no data available")
+        # For each match, create a sample
+        for match in team_data['matches']:
+            # Skip matches without opponent name or result
+            if not 'opponent_name' in match or not 'result' in match:
                 continue
             
-            # Get stats for both teams at the time of the match
-            team1_stats = team_data
-            team2_stats = team_data_collection[opponent_name]
+            # Get opponent data
+            opponent_name = match['opponent_name']
             
-            # Check what types of data we have for this matchup
-            match_has_economy = (has_economy and 
-                                'pistol_win_rate' in team2_stats and 
-                                team2_stats['pistol_win_rate'] > 0)
-            
-            match_has_player_stats = (has_player_stats and 
-                                     'avg_player_rating' in team2_stats and 
-                                     team2_stats['avg_player_rating'] > 0)
-            
-            # Prepare feature vector with economy data
-            print(f"\n-------------- TRAINING SAMPLE --------------")
-            print(f"Match: {team_name} vs {opponent_name}")
-            print(f"Economy data available: {match_has_economy}")
-            print(f"Player stats available: {match_has_player_stats}")
-            
-            features = prepare_data_for_model_with_economy(team1_stats, team2_stats)
-            
-            if features:
-                # Track what types of features we're using
-                if match_has_economy:
-                    economy_count += 1
-                if match_has_player_stats:
-                    player_stat_count += 1
-                if match_has_economy and match_has_player_stats:
-                    combined_count += 1
+            if opponent_name not in team_data_collection:
+                continue
                 
-                # Ensure all values are numeric before adding to X
-                is_valid = True
-                for key, value in features.items():
-                    if not isinstance(value, (int, float)):
-                        print(f"Invalid feature detected in match {team_name} vs {opponent_name}: {key} = {value}")
-                        is_valid = False
-                        break
+            opponent_data = team_data_collection[opponent_name]
+            
+            # Prepare sample features
+            sample = {}
+            
+            # Add win rate diff
+            if 'win_rate' in team_data and 'win_rate' in opponent_data:
+                sample['win_rate_diff'] = team_data['win_rate'] - opponent_data['win_rate']
+                sample['better_win_rate_team1'] = 1 if team_data['win_rate'] > opponent_data['win_rate'] else 0
+                sample['avg_win_rate'] = (team_data['win_rate'] + opponent_data['win_rate']) / 2
+            
+            # Add recent form diff
+            if 'recent_form' in team_data and 'recent_form' in opponent_data:
+                sample['recent_form_diff'] = team_data['recent_form'] - opponent_data['recent_form']
+                sample['better_recent_form_team1'] = 1 if team_data['recent_form'] > opponent_data['recent_form'] else 0
+                sample['avg_recent_form'] = (team_data['recent_form'] + opponent_data['recent_form']) / 2
+
+            # Add score differential
+            if 'avg_score_diff' in team_data and 'avg_score_diff' in opponent_data:
+                sample['score_diff_differential'] = team_data['avg_score_diff'] - opponent_data['avg_score_diff']
+                sample['better_score_diff_team1'] = 1 if team_data['avg_score_diff'] > opponent_data['avg_score_diff'] else 0
+            
+            # Add match count
+            if 'match_count' in team_data and 'match_count' in opponent_data:
+                sample['total_matches'] = team_data['match_count'] + opponent_data['match_count']
+                sample['match_count_diff'] = team_data['match_count'] - opponent_data['match_count']
+            
+            # Add wins and losses
+            if 'wins' in team_data and 'wins' in opponent_data:
+                sample['wins_diff'] = team_data['wins'] - opponent_data['wins']
+            
+            if 'losses' in team_data and 'losses' in opponent_data:
+                sample['losses_diff'] = team_data['losses'] - opponent_data['losses']
+            
+            # Add win/loss ratio
+            if 'win_loss_ratio' in team_data and 'win_loss_ratio' in opponent_data:
+                sample['win_loss_ratio_diff'] = team_data['win_loss_ratio'] - opponent_data['win_loss_ratio']
+            
+            # Add avg score diff
+            if 'avg_score_diff' in team_data and 'avg_score_diff' in opponent_data:
+                sample['avg_score_diff'] = team_data['avg_score_diff'] - opponent_data['avg_score_diff']
+                sample['better_avg_score_team1'] = 1 if team_data['avg_score_diff'] > opponent_data['avg_score_diff'] else 0
+                sample['avg_score_metric'] = (team_data['avg_score_diff'] + opponent_data['avg_score_diff']) / 2
+            
+            # Add avg opponent score diff
+            if 'avg_opponent_score_diff' in team_data and 'avg_opponent_score_diff' in opponent_data:
+                sample['avg_opponent_score_diff'] = team_data['avg_opponent_score_diff'] - opponent_data['avg_opponent_score_diff']
+            
+            # Add defense/attacking metrics
+            if 'defense_rating' in team_data and 'defense_rating' in opponent_data:
+                sample['better_defense_team1'] = 1 if team_data['defense_rating'] > opponent_data['defense_rating'] else 0
+                sample['avg_defense_metric'] = (team_data['defense_rating'] + opponent_data['defense_rating']) / 2
+            
+            # Add recent performance metrics
+            for period in [5, 10, 20]:
+                period_key = f'recent_{period}'
+                if period_key in team_data and period_key in opponent_data:
+                    sample[f'{period_key}_diff'] = team_data[period_key] - opponent_data[period_key]
+                    sample[f'better_{period_key}_team1'] = 1 if team_data[period_key] > opponent_data[period_key] else 0
+                    sample[f'avg_{period_key}'] = (team_data[period_key] + opponent_data[period_key]) / 2
+            
+            # Add momentum metrics
+            for momentum_pair in [(5, 10), (10, 20)]:
+                recent_a, recent_b = momentum_pair
+                momentum_key = f'momentum_{recent_a}_vs_{recent_b}'
+                if momentum_key in team_data and momentum_key in opponent_data:
+                    sample[f'{momentum_key}_diff'] = team_data[momentum_key] - opponent_data[momentum_key]
+                    sample[f'better_{momentum_key}_team1'] = 1 if team_data[momentum_key] > opponent_data[momentum_key] else 0
+                    sample[f'avg_{momentum_key}'] = (team_data[momentum_key] + opponent_data[momentum_key]) / 2
+            
+            # Add weighted win rate
+            if 'weighted_win_rate' in team_data and 'weighted_win_rate' in opponent_data:
+                sample['weighted_win_rate_diff'] = team_data['weighted_win_rate'] - opponent_data['weighted_win_rate']
+                sample['better_weighted_win_rate_team1'] = 1 if team_data['weighted_win_rate'] > opponent_data['weighted_win_rate'] else 0
+                sample['avg_weighted_win_rate'] = (team_data['weighted_win_rate'] + opponent_data['weighted_win_rate']) / 2
+            
+            # Add player stats metrics if available for both teams
+            has_player_stats = False
+            
+            if ('avg_player_rating' in team_data and team_data['avg_player_rating'] > 0 and
+                'avg_player_rating' in opponent_data and opponent_data['avg_player_rating'] > 0):
                 
-                if is_valid:
-                    X.append(features)
-                    y.append(1 if match.get('team_won', False) else 0)
+                has_player_stats = True
+                teams_with_player_stats.add(team_name)
+                teams_with_player_stats.add(opponent_name)
+                
+                # Player rating
+                sample['player_rating_diff'] = team_data['avg_player_rating'] - opponent_data['avg_player_rating']
+                sample['better_player_rating_team1'] = 1 if team_data['avg_player_rating'] > opponent_data['avg_player_rating'] else 0
+                sample['avg_player_rating'] = (team_data['avg_player_rating'] + opponent_data['avg_player_rating']) / 2
+                
+                player_features.add('player_rating_diff')
+                player_features.add('better_player_rating_team1')
+                player_features.add('avg_player_rating')
+                
+                # ACS
+                if 'avg_player_acs' in team_data and 'avg_player_acs' in opponent_data:
+                    sample['acs_diff'] = team_data['avg_player_acs'] - opponent_data['avg_player_acs']
+                    sample['better_acs_team1'] = 1 if team_data['avg_player_acs'] > opponent_data['avg_player_acs'] else 0
+                    sample['avg_acs'] = (team_data['avg_player_acs'] + opponent_data['avg_player_acs']) / 2
+                    
+                    player_features.add('acs_diff')
+                    player_features.add('better_acs_team1')
+                    player_features.add('avg_acs')
+                
+                # K/D
+                if 'avg_player_kd' in team_data and 'avg_player_kd' in opponent_data:
+                    sample['kd_diff'] = team_data['avg_player_kd'] - opponent_data['avg_player_kd']
+                    sample['better_kd_team1'] = 1 if team_data['avg_player_kd'] > opponent_data['avg_player_kd'] else 0
+                    sample['avg_kd'] = (team_data['avg_player_kd'] + opponent_data['avg_player_kd']) / 2
+                    
+                    player_features.add('kd_diff')
+                    player_features.add('better_kd_team1')
+                    player_features.add('avg_kd')
+                
+                # KAST
+                if 'avg_player_kast' in team_data and 'avg_player_kast' in opponent_data:
+                    sample['kast_diff'] = team_data['avg_player_kast'] - opponent_data['avg_player_kast']
+                    sample['better_kast_team1'] = 1 if team_data['avg_player_kast'] > opponent_data['avg_player_kast'] else 0
+                    sample['avg_kast'] = (team_data['avg_player_kast'] + opponent_data['avg_player_kast']) / 2
+                    
+                    player_features.add('kast_diff')
+                    player_features.add('better_kast_team1')
+                    player_features.add('avg_kast')
+                
+                # ADR
+                if 'avg_player_adr' in team_data and 'avg_player_adr' in opponent_data:
+                    sample['adr_diff'] = team_data['avg_player_adr'] - opponent_data['avg_player_adr']
+                    sample['better_adr_team1'] = 1 if team_data['avg_player_adr'] > opponent_data['avg_player_adr'] else 0
+                    sample['avg_adr'] = (team_data['avg_player_adr'] + opponent_data['avg_player_adr']) / 2
+                    
+                    player_features.add('adr_diff')
+                    player_features.add('better_adr_team1')
+                    player_features.add('avg_adr')
+                
+                # Headshot %
+                if 'avg_player_headshot' in team_data and 'avg_player_headshot' in opponent_data:
+                    sample['headshot_diff'] = team_data['avg_player_headshot'] - opponent_data['avg_player_headshot']
+                    sample['better_headshot_team1'] = 1 if team_data['avg_player_headshot'] > opponent_data['avg_player_headshot'] else 0
+                    sample['avg_headshot'] = (team_data['avg_player_headshot'] + opponent_data['avg_player_headshot']) / 2
+                    
+                    player_features.add('headshot_diff')
+                    player_features.add('better_headshot_team1')
+                    player_features.add('avg_headshot')
+                
+                # Star player comparison
+                if ('star_player_rating' in team_data and 'star_player_rating' in opponent_data and
+                    team_data['star_player_rating'] > 0 and opponent_data['star_player_rating'] > 0):
+                    sample['star_player_diff'] = team_data['star_player_rating'] - opponent_data['star_player_rating']
+                    sample['better_star_player_team1'] = 1 if team_data['star_player_rating'] > opponent_data['star_player_rating'] else 0
+                    sample['avg_star_player'] = (team_data['star_player_rating'] + opponent_data['star_player_rating']) / 2
+                    
+                    player_features.add('star_player_diff')
+                    player_features.add('better_star_player_team1')
+                    player_features.add('avg_star_player')
+                
+                # Player consistency
+                if 'player_consistency' in team_data and 'player_consistency' in opponent_data:
+                    sample['consistency_diff'] = team_data['player_consistency'] - opponent_data['player_consistency']
+                    sample['better_consistency_team1'] = 1 if team_data['player_consistency'] > opponent_data['player_consistency'] else 0
+                    sample['avg_consistency'] = (team_data['player_consistency'] + opponent_data['player_consistency']) / 2
+                    
+                    player_features.add('consistency_diff')
+                    player_features.add('better_consistency_team1')
+                    player_features.add('avg_consistency')
+                
+                # First kills vs first deaths ratio
+                if 'fk_fd_ratio' in team_data and 'fk_fd_ratio' in opponent_data:
+                    sample['fk_fd_diff'] = team_data['fk_fd_ratio'] - opponent_data['fk_fd_ratio']
+                    sample['better_fk_fd_team1'] = 1 if team_data['fk_fd_ratio'] > opponent_data['fk_fd_ratio'] else 0
+                    sample['avg_fk_fd'] = (team_data['fk_fd_ratio'] + opponent_data['fk_fd_ratio']) / 2
+                    
+                    player_features.add('fk_fd_diff')
+                    player_features.add('better_fk_fd_team1')
+                    player_features.add('avg_fk_fd')
+                
+                # Player count difference
+                if 'player_count' in team_data and 'player_count' in opponent_data:
+                    sample['player_count_diff'] = team_data['player_count'] - opponent_data['player_count']
+                    sample['player_count_ratio'] = team_data['player_count'] / max(opponent_data['player_count'], 1)
+                    sample['avg_player_count'] = (team_data['player_count'] + opponent_data['player_count']) / 2
+            
+            # Add economy metrics if available for both teams
+            has_economy_stats = False
+            
+            if ('pistol_win_rate' in team_data and 'pistol_win_rate' in opponent_data and
+                'eco_win_rate' in team_data and 'eco_win_rate' in opponent_data and
+                'full_buy_win_rate' in team_data and 'full_buy_win_rate' in opponent_data):
+                
+                has_economy_stats = True
+                teams_with_economy.add(team_name)
+                teams_with_economy.add(opponent_name)
+                
+                # Pistol round performance
+                sample['pistol_win_rate_diff'] = team_data['pistol_win_rate'] - opponent_data['pistol_win_rate']
+                sample['better_pistol_team1'] = 1 if team_data['pistol_win_rate'] > opponent_data['pistol_win_rate'] else 0
+                sample['avg_pistol_win_rate'] = (team_data['pistol_win_rate'] + opponent_data['pistol_win_rate']) / 2
+                
+                economy_features.add('pistol_win_rate_diff')
+                economy_features.add('better_pistol_team1')
+                economy_features.add('avg_pistol_win_rate')
+                
+                # Eco round performance
+                sample['eco_win_rate_diff'] = team_data['eco_win_rate'] - opponent_data['eco_win_rate']
+                sample['better_eco_team1'] = 1 if team_data['eco_win_rate'] > opponent_data['eco_win_rate'] else 0
+                sample['avg_eco_win_rate'] = (team_data['eco_win_rate'] + opponent_data['eco_win_rate']) / 2
+                
+                economy_features.add('eco_win_rate_diff')
+                economy_features.add('better_eco_team1')
+                economy_features.add('avg_eco_win_rate')
+                
+                # Semi-eco round performance
+                if 'semi_eco_win_rate' in team_data and 'semi_eco_win_rate' in opponent_data:
+                    sample['semi_eco_win_rate_diff'] = team_data['semi_eco_win_rate'] - opponent_data['semi_eco_win_rate']
+                    sample['better_semi_eco_team1'] = 1 if team_data['semi_eco_win_rate'] > opponent_data['semi_eco_win_rate'] else 0
+                    sample['avg_semi_eco_win_rate'] = (team_data['semi_eco_win_rate'] + opponent_data['semi_eco_win_rate']) / 2
+                    
+                    economy_features.add('semi_eco_win_rate_diff')
+                    economy_features.add('better_semi_eco_team1')
+                    economy_features.add('avg_semi_eco_win_rate')
+                
+                # Semi-buy round performance
+                if 'semi_buy_win_rate' in team_data and 'semi_buy_win_rate' in opponent_data:
+                    sample['semi_buy_win_rate_diff'] = team_data['semi_buy_win_rate'] - opponent_data['semi_buy_win_rate']
+                    sample['better_semi_buy_team1'] = 1 if team_data['semi_buy_win_rate'] > opponent_data['semi_buy_win_rate'] else 0
+                    sample['avg_semi_buy_win_rate'] = (team_data['semi_buy_win_rate'] + opponent_data['semi_buy_win_rate']) / 2
+                    
+                    economy_features.add('semi_buy_win_rate_diff')
+                    economy_features.add('better_semi_buy_team1')
+                    economy_features.add('avg_semi_buy_win_rate')
+                
+                # Full buy round performance
+                sample['full_buy_win_rate_diff'] = team_data['full_buy_win_rate'] - opponent_data['full_buy_win_rate']
+                sample['better_full_buy_team1'] = 1 if team_data['full_buy_win_rate'] > opponent_data['full_buy_win_rate'] else 0
+                sample['avg_full_buy_win_rate'] = (team_data['full_buy_win_rate'] + opponent_data['full_buy_win_rate']) / 2
+                
+                economy_features.add('full_buy_win_rate_diff')
+                economy_features.add('better_full_buy_team1')
+                economy_features.add('avg_full_buy_win_rate')
+                
+                # Low economy performance (eco + semi-eco)
+                if 'low_economy_win_rate' in team_data and 'low_economy_win_rate' in opponent_data:
+                    sample['low_economy_win_rate_diff'] = team_data['low_economy_win_rate'] - opponent_data['low_economy_win_rate']
+                    sample['better_low_economy_team1'] = 1 if team_data['low_economy_win_rate'] > opponent_data['low_economy_win_rate'] else 0
+                    sample['avg_low_economy_win_rate'] = (team_data['low_economy_win_rate'] + opponent_data['low_economy_win_rate']) / 2
+                    
+                    economy_features.add('low_economy_win_rate_diff')
+                    economy_features.add('better_low_economy_team1')
+                    economy_features.add('avg_low_economy_win_rate')
+                
+                # High economy performance (semi-buy + full-buy)
+                if 'high_economy_win_rate' in team_data and 'high_economy_win_rate' in opponent_data:
+                    sample['high_economy_win_rate_diff'] = team_data['high_economy_win_rate'] - opponent_data['high_economy_win_rate']
+                    sample['better_high_economy_team1'] = 1 if team_data['high_economy_win_rate'] > opponent_data['high_economy_win_rate'] else 0
+                    sample['avg_high_economy_win_rate'] = (team_data['high_economy_win_rate'] + opponent_data['high_economy_win_rate']) / 2
+                    
+                    economy_features.add('high_economy_win_rate_diff')
+                    economy_features.add('better_high_economy_team1')
+                    economy_features.add('avg_high_economy_win_rate')
+                
+                # Economy efficiency metric
+                if 'economy_efficiency' in team_data and 'economy_efficiency' in opponent_data:
+                    sample['economy_efficiency_diff'] = team_data['economy_efficiency'] - opponent_data['economy_efficiency']
+                    sample['better_economy_efficiency_team1'] = 1 if team_data['economy_efficiency'] > opponent_data['economy_efficiency'] else 0
+                    sample['avg_economy_efficiency'] = (team_data['economy_efficiency'] + opponent_data['economy_efficiency']) / 2
+                    
+                    economy_features.add('economy_efficiency_diff')
+                    economy_features.add('better_economy_efficiency_team1')
+                    economy_features.add('avg_economy_efficiency')
+                
+                # Pistol round confidence
+                if 'pistol_confidence' in team_data and 'pistol_confidence' in opponent_data:
+                    sample['pistol_confidence_diff'] = team_data['pistol_confidence'] - opponent_data['pistol_confidence']
+                    sample['better_pistol_confidence_team1'] = 1 if team_data['pistol_confidence'] > opponent_data['pistol_confidence'] else 0
+                    sample['avg_pistol_confidence'] = (team_data['pistol_confidence'] + opponent_data['pistol_confidence']) / 2
+                    
+                    economy_features.add('pistol_confidence_diff')
+                    economy_features.add('better_pistol_confidence_team1')
+                    economy_features.add('avg_pistol_confidence')
+                
+                # Pistol round sample size
+                if 'pistol_sample' in team_data and 'pistol_sample' in opponent_data:
+                    sample['pistol_sample_diff'] = team_data['pistol_sample'] - opponent_data['pistol_sample']
+                    sample['better_pistol_sample_team1'] = 1 if team_data['pistol_sample'] > opponent_data['pistol_sample'] else 0
+                    sample['avg_pistol_sample'] = (team_data['pistol_sample'] + opponent_data['pistol_sample']) / 2
+            
+            # Add additional player metrics if available
+            if ('first_bloods' in team_data and 'first_bloods' in opponent_data and
+                team_data['first_bloods'] > 0 and opponent_data['first_bloods'] > 0):
+                sample['first_bloods_diff'] = team_data['first_bloods'] - opponent_data['first_bloods']
+                sample['better_first_bloods_team1'] = 1 if team_data['first_bloods'] > opponent_data['first_bloods'] else 0
+                sample['avg_first_bloods'] = (team_data['first_bloods'] + opponent_data['first_bloods']) / 2
+                
+                player_features.add('first_bloods_diff')
+                player_features.add('better_first_bloods_team1')
+                player_features.add('avg_first_bloods')
+            
+            if ('clutches' in team_data and 'clutches' in opponent_data and
+                team_data['clutches'] > 0 and opponent_data['clutches'] > 0):
+                sample['clutches_diff'] = team_data['clutches'] - opponent_data['clutches']
+                sample['better_clutches_team1'] = 1 if team_data['clutches'] > opponent_data['clutches'] else 0
+                sample['avg_clutches'] = (team_data['clutches'] + opponent_data['clutches']) / 2
+                
+                player_features.add('clutches_diff')
+                player_features.add('better_clutches_team1')
+                player_features.add('avg_clutches')
+            
+            if ('aces' in team_data and 'aces' in opponent_data and
+                team_data['aces'] > 0 and opponent_data['aces'] > 0):
+                sample['aces_diff'] = team_data['aces'] - opponent_data['aces']
+                sample['better_aces_team1'] = 1 if team_data['aces'] > opponent_data['aces'] else 0
+                sample['avg_aces'] = (team_data['aces'] + opponent_data['aces']) / 2
+                
+                player_features.add('aces_diff')
+                player_features.add('better_aces_team1')
+                player_features.add('avg_aces')
+            
+            if ('entry_kills' in team_data and 'entry_kills' in opponent_data and
+                team_data['entry_kills'] > 0 and opponent_data['entry_kills'] > 0):
+                sample['entry_kills_diff'] = team_data['entry_kills'] - opponent_data['entry_kills']
+                sample['better_entry_kills_team1'] = 1 if team_data['entry_kills'] > opponent_data['entry_kills'] else 0
+                sample['avg_entry_kills'] = (team_data['entry_kills'] + opponent_data['entry_kills']) / 2
+                
+                player_features.add('entry_kills_diff')
+                player_features.add('better_entry_kills_team1')
+                player_features.add('avg_entry_kills')
+                
+            # Add first kill differential
+            if ('first_kill_diff' in team_data and 'first_kill_diff' in opponent_data):
+                sample['first_kill_diff_differential'] = team_data['first_kill_diff'] - opponent_data['first_kill_diff']
+                sample['better_first_kill_diff_team1'] = 1 if team_data['first_kill_diff'] > opponent_data['first_kill_diff'] else 0
+                sample['avg_first_kill_diff'] = (team_data['first_kill_diff'] + opponent_data['first_kill_diff']) / 2
+                
+                player_features.add('first_kill_diff_differential')
+                player_features.add('better_first_kill_diff_team1')
+                player_features.add('avg_first_kill_diff')
+            
+            # Add headshot percentage
+            if ('headshot_percentage' in team_data and 'headshot_percentage' in opponent_data):
+                sample['headshot_percentage_diff'] = team_data['headshot_percentage'] - opponent_data['headshot_percentage']
+                sample['better_headshot_percentage_team1'] = 1 if team_data['headshot_percentage'] > opponent_data['headshot_percentage'] else 0
+                sample['avg_headshot_percentage'] = (team_data['headshot_percentage'] + opponent_data['headshot_percentage']) / 2
+                
+                player_features.add('headshot_percentage_diff')
+                player_features.add('better_headshot_percentage_team1')
+                player_features.add('avg_headshot_percentage')
+            
+            # Add KAST advantage
+            if ('kast_advantage' in team_data and 'kast_advantage' in opponent_data):
+                sample['kast_adv_diff'] = team_data['kast_advantage'] - opponent_data['kast_advantage']
+                sample['better_kast_adv_team1'] = 1 if team_data['kast_advantage'] > opponent_data['kast_advantage'] else 0
+                sample['avg_kast_adv'] = (team_data['kast_advantage'] + opponent_data['kast_advantage']) / 2
+                
+                player_features.add('kast_adv_diff')
+                player_features.add('better_kast_adv_team1')
+                player_features.add('avg_kast_adv')
+            
+            # Add ADR advantage
+            if ('adr_advantage' in team_data and 'adr_advantage' in opponent_data):
+                sample['adr_adv_diff'] = team_data['adr_advantage'] - opponent_data['adr_advantage']
+                sample['better_adr_adv_team1'] = 1 if team_data['adr_advantage'] > opponent_data['adr_advantage'] else 0
+                sample['avg_adr_adv'] = (team_data['adr_advantage'] + opponent_data['adr_advantage']) / 2
+                
+                player_features.add('adr_adv_diff')
+                player_features.add('better_adr_adv_team1')
+                player_features.add('avg_adr_adv')
+
+            # Add map-specific metrics
+            if ('map_performance' in team_data and 'map_performance' in opponent_data and
+                match.get('map_name') and match['map_name'] in team_data['map_performance'] and
+                match['map_name'] in opponent_data['map_performance']):
+                # Get map performance for this specific map
+                team_map_perf = team_data['map_performance'][match['map_name']]
+                opp_map_perf = opponent_data['map_performance'][match['map_name']]
+                
+                # Only include if we have win rates for both teams
+                if ('win_rate' in team_map_perf and 'win_rate' in opp_map_perf):
+                    # Convert dict metrics to scalars
+                    map_name = match['map_name']
+                    sample[f'map_{map_name}'] = 1
+                    map_features.add(f'map_{map_name}')
+            
+            # Calculate common metrics - agent overlap
+            if ('agent_composition' in team_data and 'agent_composition' in opponent_data and
+                match.get('map_name') and match['map_name'] in team_data.get('agent_composition', {}) and
+                match['map_name'] in opponent_data.get('agent_composition', {})):
+                
+                team_agents = team_data['agent_composition'][match['map_name']]
+                opp_agents = opponent_data['agent_composition'][match['map_name']]
+                
+                if isinstance(team_agents, list) and isinstance(opp_agents, list):
+                    overlap = len(set(team_agents) & set(opp_agents))
+                    sample['agent_overlap'] = overlap
+            
+            # Calculate map overlap
+            if 'map_performance' in team_data and 'map_performance' in opponent_data:
+                team_maps = set(team_data['map_performance'].keys())
+                opp_maps = set(opponent_data['map_performance'].keys())
+                common_maps = len(team_maps & opp_maps)
+                sample['common_map_count'] = common_maps
+            
+            # Add opponent quality metrics
+            if ('opponent_quality' in team_data and 'opponent_quality' in opponent_data and
+                'avg_opponent_rank' in team_data['opponent_quality'] and 'avg_opponent_rank' in opponent_data['opponent_quality']):
+                
+                sample['opponent_rank_diff'] = team_data['opponent_quality']['avg_opponent_rank'] - opponent_data['opponent_quality']['avg_opponent_rank']
+                sample['better_opponent_quality_team1'] = 1 if team_data['opponent_quality']['avg_opponent_rank'] < opponent_data['opponent_quality']['avg_opponent_rank'] else 0
+                sample['avg_opponent_rank'] = (team_data['opponent_quality']['avg_opponent_rank'] + opponent_data['opponent_quality']['avg_opponent_rank']) / 2
+            
+            if ('opponent_quality' in team_data and 'opponent_quality' in opponent_data and
+                'avg_opponent_rating' in team_data['opponent_quality'] and 'avg_opponent_rating' in opponent_data['opponent_quality']):
+                
+                sample['opponent_rating_diff'] = team_data['opponent_quality']['avg_opponent_rating'] - opponent_data['opponent_quality']['avg_opponent_rating']
+                sample['better_opponent_rating_team1'] = 1 if team_data['opponent_quality']['avg_opponent_rating'] > opponent_data['opponent_quality']['avg_opponent_rating'] else 0
+                sample['avg_opponent_rating'] = (team_data['opponent_quality']['avg_opponent_rating'] + opponent_data['opponent_quality']['avg_opponent_rating']) / 2
+            
+            # Add performance against top teams
+            if ('opponent_quality' in team_data and 'opponent_quality' in opponent_data and
+                'top_10_win_rate' in team_data['opponent_quality'] and 'top_10_win_rate' in opponent_data['opponent_quality']):
+                
+                sample['top_10_win_rate_diff'] = team_data['opponent_quality']['top_10_win_rate'] - opponent_data['opponent_quality']['top_10_win_rate']
+                sample['better_top_10_team1'] = 1 if team_data['opponent_quality']['top_10_win_rate'] > opponent_data['opponent_quality']['top_10_win_rate'] else 0
+                sample['avg_top_10_win_rate'] = (team_data['opponent_quality']['top_10_win_rate'] + opponent_data['opponent_quality']['top_10_win_rate']) / 2
+            
+            # Add performance against bottom teams
+            if ('opponent_quality' in team_data and 'opponent_quality' in opponent_data and
+                'bottom_50_win_rate' in team_data['opponent_quality'] and 'bottom_50_win_rate' in opponent_data['opponent_quality']):
+                
+                sample['bottom_50_win_rate_diff'] = team_data['opponent_quality']['bottom_50_win_rate'] - opponent_data['opponent_quality']['bottom_50_win_rate']
+                sample['better_bottom_50_team1'] = 1 if team_data['opponent_quality']['bottom_50_win_rate'] > opponent_data['opponent_quality']['bottom_50_win_rate'] else 0
+                sample['avg_bottom_50_win_rate'] = (team_data['opponent_quality']['bottom_50_win_rate'] + opponent_data['opponent_quality']['bottom_50_win_rate']) / 2
+            
+            # Add upset metrics
+            if ('opponent_quality' in team_data and 'opponent_quality' in opponent_data and
+                'upset_factor' in team_data['opponent_quality'] and 'upset_factor' in opponent_data['opponent_quality']):
+                
+                sample['upset_factor_diff'] = team_data['opponent_quality']['upset_factor'] - opponent_data['opponent_quality']['upset_factor']
+                sample['better_upset_team1'] = 1 if team_data['opponent_quality']['upset_factor'] > opponent_data['opponent_quality']['upset_factor'] else 0
+                sample['avg_upset_factor'] = (team_data['opponent_quality']['upset_factor'] + opponent_data['opponent_quality']['upset_factor']) / 2
+            
+            # Add upset vulnerability metrics
+            if ('opponent_quality' in team_data and 'opponent_quality' in opponent_data and
+                'upset_vulnerability' in team_data['opponent_quality'] and 'upset_vulnerability' in opponent_data['opponent_quality']):
+                
+                sample['upset_vulnerability_diff'] = team_data['opponent_quality']['upset_vulnerability'] - opponent_data['opponent_quality']['upset_vulnerability']
+                sample['less_vulnerable_team1'] = 1 if team_data['opponent_quality']['upset_vulnerability'] < opponent_data['opponent_quality']['upset_vulnerability'] else 0
+                sample['avg_upset_vulnerability'] = (team_data['opponent_quality']['upset_vulnerability'] + opponent_data['opponent_quality']['upset_vulnerability']) / 2
+            
+            # Add team ranking metrics
+            if ('ranking' in team_data and 'ranking' in opponent_data):
+                sample['team_rank_diff'] = team_data['ranking'] - opponent_data['ranking']
+                sample['better_ranked_team1'] = 1 if team_data['ranking'] < opponent_data['ranking'] else 0
+                sample['avg_team_rank'] = (team_data['ranking'] + opponent_data['ranking']) / 2
+                sample['rank_gap'] = abs(team_data['ranking'] - opponent_data['ranking'])
+            
+            # Add team rating metrics
+            if ('rating' in team_data and 'rating' in opponent_data):
+                sample['team_rating_quality_diff'] = team_data['rating'] - opponent_data['rating']
+                sample['better_rated_quality_team1'] = 1 if team_data['rating'] > opponent_data['rating'] else 0
+                sample['avg_team_rating_quality'] = (team_data['rating'] + opponent_data['rating']) / 2
+                sample['rating_gap'] = abs(team_data['rating'] - opponent_data['rating'])
+            
+            # Add tournament performance metrics
+            if ('tournament_performance' in team_data and 'tournament_performance' in opponent_data):
+                # Mid-tier tournaments
+                if ('mid_tier_win_rate' in team_data['tournament_performance'] and 
+                    'mid_tier_win_rate' in opponent_data['tournament_performance']):
+                    
+                    t1_mid = team_data['tournament_performance']['mid_tier_win_rate']
+                    t2_mid = opponent_data['tournament_performance']['mid_tier_win_rate']
+                    
+                    # Convert from dict to float if needed
+                    if isinstance(t1_mid, dict) and 'win_rate' in t1_mid:
+                        t1_mid = t1_mid['win_rate']
+                    if isinstance(t2_mid, dict) and 'win_rate' in t2_mid:
+                        t2_mid = t2_mid['win_rate']
+                    
+                    # Only use if both are numeric
+                    if isinstance(t1_mid, (int, float)) and isinstance(t2_mid, (int, float)):
+                        sample['mid_tier_tourney_diff'] = t1_mid - t2_mid
+                        sample['better_mid_tier_team1'] = 1 if t1_mid > t2_mid else 0
+                        sample['avg_mid_tier_win_rate'] = (t1_mid + t2_mid) / 2
+                
+                # Overall tournament performance
+                if ('overall_win_rate' in team_data['tournament_performance'] and 
+                    'overall_win_rate' in opponent_data['tournament_performance']):
+                    
+                    t1_overall = team_data['tournament_performance']['overall_win_rate']
+                    t2_overall = opponent_data['tournament_performance']['overall_win_rate']
+                    
+                    # Convert from dict to float if needed
+                    if isinstance(t1_overall, dict) and 'win_rate' in t1_overall:
+                        t1_overall = t1_overall['win_rate']
+                    if isinstance(t2_overall, dict) and 'win_rate' in t2_overall:
+                        t2_overall = t2_overall['win_rate']
+                    
+                    # Only use if both are numeric
+                    if isinstance(t1_overall, (int, float)) and isinstance(t2_overall, (int, float)):
+                        sample['overall_tourney_diff'] = t1_overall - t2_overall
+                        sample['better_tourney_team1'] = 1 if t1_overall > t2_overall else 0
+                        sample['avg_tourney_win_rate'] = (t1_overall + t2_overall) / 2
+            
+            # Add head-to-head metrics
+            # (We're not accessing nested dictionaries here to avoid errors)
+            h2h_win_rate = 0.5  # Default to 50% if no H2H data
+            h2h_matches = 0
+            h2h_score_diff = 0
+            h2h_advantage = 0
+            h2h_significant = 0
+            
+            # Get H2H data from team_data
+            if ('head_to_head' in team_data and opponent_name in team_data['head_to_head']):
+                h2h_data = team_data['head_to_head'][opponent_name]
+                if isinstance(h2h_data, dict):
+                    if 'win_rate' in h2h_data and isinstance(h2h_data['win_rate'], (int, float)):
+                        h2h_win_rate = h2h_data['win_rate']
+                    if 'matches' in h2h_data and isinstance(h2h_data['matches'], (int, float)):
+                        h2h_matches = h2h_data['matches']
+                    if 'score_diff' in h2h_data and isinstance(h2h_data['score_diff'], (int, float)):
+                        h2h_score_diff = h2h_data['score_diff']
+            
+            # Compute simple H2H metrics
+            h2h_advantage = 1 if h2h_win_rate > 0.5 else 0
+            h2h_significant = 1 if h2h_matches >= 3 else 0
+            h2h_confidence = min(1.0, h2h_matches / 10.0)  # Scale up to 10 matches
+            
+            # Add H2H metrics to sample
+            sample['h2h_win_rate'] = h2h_win_rate
+            sample['h2h_matches'] = h2h_matches
+            sample['h2h_score_diff'] = h2h_score_diff
+            sample['h2h_advantage_team1'] = h2h_advantage
+            sample['h2h_significant'] = h2h_significant
+            sample['h2h_confidence'] = h2h_confidence
+            
+            # Feature interactions (to capture non-linear relationships)
+            # Only include if both components are valid
+            if 'avg_player_rating' in sample and 'win_rate_diff' in sample:
+                sample['rating_x_win_rate'] = sample['avg_player_rating'] * sample['win_rate_diff']
+            
+            if 'avg_pistol_win_rate' in sample and 'avg_eco_win_rate' in sample:
+                sample['pistol_x_eco'] = sample['avg_pistol_win_rate'] * sample['avg_eco_win_rate']
+            
+            if 'avg_pistol_win_rate' in sample and 'avg_full_buy_win_rate' in sample:
+                sample['pistol_x_full_buy'] = sample['avg_pistol_win_rate'] * sample['avg_full_buy_win_rate']
+            
+            if 'star_player_diff' in sample and 'consistency_diff' in sample:
+                sample['star_x_consistency'] = sample['star_player_diff'] * sample['consistency_diff']
+            
+            if 'h2h_win_rate' in sample and 'recent_form_diff' in sample:
+                sample['h2h_x_form'] = sample['h2h_win_rate'] * sample['recent_form_diff']
+            
+            if 'headshot_diff' in sample and 'kd_diff' in sample:
+                sample['headshot_x_kd'] = sample['headshot_diff'] * sample['kd_diff']
+            
+            if 'win_rate_diff' in sample and 'opponent_rank_diff' in sample:
+                sample['win_rate_x_opp_quality'] = sample['win_rate_diff'] * (1 / (sample['opponent_rank_diff'] + 1))
+            
+            if 'first_bloods_diff' in sample and 'win_rate_diff' in sample:
+                sample['first_blood_x_win_rate'] = sample['first_bloods_diff'] * sample['win_rate_diff']
+            
+            if 'clutches_diff' in sample and 'consistency_diff' in sample:
+                sample['clutch_x_consistency'] = sample['clutches_diff'] * sample['consistency_diff']
+            
+            # Count how many metrics favor team1
+            team1_better_count = sum(1 for key, value in sample.items() if key.startswith('better_') and value == 1)
+            total_better_metrics = sum(1 for key in sample.keys() if key.startswith('better_'))
+            sample['team1_better_count'] = team1_better_count
+            sample['team1_better_ratio'] = team1_better_count / max(total_better_metrics, 1)
+            
+            # Add "significant difference" features
+            for key in list(sample.keys()):
+                if key.endswith('_diff') and not key.endswith('_significant_diff'):
+                    # Get the threshold for this metric (can be customized per metric)
+                    threshold = 0.1  # Default threshold
+                    
+                    # Special thresholds for certain metrics
+                    if 'win_rate' in key:
+                        threshold = 0.1  # 10% difference in win rate is significant
+                    elif 'form' in key:
+                        threshold = 0.15  # 15% difference in form is significant
+                    elif 'player_rating' in key:
+                        threshold = 0.2  # 0.2 difference in player rating is significant
+                    elif 'score' in key:
+                        threshold = 3  # 3 rounds difference is significant
+                    
+                    # Is the difference significant?
+                    value = sample[key]
+                    significant = 1 if abs(value) >= threshold else 0
+                    
+                    # Who has the advantage? (1 for team1, 0 for team2)
+                    advantage = 1 if value > 0 else 0
+                    
+                    # Add new features
+                    significant_key = key.replace('_diff', '_significant_diff')
+                    advantage_key = key.replace('_diff', '_significant_advantage_team1')
+                    
+                    sample[significant_key] = significant
+                    sample[advantage_key] = advantage if significant else 0
+            
+            # At this point, we might have nested dictionaries in the sample
+            # Let's remove them to avoid issues with the model
+            clean_sample = {}
+            for key, value in sample.items():
+                # Skip dictionaries, lists, or any other non-scalar values
+                if isinstance(value, (int, float, bool, str)):
+                    clean_sample[key] = value
+                elif value is None:
+                    clean_sample[key] = 0  # Convert None to 0
+            
+            # Add to training data
+            X.append(clean_sample)
+            y.append(1 if match['result'] == 'win' else 0)  # 1 for win, 0 for loss
+            
+            # Count samples with different data types
+            has_both = has_player_stats and has_economy_stats
+            
+            if has_player_stats:
+                player_stats_sample_count += 1
+            
+            if has_economy_stats:
+                economy_sample_count += 1
+            
+            if has_both:
+                both_sample_count += 1
     
-    print(f"\n=================================================")
-    print(f"TRAINING DATASET STATISTICS")
-    print(f"=================================================")
     print(f"Created {len(X)} training samples with:")
-    print(f"  - Samples with economy data: {economy_count}")
-    print(f"  - Samples with player stats: {player_stat_count}")
-    print(f"  - Samples with both: {combined_count}")
+    print(f"  - Samples with economy data: {economy_sample_count}")
+    print(f"  - Samples with player stats: {player_stats_sample_count}")
+    print(f"  - Samples with both: {both_sample_count}")
     print(f"  - Teams with economy data: {len(teams_with_economy)}/{len(team_data_collection)}")
     print(f"  - Teams with player stats: {len(teams_with_player_stats)}/{len(team_data_collection)}")
     
-    # If we have at least one sample, print feature stats for debugging
-    if len(X) > 0:
-        # Count types of features
-        feature_keys = X[0].keys()
-        economy_feature_count = sum(1 for key in feature_keys if any(term in key.lower() for term in 
-                                                       ['eco', 'pistol', 'buy', 'economy']))
-        player_feature_count = sum(1 for key in feature_keys if any(term in key.lower() for term in 
-                                                      ['rating', 'acs', 'kd', 'adr', 'headshot', 'clutch', 'aces', 'first_blood']))
-        map_feature_count = sum(1 for key in feature_keys if 'map_' in key.lower())
-        
-        print(f"\nFeature breakdown:")
-        print(f"  - Economy features: {economy_feature_count}")
-        print(f"  - Player features: {player_feature_count}")
-        print(f"  - Map features: {map_feature_count}")
-        print(f"  - Total features: {len(feature_keys)}")
-        
-        # Print sample of each feature type
-        if economy_feature_count > 0:
-            print("\nSample economy features:")
-            for key in [k for k in feature_keys if any(term in k.lower() for term in ['eco', 'pistol', 'buy', 'economy'])][:5]:
-                print(f"  - {key}")
-                
-        if player_feature_count > 0:
-            print("\nSample player features:")
-            for key in [k for k in feature_keys if any(term in k.lower() for term in ['rating', 'acs', 'kd', 'adr', 'headshot', 'clutch'])][:5]:
-                print(f"  - {key}")
+    print("\nFeature breakdown:")
+    print(f"  - Economy features: {len(economy_features)}")
+    print(f"  - Player features: {len(player_features)}")
+    print(f"  - Map features: {len(map_features)}")
+    print(f"  - Total features: {len(set().union(economy_features, player_features, map_features))}")
+    
+    print("\nSample economy features:")
+    for feature in list(economy_features)[:5]:
+        print(f"  - {feature}")
+    
+    print("\nSample player features:")
+    for feature in list(player_features)[:5]:
+        print(f"  - {feature}")
+
+    successful_pairings += 1    
     
     return X, y
+
+def debug_and_fix_match_data(team_data_collection):
+    """Analyze and fix the match data structure for training."""
+    total_teams = len(team_data_collection)
+    teams_with_matches = 0
+    total_matches = 0
+    fixed_matches = 0
+    
+    print("\n=== MATCH DATA STRUCTURE ANALYSIS ===")
+    
+    for team_name, team_data in team_data_collection.items():
+        if 'matches' not in team_data or not team_data['matches']:
+            continue
+            
+        teams_with_matches += 1
+        team_matches = team_data['matches']
+        total_matches += len(team_matches)
+        
+        # For the first team, print detailed match structure
+        if teams_with_matches == 1:
+            print(f"\nSample match structure for {team_name}:")
+            if team_matches:
+                sample_match = team_matches[0]
+                print(f"Keys in match: {list(sample_match.keys())}")
+                
+                # Check specific fields
+                print(f"  Has 'opponent_name'? {'opponent_name' in sample_match}")
+                print(f"  Has 'team_won'? {'team_won' in sample_match}")
+                print(f"  Has 'result'? {'result' in sample_match}")
+                
+                # Print values for key fields
+                if 'opponent_name' in sample_match:
+                    print(f"  opponent_name: {sample_match['opponent_name']}")
+                if 'team_won' in sample_match:
+                    print(f"  team_won: {sample_match['team_won']}")
+        
+        # Fix all matches for this team
+        for match in team_matches:
+            # Make sure opponent_name exists
+            if 'opponent_name' not in match and 'opponent' in match and isinstance(match['opponent'], dict):
+                match['opponent_name'] = match['opponent'].get('name', 'Unknown')
+            
+            # Make sure result exists based on team_won
+            if 'result' not in match and 'team_won' in match:
+                match['result'] = 'win' if match['team_won'] else 'loss'
+                fixed_matches += 1
+            
+            # If neither exists, try to determine from scores
+            if 'result' not in match and 'team_won' not in match:
+                if 'team_score' in match and 'opponent_score' in match:
+                    match['team_won'] = match['team_score'] > match['opponent_score']
+                    match['result'] = 'win' if match['team_won'] else 'loss'
+                    fixed_matches += 1
+    
+    print(f"\n=== MATCH DATA ANALYSIS SUMMARY ===")
+    print(f"Total teams: {total_teams}")
+    print(f"Teams with matches: {teams_with_matches}")
+    print(f"Total matches: {total_matches}")
+    print(f"Fixed matches: {fixed_matches}")
+    
+    return team_data_collection
+
 
 def build_training_dataset_from_matches(matches, team_data_collection):
     """Build a dataset for model training from a specific set of matches."""
@@ -2143,12 +2840,20 @@ def fetch_match_economy_details(match_id):
 
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return economy_details
 
-def extract_economy_metrics(match_economy_data, team_tag=None):
-    """Extract relevant economic performance metrics from match economy data for a specific team."""
+def extract_economy_metrics(match_economy_data, team_identifier=None):
+    """Extract relevant economic performance metrics from match economy data for a specific team.
+    
+    Args:
+        match_economy_data (dict): The economy data from the match
+        team_identifier (str): The team tag or team name to identify the team
+        
+    Returns:
+        dict: Economy metrics for the team, or empty dict if not found
+    """
     if not match_economy_data or 'data' not in match_economy_data or 'teams' not in match_economy_data['data']:
         print("\nNo valid economy data found in match_economy_data")
         return {}
@@ -2158,20 +2863,22 @@ def extract_economy_metrics(match_economy_data, team_tag=None):
         print("\nNot enough teams found in economy data")
         return {}
     
-    print("\nLooking for team with tag:", team_tag)
+    print(f"\nLooking for team with identifier: {team_identifier}")
     
-    # Find the team with matching tag
+    # Find the team with matching tag or name
     target_team_data = None
     for team in teams_data:
-        if team.get('name', '').lower() == team_tag.lower():
+        # Try to match by name (lowercase for case-insensitive comparison)
+        if team.get('name', '').lower() == team_identifier.lower():
             target_team_data = team
+            print(f"Found team by name: {team.get('name', '')}")
             break
     
     if not target_team_data:
-        print(f"\nNo team found with tag: {team_tag}")
+        print(f"\nNo team found with identifier: {team_identifier}")
         return {}
     
-    print(f"\nFound team data for {team_tag}")
+    print(f"\nFound team data for {team_identifier}")
     
     # Extract metrics for the target team only
     metrics = {
@@ -2223,7 +2930,7 @@ def extract_economy_metrics(match_economy_data, team_tag=None):
     else:
         metrics['economy_efficiency'] = 0
     
-    print(f"\nExtracted metrics for {team_tag}:")
+    print(f"\nExtracted metrics for {team_identifier}:")
     print(json.dumps(metrics, indent=2))
     
     return metrics
@@ -2251,7 +2958,7 @@ def fetch_player_stats(player_name):
     player_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     # Return player stats if successful
     if player_data.get('status') == 'OK' and 'data' in player_data:
@@ -2319,6 +3026,66 @@ def create_deep_learning_model_with_economy_and_regularization(input_dim, regula
     model.summary()
     
     return model
+
+# 2. Add an advanced learning rate scheduler
+def create_deep_learning_model_with_advanced_lr(input_dim, regularization_strength=0.001, dropout_rate=0.4):
+    """Create a deep learning model with advanced learning rate scheduling."""
+    # Define inputs
+    inputs = Input(shape=(input_dim,))
+    
+    # First layer - shared feature processing
+    x = Dense(256, activation='relu', 
+              kernel_regularizer=l2(regularization_strength),
+              kernel_initializer='he_normal')(inputs)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate)(x)
+    
+    # Second layer - deeper processing
+    x = Dense(128, activation='relu', 
+              kernel_regularizer=l2(regularization_strength/2),
+              kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate * 0.75)(x)
+    
+    # Player stats pathway with additional neurons
+    x = Dense(96, activation='relu', 
+              kernel_regularizer=l2(regularization_strength/4),
+              kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate * 0.6)(x)
+    
+    # Economy-specific pathway with expanded capacity
+    x = Dense(64, activation='relu', 
+              kernel_regularizer=l2(regularization_strength/8),
+              kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate * 0.5)(x)
+    
+    # Combined pathway
+    x = Dense(32, activation='relu', 
+              kernel_regularizer=l2(regularization_strength/16),
+              kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate * 0.4)(x)
+    
+    # Output
+    outputs = Dense(1, activation='sigmoid')(x)
+    
+    # Create model
+    model = Model(inputs=inputs, outputs=outputs)
+    
+    # Compile model
+    # Using a very small initial learning rate that will be controlled by the scheduler
+    model.compile(loss='binary_crossentropy', 
+                 optimizer=Adam(learning_rate=0.0005),
+                 metrics=['accuracy'])
+    
+    # Print model summary
+    print("\nModel Architecture with Advanced LR:")
+    model.summary()
+    
+    return model
+
 
 def find_optimal_regularization(X, y, test_size=0.2, random_state=42):
     """Find optimal regularization parameters to combat overfitting."""
@@ -2692,6 +3459,206 @@ def train_model_with_overfitting_detection(X, y, test_size=0.2, random_state=42)
         
         return model, scaler, feature_names
 
+# 1. Add k-fold cross-validation functionality
+def train_with_cross_validation(X, y, n_splits=5, random_state=42):
+    """Train model using k-fold cross-validation for more robust performance estimation."""
+    from sklearn.model_selection import StratifiedKFold
+    
+    print("\n" + "="*60)
+    print(f"TRAINING WITH {n_splits}-FOLD CROSS-VALIDATION")
+    print("="*60)
+    
+    # Convert data to the right format
+    if isinstance(X, list):
+        # Check for dictionary values in the list
+        for i, sample in enumerate(X):
+            for key, value in list(sample.items()):
+                if isinstance(value, dict):
+                    print(f"Warning: Found dictionary value for feature '{key}' in sample {i}")
+                    # Either flatten the dict or remove it
+                    del sample[key]
+                elif not isinstance(value, (int, float, bool, str)):
+                    print(f"Warning: Non-numeric value for feature '{key}' in sample {i}: {type(value)}")
+                    del sample[key]
+        
+        # Convert to DataFrame for easier handling
+        X = pd.DataFrame(X)
+    
+    # Ensure all values are numeric
+    if isinstance(X, pd.DataFrame):
+        # Replace any remaining dictionaries or non-numeric values
+        for col in X.columns:
+            if X[col].apply(lambda x: isinstance(x, dict)).any():
+                print(f"Removing column '{col}' because it contains dictionary values")
+                X = X.drop(columns=[col])
+            elif not pd.api.types.is_numeric_dtype(X[col]):
+                try:
+                    X[col] = pd.to_numeric(X[col], errors='coerce')
+                    print(f"Converted column '{col}' to numeric")
+                except:
+                    print(f"Removing column '{col}' because it contains non-numeric values")
+                    X = X.drop(columns=[col])
+    
+    # Convert to numpy array
+    X = np.array(X)
+    if isinstance(y, list):
+        y = np.array(y)
+    
+    
+    # Set up cross-validation
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    
+    # Initialize arrays to store results
+    fold_metrics = []
+    fold_models = []
+    
+    # For storing feature importances across folds
+    all_feature_importances = {}
+    
+    # Scale features outside the loop to ensure consistent scaling
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    # Run cross-validation
+    for fold, (train_idx, val_idx) in enumerate(skf.split(X_scaled, y)):
+        print(f"\n----- Training Fold {fold+1}/{n_splits} -----")
+        
+        # Split data
+        X_train, X_val = X_scaled[train_idx], X_scaled[val_idx]
+        y_train, y_val = y[train_idx], y[val_idx]
+        
+        # Check for class imbalance and apply SMOTE if needed
+        class_counts = np.bincount(y_train)
+        if np.min(class_counts) / np.sum(class_counts) < 0.4:
+            try:
+                min_samples = np.min(class_counts)
+                k_neighbors = min(5, min_samples-1)
+                smote = SMOTE(random_state=random_state, k_neighbors=k_neighbors)
+                X_train, y_train = smote.fit_resample(X_train, y_train)
+                print(f"Applied SMOTE resampling: {np.bincount(y_train)}")
+            except Exception as e:
+                print(f"Error applying SMOTE: {e}")
+        
+        # Feature selection for this fold
+        X_train_selected, selected_features, _ = select_optimal_features(
+            pd.DataFrame(X_train), y_train, test_size=0.2, random_state=random_state)
+        
+        # Apply same feature selection to validation set
+        if isinstance(selected_features[0], int):
+            # If features are indices
+            X_val_selected = X_val[:, selected_features]
+        else:
+            # If features are column names
+            feature_indices = [list(df.columns).index(f) for f in selected_features]
+            X_val_selected = X_val[:, feature_indices]
+        
+        # Store feature importances
+        for feature in selected_features:
+            if feature in all_feature_importances:
+                all_feature_importances[feature] += 1
+            else:
+                all_feature_importances[feature] = 1
+        
+        # Train model
+        input_dim = X_train_selected.shape[1]
+        model = create_deep_learning_model_with_advanced_lr(input_dim)
+        
+        # Define callbacks
+        early_stopping = EarlyStopping(
+            monitor='val_loss', patience=15, restore_best_weights=True, verbose=1
+        )
+        
+        # Use CosineAnnealingLR instead of ReduceLROnPlateau
+        cosine_lr = tf.keras.callbacks.LearningRateScheduler(
+            lambda epoch: 0.001 * (1 + np.cos(epoch * np.pi / 50)), verbose=0
+        )
+        
+        # Train the model
+        history = model.fit(
+            X_train_selected, y_train,
+            epochs=100,
+            batch_size=32,
+            validation_data=(X_val_selected, y_val),
+            callbacks=[early_stopping, cosine_lr],
+            verbose=1
+        )
+        
+        # Evaluate model
+        y_pred_proba = model.predict(X_val_selected)
+        y_pred = (y_pred_proba > 0.5).astype(int).flatten()
+        
+        # Calculate metrics with NaN handling
+        accuracy = accuracy_score(y_val, y_pred)
+        precision = precision_score(y_val, y_pred)
+        recall = recall_score(y_val, y_pred)
+        f1 = f1_score(y_val, y_pred)
+        # Safely calculate AUC - handle NaN values
+        try:
+            # Check if there are NaN values in the predictions
+            if np.isnan(y_pred_proba).any():
+                print(f"  Warning: NaN values detected in predictions. Using fallback AUC value.")
+                auc = 0.5  # Default to random guessing
+            else:
+                auc = roc_auc_score(y_val, y_pred_proba)
+        except Exception as e:
+            print(f"  Error calculating AUC: {e}")
+            auc = 0.5  # Default to random guessing
+
+
+
+        # Store results
+        fold_metrics.append({
+            'accuracy': accuracy,
+            'precision': precision,
+            'recall': recall,
+            'f1': f1,
+            'auc': auc,
+            'selected_features': selected_features
+        })
+        
+        fold_models.append(model)
+        
+        # Print fold results
+        print(f"Fold {fold+1} Results:")
+        print(f"  Accuracy: {accuracy:.4f}")
+        print(f"  Precision: {precision:.4f}")
+        print(f"  Recall: {recall:.4f}")
+        print(f"  F1 Score: {f1:.4f}")
+        print(f"  AUC: {auc:.4f}")
+        print(f"  Selected Features: {len(selected_features)}")
+    
+    # Analyze cross-validation results
+    print("\n" + "="*60)
+    print("CROSS-VALIDATION RESULTS SUMMARY")
+    print("="*60)
+    
+    # Calculate average metrics
+    avg_metrics = {metric: np.mean([fold[metric] for fold in fold_metrics]) 
+                   for metric in ['accuracy', 'precision', 'recall', 'f1', 'auc']}
+    
+    std_metrics = {metric: np.std([fold[metric] for fold in fold_metrics]) 
+                  for metric in ['accuracy', 'precision', 'recall', 'f1', 'auc']}
+    
+    print(f"Average Metrics Across {n_splits} Folds:")
+    for metric, value in avg_metrics.items():
+        print(f"  {metric.capitalize()}: {value:.4f} ± {std_metrics[metric]:.4f}")
+    
+    # Analyze feature importance consistency
+    sorted_features = sorted(all_feature_importances.items(), 
+                           key=lambda x: x[1], reverse=True)
+    
+    print("\nTop Features By Selection Frequency:")
+    for feature, count in sorted_features[:20]:
+        print(f"  {feature}: Selected in {count}/{n_splits} folds")
+    
+    # Create a stable feature set
+    stable_features = [feature for feature, count in sorted_features 
+                      if count >= n_splits * 0.8]  # Features selected in at least 80% of folds
+    
+    print(f"\nStable Feature Set: {len(stable_features)} features")
+    
+    return fold_models, stable_features, avg_metrics, fold_metrics, scaler
+
 def select_optimal_features(X, y, test_size=0.2, random_state=42):
     """Perform feature selection to reduce overfitting and improve model performance."""
     print("\n" + "="*60)
@@ -2868,34 +3835,41 @@ def select_optimal_features(X, y, test_size=0.2, random_state=42):
     if optimal_features:
         print("\nAnalyzing selected features by category:")
         
-        # Economy features
-        economy_features = [f for f in optimal_features if any(term in f.lower() for term in 
+        # Check if optimal_features contains integers or indices instead of feature names
+        if optimal_features and isinstance(optimal_features[0], int):
+            # Convert indices to feature names
+            optimal_feature_names = [list(df.columns)[i] for i in optimal_features]
+        else:
+            optimal_feature_names = optimal_features
+        
+        # Economy features - use str() for safety
+        economy_features = [f for f in optimal_feature_names if any(term in str(f).lower() for term in 
                                                         ['eco', 'pistol', 'buy', 'economy'])]
         print(f"\nEconomy features ({len(economy_features)}/{len(economy_features)}): ")
         for feature in economy_features[:10]:  # Show first 10
             print(f"  - {feature}")
         
-        # Player features
-        player_features = [f for f in optimal_features if any(term in f.lower() for term in 
+        # Player features - use str() for safety
+        player_features = [f for f in optimal_feature_names if any(term in str(f).lower() for term in 
                                                       ['rating', 'acs', 'kd', 'adr', 'headshot',
                                                        'clutch', 'aces', 'first_blood'])]
         print(f"\nPlayer features ({len(player_features)}/{len(player_features)}): ")
         for feature in player_features[:10]:  # Show first 10
             print(f"  - {feature}")
         
-        # Map features
-        map_features = [f for f in optimal_features if 'map_' in f.lower()]
+        # Map features - use str() for safety
+        map_features = [f for f in optimal_feature_names if 'map_' in str(f).lower()]
         print(f"\nMap features ({len(map_features)}/{len(map_features)}): ")
         for feature in map_features[:10]:  # Show first 10
             print(f"  - {feature}")
         
         # Calculate retention percentage by category
-        all_economy_features = [f for f in df.columns if any(term in f.lower() for term in 
+        all_economy_features = [f for f in df.columns if any(term in str(f).lower() for term in 
                                                   ['eco', 'pistol', 'buy', 'economy'])]
-        all_player_features = [f for f in df.columns if any(term in f.lower() for term in 
+        all_player_features = [f for f in df.columns if any(term in str(f).lower() for term in 
                                                  ['rating', 'acs', 'kd', 'adr', 'headshot',
                                                   'clutch', 'aces', 'first_blood'])]
-        all_map_features = [f for f in df.columns if 'map_' in f.lower()]
+        all_map_features = [f for f in df.columns if 'map_' in str(f).lower()]
         
         economy_retention = len(economy_features) / max(len(all_economy_features), 1) * 100
         player_retention = len(player_features) / max(len(all_player_features), 1) * 100
@@ -2906,17 +3880,24 @@ def select_optimal_features(X, y, test_size=0.2, random_state=42):
         print(f"  Player features: {player_retention:.1f}%")
         print(f"  Map features: {map_retention:.1f}%")
         
-        # Prepare selected feature dataset
-        selected_features_indices = [list(df.columns).index(feature) for feature in optimal_features]
+        # Prepare selected feature dataset - use original optimal_features
+        if isinstance(optimal_features[0], int):
+            # If optimal_features contains indices
+            selected_features_indices = optimal_features
+        else:
+            # If optimal_features contains feature names
+            selected_features_indices = [list(df.columns).index(feature) for feature in optimal_features]
+            
         X_selected = X_arr[:, selected_features_indices]
         
         # Scale selected features
         scaler_selected = StandardScaler()
         X_selected_scaled = scaler_selected.fit_transform(X_selected)
         
+        # Return original optimal_features (names or indices) to maintain consistency
         return X_selected_scaled, optimal_features, scaler_selected
     
-    return X_scaled, list(df.columns), scaler        
+    return X_scaled, list(df.columns), scaler 
 
 def optimize_model_pipeline(X, y, test_size=0.2, random_state=42):
     """Complete pipeline to optimize model with feature selection and regularization."""
@@ -3471,6 +4452,239 @@ def train_model_with_learning_curves(X, y, test_size=0.2, random_state=42):
     
     return model, scaler, list(df.columns), learning_curve_data
 
+# 4. Update the main function to use cross-validation and ensembling
+def train_and_evaluate_model(X, y, n_splits=5, random_state=42):
+    """Complete pipeline for training with cross-validation and ensembling."""
+    # Train with cross-validation
+    ensemble_models, stable_features, avg_metrics, fold_metrics, scaler = train_with_cross_validation(
+        X, y, n_splits=n_splits, random_state=random_state
+    )
+    
+    # Save the ensemble models
+    for i, model in enumerate(ensemble_models):
+        model.save(f'valorant_model_fold_{i+1}.h5')
+    
+    # Save the stable features
+    with open('stable_features.pkl', 'wb') as f:
+        pickle.dump(stable_features, f)
+    
+    # Save the scaler
+    with open('ensemble_scaler.pkl', 'wb') as f:
+        pickle.dump(scaler, f)
+    
+    # Save the ensemble metadata
+    ensemble_metadata = {
+        'n_models': len(ensemble_models),
+        'stable_features': stable_features,
+        'avg_metrics': avg_metrics,
+        'fold_metrics': fold_metrics
+    }
+    
+    with open('ensemble_metadata.pkl', 'wb') as f:
+        pickle.dump(ensemble_metadata, f)
+    
+    print("\n" + "="*60)
+    print("ENSEMBLE MODEL SAVED")
+    print("="*60)
+    print(f"Number of models in ensemble: {len(ensemble_models)}")
+    print(f"Number of stable features: {len(stable_features)}")
+    print(f"Average accuracy: {avg_metrics['accuracy']:.4f}")
+    
+    return ensemble_models, stable_features, scaler, ensemble_metadata
+
+def predict_match_with_ensemble(team1_name, team2_name):
+    """Predict match outcome using the ensemble model for improved stability."""
+    print(f"Predicting match between {team1_name} and {team2_name} using ensemble model...")
+    
+    # Get team IDs
+    team1_id = get_team_id(team1_name)
+    team2_id = get_team_id(team2_name)
+    
+    if not team1_id or not team2_id:
+        print("Could not find one or both teams. Please check team names.")
+        return None
+
+    # Fetch team details to get team tags
+    team1_details, team1_tag = fetch_team_details(team1_id)
+    team2_details, team2_tag = fetch_team_details(team2_id)    
+    print(f"Team tags: {team1_name} = {team1_tag}, {team2_name} = {team2_tag}")
+    
+    # Fetch match histories
+    team1_history = fetch_team_match_history(team1_id)
+    team2_history = fetch_team_match_history(team2_id)
+    
+    if not team1_history or not team2_history:
+        print("Could not fetch match history for one or both teams.")
+        return None
+    
+    # Parse match data
+    team1_matches = parse_match_data(team1_history, team1_name)
+    team2_matches = parse_match_data(team2_history, team2_name)
+
+    # Store team tags for use in economy data matching
+    for match in team1_matches:
+        match['team_tag'] = team1_tag
+    
+    for match in team2_matches:
+        match['team_tag'] = team2_tag
+    
+    # Fetch player stats for both teams
+    team1_player_stats = fetch_team_player_stats(team1_id)
+    team2_player_stats = fetch_team_player_stats(team2_id)
+
+    # Calculate team stats with economy data
+    team1_stats = calculate_team_stats_with_economy(team1_matches, team1_player_stats)
+    team2_stats = calculate_team_stats_with_economy(team2_matches, team2_player_stats)
+    
+    # Store team tags in the stats
+    team1_stats['team_tag'] = team1_tag
+    team2_stats['team_tag'] = team2_tag
+    
+    # Extract additional metrics
+    team1_map_performance = extract_map_performance(team1_matches)
+    team2_map_performance = extract_map_performance(team2_matches)
+    
+    team1_tournament_performance = extract_tournament_performance(team1_matches)
+    team2_tournament_performance = extract_tournament_performance(team2_matches)
+    
+    team1_performance_trends = analyze_performance_trends(team1_matches)
+    team2_performance_trends = analyze_performance_trends(team2_matches)
+    
+    team1_opponent_quality = analyze_opponent_quality(team1_matches, team1_id)
+    team2_opponent_quality = analyze_opponent_quality(team2_matches, team2_id)
+    
+    # Add derived metrics to team stats
+    team1_stats['map_performance'] = team1_map_performance
+    team2_stats['map_performance'] = team2_map_performance
+    
+    team1_stats['tournament_performance'] = team1_tournament_performance
+    team2_stats['tournament_performance'] = team2_tournament_performance
+    
+    team1_stats['performance_trends'] = team1_performance_trends
+    team2_stats['performance_trends'] = team2_performance_trends
+    
+    team1_stats['opponent_quality'] = team1_opponent_quality
+    team2_stats['opponent_quality'] = team2_opponent_quality
+    
+    # Prepare data for model
+    all_features = prepare_data_for_model_with_economy(team1_stats, team2_stats)
+    
+    if not all_features:
+        print("Could not prepare features for prediction.")
+        return None
+    
+      # Load ensemble models
+    ensemble_models = []
+    for i in range(5):  # Assuming 5-fold CV by default
+        try:
+            model = load_model(f'valorant_model_fold_{i+1}.h5')
+            ensemble_models.append(model)
+        except:
+            print(f"Could not load model for fold {i+1}")
+    
+    if not ensemble_models:
+        print("No ensemble models found. Please train an ensemble first.")
+        return None
+    
+    # Load stable features
+    try:
+        with open('stable_features.pkl', 'rb') as f:
+            stable_features = pickle.load(f)
+    except:
+        print("Could not load stable features. Using all features.")
+        stable_features = None
+    
+    # Load scaler
+    try:
+        with open('ensemble_scaler.pkl', 'rb') as f:
+            scaler = pickle.load(f)
+    except:
+        print("Could not load scaler. Please train an ensemble first.")
+        return None
+    
+    # Make prediction using ensemble
+    ensemble_result = predict_with_ensemble(
+        ensemble_models, all_features, stable_features, scaler
+    )
+    
+    # Prepare result
+    prediction = ensemble_result['prediction']
+    confidence = 1.0 - ensemble_result['confidence_interval']  
+    
+    result = {
+        'team1': team1_name,
+        'team2': team2_name,
+        'team1_win_probability': float(prediction),
+        'team2_win_probability': float(1 - prediction),
+        'predicted_winner': team1_name if prediction > 0.5 else team2_name,
+        'confidence': float(confidence),
+        'team1_stats_summary': {
+            'matches_played': team1_stats['matches'] if isinstance(team1_stats['matches'], int) else len(team1_stats['matches']),
+            'win_rate': team1_stats['win_rate'],
+            'recent_form': team1_stats['recent_form'],
+            'avg_player_rating': team1_stats.get('avg_player_rating', 0),
+            'star_player': team1_stats.get('player_stats', {}).get('star_player_name', ''),
+            'star_player_rating': team1_stats.get('star_player_rating', 0),
+            'pistol_win_rate': team1_stats.get('pistol_win_rate', 0),
+            'eco_win_rate': team1_stats.get('eco_win_rate', 0),
+            'full_buy_win_rate': team1_stats.get('full_buy_win_rate', 0),
+            'economy_efficiency': team1_stats.get('economy_efficiency', 0)
+        },
+        'team2_stats_summary': {
+            'matches_played': team2_stats['matches'] if isinstance(team2_stats['matches'], int) else len(team2_stats['matches']),
+            'win_rate': team2_stats['win_rate'],
+            'recent_form': team2_stats['recent_form'],
+            'avg_player_rating': team2_stats.get('avg_player_rating', 0),
+            'star_player': team2_stats.get('player_stats', {}).get('star_player_name', ''),
+            'star_player_rating': team2_stats.get('star_player_rating', 0),
+            'pistol_win_rate': team2_stats.get('pistol_win_rate', 0),
+            'eco_win_rate': team2_stats.get('eco_win_rate', 0),
+            'full_buy_win_rate': team2_stats.get('full_buy_win_rate', 0),
+            'economy_efficiency': team2_stats.get('economy_efficiency', 0)
+        },
+        'model_info': {
+            'features_used': len(feature_names) if feature_names else 'all',
+            'feature_names': feature_names if feature_names else 'all',
+            'model_type': 'optimized' if os.path.exists('valorant_model_optimized.h5') else 'regular'
+        }
+    }
+    
+    # Export prediction data if requested
+    if export_data:
+        export_prediction_data_with_economy(result, team1_stats, team2_stats)
+    
+    # Display detailed results if requested
+    if display_details:
+        display_prediction_results_with_economy(result, team1_stats, team2_stats)
+        
+        # Additionally display model information
+        print("\n" + "="*60)
+        print("MODEL INFORMATION")
+        print("="*60)
+        print(f"Model type: {result['model_info']['model_type']}")
+        print(f"Features used: {result['model_info']['features_used']}")
+        
+        if feature_names and len(feature_names) <= 20:
+            print("\nSelected features:")
+            for feature in feature_names:
+                print(f"  - {feature}")
+        elif feature_names:
+            print(f"\nUsing {len(feature_names)} selected features")
+            
+            # Count feature types
+            economy_features = sum(1 for f in feature_names if any(term in f.lower() for term in 
+                                                     ['eco', 'pistol', 'buy', 'economy']))
+            player_features = sum(1 for f in feature_names if any(term in f.lower() for term in 
+                                                    ['rating', 'acs', 'kd', 'adr', 'headshot',
+                                                     'clutch', 'aces', 'first_blood']))
+            map_features = sum(1 for f in feature_names if 'map_' in f.lower())
+            
+            print(f"  Economy features: {economy_features}")
+            print(f"  Player features: {player_features}")
+            print(f"  Map features: {map_features}")
+    
+    return result
+
 def predict_match_with_optimized_model(team1_name, team2_name, model=None, scaler=None, feature_names=None, export_data=True, display_details=True):
     """Predict match outcome using the optimized model with selected features and regularization."""
     print(f"Predicting match between {team1_name} and {team2_name} using optimized model...")
@@ -3601,15 +4815,66 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     # Make prediction
     prediction = model.predict(X)[0][0]
     
+    # --- FIX: Check prediction against team stats to ensure correct interpretation ---
+    # For debugging, print the raw prediction
+    print(f"Raw model prediction (team1 win probability): {prediction:.6f}")
+    
+    # Evaluate key differential metrics to determine if prediction is "flipped"
+    team1_advantage_count = 0
+    team2_advantage_count = 0
+    
+    # Check win rate
+    if team1_stats.get('win_rate', 0) > team2_stats.get('win_rate', 0):
+        team1_advantage_count += 1
+    else:
+        team2_advantage_count += 1
+    
+    # Check recent form
+    if team1_stats.get('recent_form', 0) > team2_stats.get('recent_form', 0):
+        team1_advantage_count += 1
+    else:
+        team2_advantage_count += 1
+    
+    # Check player ratings
+    if team1_stats.get('avg_player_rating', 0) > team2_stats.get('avg_player_rating', 0):
+        team1_advantage_count += 1
+    else:
+        team2_advantage_count += 1
+    
+    # Check head-to-head
+    h2h_win_rate = 0.5  # Default to even
+    if 'opponent_stats' in team1_stats and team2_name in team1_stats['opponent_stats']:
+        h2h_win_rate = team1_stats['opponent_stats'][team2_name].get('win_rate', 0.5)
+    
+    if h2h_win_rate > 0.5:
+        team1_advantage_count += 2  # Give extra weight to head-to-head
+    elif h2h_win_rate < 0.5:
+        team2_advantage_count += 2
+    
+    # Determine if prediction seems flipped
+    team1_should_be_favored = team1_advantage_count > team2_advantage_count
+    prediction_favors_team1 = prediction > 0.5
+    
+    print(f"Team1 advantages: {team1_advantage_count}, Team2 advantages: {team2_advantage_count}")
+    print(f"Team1 should be favored based on stats: {team1_should_be_favored}")
+    print(f"Prediction favors Team1: {prediction_favors_team1}")
+    
+    # Fix for "flipped" predictions
+    adjusted_prediction = prediction
+    if team1_should_be_favored != prediction_favors_team1:
+        print("WARNING: Model prediction appears to be inverted based on team statistics!")
+        print(f"Adjusting prediction from {prediction:.4f} to {1-prediction:.4f}")
+        adjusted_prediction = 1 - prediction
+    
     # Calculate confidence
-    confidence = max(prediction, 1 - prediction)
+    confidence = max(adjusted_prediction, 1 - adjusted_prediction)
     
     result = {
         'team1': team1_name,
         'team2': team2_name,
-        'team1_win_probability': float(prediction),
-        'team2_win_probability': float(1 - prediction),
-        'predicted_winner': team1_name if prediction > 0.5 else team2_name,
+        'team1_win_probability': float(adjusted_prediction),
+        'team2_win_probability': float(1 - adjusted_prediction),
+        'predicted_winner': team1_name if adjusted_prediction > 0.5 else team2_name,
         'confidence': float(confidence),
         'team1_stats_summary': {
             'matches_played': team1_stats['matches'] if isinstance(team1_stats['matches'], int) else len(team1_stats['matches']),
@@ -3638,7 +4903,8 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
         'model_info': {
             'features_used': len(feature_names) if feature_names else 'all',
             'feature_names': feature_names if feature_names else 'all',
-            'model_type': 'optimized' if os.path.exists('valorant_model_optimized.h5') else 'regular'
+            'model_type': 'optimized' if os.path.exists('valorant_model_optimized.h5') else 'regular',
+            'prediction_adjusted': team1_should_be_favored != prediction_favors_team1
         }
     }
     
@@ -3675,6 +4941,54 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
             print(f"  Economy features: {economy_features}")
             print(f"  Player features: {player_features}")
             print(f"  Map features: {map_features}")
+        
+        # Add information about the prediction adjustment
+        if result['model_info']['prediction_adjusted']:
+            print("\nNOTE: Original model prediction was adjusted due to inconsistency with team statistics.")
+            print(f"Raw prediction: {prediction:.4f}, Adjusted: {adjusted_prediction:.4f}")
+    
+    return result
+
+# 3. Implement an ensemble prediction method
+def predict_with_ensemble(ensemble_models, features, stable_features, scaler):
+    """Make predictions using an ensemble of models for improved stability."""
+    # Prepare features
+    features_df = pd.DataFrame([features])
+    
+    # Select only stable features
+    if stable_features:
+        # Add missing features with default values
+        for feature in stable_features:
+            if feature not in features_df.columns:
+                features_df[feature] = 0
+        
+        # Keep only the stable features
+        features_df = features_df[stable_features]
+    
+    # Scale features
+    X = scaler.transform(features_df.values)
+    
+    # Make predictions with each model in the ensemble
+    all_predictions = []
+    for model in ensemble_models:
+        pred = model.predict(X)[0][0]
+        all_predictions.append(pred)
+    
+    # Calculate ensemble prediction (mean of all models)
+    ensemble_prediction = np.mean(all_predictions)
+    
+    # Calculate prediction variance (for confidence assessment)
+    prediction_variance = np.var(all_predictions)
+    
+    # Calculate confidence interval (95%)
+    confidence_interval = 1.96 * np.sqrt(prediction_variance / len(ensemble_models))
+    
+    result = {
+        'prediction': float(ensemble_prediction),
+        'variance': float(prediction_variance),
+        'confidence_interval': float(confidence_interval),
+        'individual_predictions': all_predictions
+    }
     
     return result
 
@@ -3784,14 +5098,14 @@ def visualize_feature_importance(importance_report):
     if importance_report['economy_features']:
         print("\nTop Economy Features:")
         for i, (feature, importance) in enumerate(sorted(importance_report['economy_features'].items(), 
-                                                         key=lambda x: x[1], reverse=True)[:5]):
+                                                         key=lambda x: x[1], reverse=True)[:10]):
             print(f"{i+1}. {feature}: {importance:.3f}")
     
     # Print top player features
     if importance_report['player_features']:
         print("\nTop Player Features:")
         for i, (feature, importance) in enumerate(sorted(importance_report['player_features'].items(), 
-                                                         key=lambda x: x[1], reverse=True)[:5]):
+                                                         key=lambda x: x[1], reverse=True)[:10]):
             print(f"{i+1}. {feature}: {importance:.3f}")
 
 def analyze_performance_trends(team_matches, window_sizes=[5, 10, 20]):
@@ -3885,7 +5199,7 @@ def analyze_performance_trends(team_matches, window_sizes=[5, 10, 20]):
         
         trends['recency_weighted_win_rate'] = weighted_sum / weight_sum if weight_sum > 0 else 0
     
-    return trends 
+    return trends
 
 # Update visualize_prediction to include player stats
 def visualize_prediction_with_economy(prediction_result):
@@ -4088,7 +5402,7 @@ def analyze_upcoming_matches():
             team2_name = match['teams'][1].get('name', '')
             
             if team1_name and team2_name:
-                prediction = predict_match_with_economy(team1_name, team2_name, model, scaler, feature_names)
+                prediction = predict_match_with_optimized_model(team1_name, team2_name, model, scaler, feature_names)
                 
                 if prediction:
                     # Add match details to prediction
@@ -4360,7 +5674,7 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
             continue
         
         # Get prediction with full features
-        prediction = predict_match_with_economy(team1_name, team2_name, model, scaler, feature_names)
+        prediction = predict_match_with_optimized_model(team1_name, team2_name, model, scaler, feature_names)
         
         if prediction:
             team1_win_prob = prediction['team1_win_probability']
@@ -4573,8 +5887,9 @@ def create_deep_learning_model_with_economy(input_dim):
     
     # Compile model
     model.compile(loss='binary_crossentropy', 
-                 optimizer=Adam(learning_rate=0.0005),
+                 optimizer=Adam(learning_rate=0.0005, clipnorm=1.0),  # Add clipnorm
                  metrics=['accuracy'])
+    
     
     # Print model summary to see the expanded architecture
     print("\nModel Architecture:")
@@ -4915,6 +6230,11 @@ def main():
     parser.add_argument("--economy", action="store_true", help="Include economy data in analysis")
     parser.add_argument("--learning-curves", action="store_true", help="Generate detailed learning curves")
     parser.add_argument("--verbose", action="store_true", help="Show detailed progress")
+    parser.add_argument("--cross-validate", action="store_true", 
+                      help="Train with cross-validation and create ensemble model")
+    parser.add_argument("--folds", type=int, default=5, 
+                      help="Number of folds for cross-validation")   
+
 
     args = parser.parse_args()
     
@@ -4969,7 +6289,7 @@ def main():
             # If no teams with rankings were found, just take the first 50 teams
             if not top_teams:
                 print("No teams with rankings found. Using the first 20 teams instead.")
-                top_teams = teams_data['data'][:30]
+                top_teams = teams_data['data'][:40]
         
         print(f"Selected {len(top_teams)} teams for training data.")
         
@@ -5116,6 +6436,31 @@ def main():
             print("Not enough training data. Please collect more match data.")
             return
         
+    # In your if-else logic, add:
+    if args.cross_validate:
+        print(f"Training with {args.folds}-fold cross-validation and ensemble modeling...")
+        
+        team_data_collection = debug_and_fix_match_data(team_data_collection)   
+
+        # Build training dataset
+        print("\nBuilding training dataset with player and economy features...")
+        X, y = build_training_dataset_with_economy(team_data_collection)
+        
+        print(f"Built training dataset with {len(X)} samples.")
+        
+        # Check if we have enough data
+        if len(X) < args.folds * 2:  # Need at least 2 samples per fold
+            print(f"Not enough training data for {args.folds}-fold cross-validation.")
+            print(f"Need at least {args.folds * 2} samples, but only have {len(X)}.")
+            return
+            
+        # Train with cross-validation
+        ensemble_models, stable_features, scaler, ensemble_metadata = train_and_evaluate_model(
+            X, y, n_splits=args.folds, random_state=42
+        )
+        
+        print("Ensemble model training complete.")
+
         if args.learning_curves:
             # Train model with detailed learning curves for overfitting detection
             print("\nTraining model with detailed learning curves for overfitting detection...")
@@ -5138,15 +6483,18 @@ def main():
         print("Model training complete.")
     
     elif args.predict and args.team1 and args.team2:
-        # Check if optimized model files exist
-        optimized_model_exists = os.path.exists('valorant_model_optimized.h5')
+        # Check if ensemble models exist
+        ensemble_exists = any(os.path.exists(f'valorant_model_fold_{i+1}.h5') for i in range(5))
         
-        if optimized_model_exists:
+        if ensemble_exists:
+            print(f"Predicting match between {args.team1} and {args.team2} using ensemble model...")
+            prediction = predict_match_with_ensemble(args.team1, args.team2)
+        elif os.path.exists('valorant_model_optimized.h5'):
             print(f"Predicting match between {args.team1} and {args.team2} using optimized model...")
             prediction = predict_match_with_optimized_model(args.team1, args.team2)
         else:
             print(f"Predicting match between {args.team1} and {args.team2} with standard model...")
-            prediction = predict_match_with_economy(args.team1, args.team2)
+            prediction = predict_match_with_optimized_model(args.team1, args.team2)
         
         if prediction:
             visualize_prediction_with_economy(prediction)

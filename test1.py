@@ -112,7 +112,7 @@ def fetch_team_details(team_id):
     team_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     # Extract the team tag if available - it's in data.info.tag
     team_tag = None
@@ -192,6 +192,221 @@ def fetch_team_player_stats(team_id):
     
     print(f"Successfully fetched statistics for {len(player_stats)} out of {len(players)} players")
     return player_stats
+
+def extract_map_statistics(team_stats_data):
+    """
+    Extract detailed map statistics from team stats API response.
+    
+    Args:
+        team_stats_data (dict): Data from team-stats API endpoint
+        
+    Returns:
+        dict: Processed map statistics with various metrics
+    """
+    if not team_stats_data or 'data' not in team_stats_data:
+        return {}
+    
+    maps_data = team_stats_data['data']
+    map_statistics = {}
+    
+    for map_entry in maps_data:
+        map_name = map_entry.get('map', '').split(' ')[0]  # Extract just the map name without count
+        if not map_name:
+            continue
+            
+        # Get the main stats for this map
+        stats = map_entry.get('stats', [])
+        if not stats or len(stats) == 0:
+            continue
+            
+        main_stats = stats[0]  # First entry contains the summary stats
+        
+        # Extract basic win/loss statistics
+        win_percentage = main_stats.get('WIN%', '0%').strip('%')
+        try:
+            win_percentage = float(win_percentage) / 100
+        except (ValueError, TypeError):
+            win_percentage = 0
+
+        
+        wins = int(main_stats.get('W', '0'))
+        losses = int(main_stats.get('L', '0'))
+        
+        # Extract side preferences and win rates
+        atk_first = int(main_stats.get('ATK 1st', '0'))
+        def_first = int(main_stats.get('DEF 1st', '0'))
+        
+        atk_win_rate = main_stats.get('ATK RWin%', '0%').strip('%')
+        atk_win_rate = float(atk_win_rate) / 100 if atk_win_rate else 0
+        
+        def_win_rate = main_stats.get('DEF RWin%', '0%').strip('%')
+        def_win_rate = float(def_win_rate) / 100 if def_win_rate else 0
+        
+        # Calculate round statistics
+        atk_rounds_won = int(main_stats.get('RW', '0')) 
+        atk_rounds_lost = int(main_stats.get('RL', '0'))
+        
+        # Process agent compositions
+        agent_compositions = main_stats.get('Agent Compositions', [])
+        
+        # Group agents into actual team compositions (5 agents per comp)
+        team_compositions = []
+        current_comp = []
+        
+        for agent in agent_compositions:
+            current_comp.append(agent)
+            if len(current_comp) == 5:
+                team_compositions.append(current_comp)
+                current_comp = []
+        
+        # Calculate agent usage frequency
+        agent_usage = {}
+        for comp in team_compositions:
+            for agent in comp:
+                agent_usage[agent] = agent_usage.get(agent, 0) + 1
+        
+        # Sort agents by usage
+        sorted_agents = sorted(agent_usage.items(), key=lambda x: x[1], reverse=True)
+        
+        # Process match history with detailed results
+        match_history = []
+        for i in range(1, len(stats)):
+            match_stat = stats[i]
+            match_details = match_stat.get('Expand', '')
+            
+            if not match_details:
+                continue
+                
+            # Parse match details: date, opponent, score, side scores, event type
+            parts = match_details.split()
+            
+            try:
+                date = parts[0] if len(parts) > 0 else ''
+                opponent = ' '.join(parts[1:parts.index(parts[next(i for i, p in enumerate(parts) if '/' in p and i > 0)])]) if len(parts) > 1 else ''
+                
+                # Find score parts using pattern matching
+                score_index = next((i for i, p in enumerate(parts) if '/' in p and i > 0), -1)
+                if score_index != -1:
+                    score_parts = parts[score_index].split('/')
+                    team_score = int(score_parts[0])
+                    opponent_score = int(score_parts[1])
+                else:
+                    team_score = 0
+                    opponent_score = 0
+                
+                # Parse side scores and overtime
+                side_scores = {}
+                sides = ['atk', 'def', 'OT']
+                for side in sides:
+                    side_index = next((i for i, p in enumerate(parts) if p.lower() == side), -1)
+                    if side_index != -1 and side_index + 1 < len(parts):
+                        side_score_part = parts[side_index + 1]
+                        if '/' in side_score_part:
+                            side_score_parts = side_score_part.split('/')
+                            side_scores[side] = {
+                                'won': int(side_score_parts[0]),
+                                'lost': int(side_score_parts[1])
+                            }
+                
+                # Extract event type
+                event_type = ' '.join(parts[parts.index(sides[-1]) + 2:]) if sides[-1] in parts else ''
+                if not event_type and sides[1] in parts:
+                    event_type = ' '.join(parts[parts.index(sides[1]) + 2:])
+                
+                # Check if match went to overtime
+                went_to_ot = 'OT' in parts
+                
+                match_result = {
+                    'date': date,
+                    'opponent': opponent,
+                    'team_score': team_score,
+                    'opponent_score': opponent_score,
+                    'won': team_score > opponent_score,
+                    'side_scores': side_scores,
+                    'went_to_ot': went_to_ot,
+                    'event_type': event_type
+                }
+                
+                match_history.append(match_result)
+            except Exception as e:
+                print(f"Error parsing match details '{match_details}': {e}")
+        
+        # Calculate additional metrics
+        overtime_matches = sum(1 for m in match_history if m.get('went_to_ot', False))
+        overtime_wins = sum(1 for m in match_history if m.get('went_to_ot', False) and m.get('won', False))
+        
+        playoff_matches = sum(1 for m in match_history if 'Playoff' in m.get('event_type', ''))
+        playoff_wins = sum(1 for m in match_history if 'Playoff' in m.get('event_type', '') and m.get('won', False))
+        
+        # Calculate recent form (last 3 matches)
+        recent_matches = match_history[:3] if len(match_history) >= 3 else match_history
+        recent_win_rate = sum(1 for m in recent_matches if m.get('won', False)) / len(recent_matches) if recent_matches else 0
+        
+        # Store all processed data
+        map_statistics[map_name] = {
+            'win_percentage': win_percentage,
+            'wins': wins,
+            'losses': losses,
+            'matches_played': wins + losses,
+            'atk_first': atk_first,
+            'def_first': def_first,
+            'atk_win_rate': atk_win_rate,
+            'def_win_rate': def_win_rate,
+            'atk_rounds_won': atk_rounds_won,
+            'atk_rounds_lost': atk_rounds_lost,
+            'side_preference': 'Attack' if atk_win_rate > def_win_rate else 'Defense',
+            'side_preference_strength': abs(atk_win_rate - def_win_rate),
+            'agent_compositions': team_compositions,
+            'agent_usage': dict(sorted_agents),
+            'match_history': match_history,
+            'overtime_stats': {
+                'matches': overtime_matches,
+                'wins': overtime_wins,
+                'win_rate': overtime_wins / overtime_matches if overtime_matches > 0 else 0
+            },
+            'playoff_stats': {
+                'matches': playoff_matches,
+                'wins': playoff_wins,
+                'win_rate': playoff_wins / playoff_matches if playoff_matches > 0 else 0
+            },
+            'recent_form': recent_win_rate,
+            'composition_variety': len(team_compositions),
+            'most_played_composition': team_compositions[0] if team_compositions else [],
+            'most_played_agents': [agent for agent, count in sorted_agents[:5]] if sorted_agents else []
+        }
+    
+    return map_statistics
+
+def fetch_team_map_statistics(team_id):
+    """
+    Fetch detailed map statistics for a team using the team-stats API endpoint.
+    
+    Args:
+        team_id (str): The ID of the team
+        
+    Returns:
+        dict: Processed map statistics with various metrics
+    """
+    if not team_id:
+        print("Invalid team ID")
+        return {}
+    
+    print(f"Fetching map statistics for team ID: {team_id}")
+    response = requests.get(f"{API_URL}/team-stats/{team_id}")
+    
+    if response.status_code != 200:
+        print(f"Error fetching team stats for {team_id}: {response.status_code}")
+        return {}
+    
+    team_stats_data = response.json()
+    
+
+    
+    # Process the data
+    map_statistics = extract_map_statistics(team_stats_data)
+    
+    print(f"Processed statistics for {len(map_statistics)} maps")
+    return map_statistics
 
 def calculate_team_player_stats(player_stats_list):
     """
@@ -332,7 +547,7 @@ def fetch_team_match_history(team_id):
     match_history = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return match_history
 
@@ -351,7 +566,7 @@ def fetch_match_details(match_id):
     match_details = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return match_details
 
@@ -367,7 +582,7 @@ def fetch_events():
     events_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return events_data.get('data', [])
 
@@ -383,7 +598,7 @@ def fetch_upcoming_matches():
     matches_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return matches_data.get('data', [])
 
@@ -590,12 +805,29 @@ def calculate_team_stats(matches, player_stats=None):
 
 calculate_team_stats_original = calculate_team_stats
 
+def fetch_match_economy_details(match_id):
+    """Fetch economic details for a specific match."""
+    if not match_id:
+        return None
+    
+    print(f"Fetching economy details for match ID: {match_id}")
+    response = requests.get(f"{API_URL}/match-details/{match_id}?tab=economy")
+    
+    if response.status_code != 200:
+        print(f"Error fetching economy details for match {match_id}: {response.status_code}")
+        return None
+    
+    economy_details = response.json()
+
+    # Be nice to the API
+     
+    return economy_details
+
 def calculate_team_stats_with_economy(matches, player_stats=None):
     """Calculate comprehensive statistics for a team from its matches, including economy data."""
     # First use the original function to get base stats
     base_stats = calculate_team_stats_original(matches, player_stats)
     
-    # Now add economy-specific metrics
     if not matches:
         return base_stats
     
@@ -610,9 +842,17 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         'total_economy_matches': 0
     }
     
-    # Get team tag from the matches if available
-    team_tag = matches[0].get('team_tag') if matches else None
-    team_name = matches[0].get('team') if matches else None
+    # Get team tag or name from the matches if available
+    team_tag = None
+    team_name = None
+    team_id = None
+    
+    if matches:
+        team_tag = matches[0].get('team_tag')
+        team_name = matches[0].get('team_name')
+        team_id = matches[0].get('team_id')
+    
+    print(f"Processing economy data for team: {team_name} (Tag: {team_tag}, ID: {team_id})")
     
     # Track aggregated economy stats across matches
     total_pistol_won = 0
@@ -628,41 +868,59 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
     total_efficiency_sum = 0
     economy_matches_count = 0
     
-    # Process each match
+    # Process each match to extract economy data
     for match in matches:
         match_id = match.get('match_id')
         if not match_id:
             continue
             
-        # Get team name and tag for better matching
-        team_name = match.get('team', '')
-        team_tag = match.get('team_tag')
-            
-        # Get economy data
-        economy_data = fetch_match_economy_details(match_id)
-        if not economy_data or 'data' not in economy_data or 'teams' not in economy_data['data']:
-            continue
-            
-        # Extract team-specific economy data - Try with tag first, then name if tag fails
-        our_team_metrics = extract_economy_metrics(economy_data, team_tag)
+        # Get team tag and name for better matching
+        match_team_tag = match.get('team_tag', team_tag)
+        match_team_name = match.get('team_name', team_name)
         
-        # If tag doesn't work, try with the team name
-        if not our_team_metrics and team_name:
-            print(f"Using team name '{team_name}' for economy data (no tag found)")
-            our_team_metrics = extract_economy_metrics(economy_data, team_name)
+        # Debug output
+        print(f"Processing match ID {match_id} economy data for team: {match_team_name} (Tag: {match_team_tag})")
             
-        if not our_team_metrics:
-            if team_tag:
-                print(f"Looking for team with tag: {team_tag}")
-                print(f"No team found with tag: {team_tag}")
-            if team_name:
-                print(f"Warning: No economy data found for team '{team_name}'")
-            print(f"Fetching economy details for match ID: {match_id}")
+        # Get economy data with additional debug output
+        print(f"Fetching economy details for match ID: {match_id}")
+        economy_data = fetch_match_economy_details(match_id)
+        
+        if not economy_data:
+            print(f"No economy data returned for match ID: {match_id}")
             continue
+            
+        if 'data' not in economy_data:
+            print(f"No 'data' field in economy response for match ID: {match_id}")
+            continue
+            
+        if 'teams' not in economy_data['data']:
+            print(f"No 'teams' field in economy data for match ID: {match_id}")
+            continue
+            
+        # Try to use team_tag first if available
+        team_identifier = match_team_tag if match_team_tag else match_team_name
+        
+        if not team_identifier:
+            print(f"Warning: No team identifier (tag or name) available for match ID: {match_id}")
+            continue
+            
+        # Debug: show teams in economy data
+        teams_in_data = [team.get('name', 'Unknown') for team in economy_data['data']['teams']]
+        print(f"Teams in economy data: {teams_in_data}")
+            
+        # Extract team-specific economy data using the identifier with more debug info
+        print(f"Looking for team with identifier: {team_identifier}")
+        our_team_metrics = extract_economy_metrics(economy_data, team_identifier)
+        
+        if not our_team_metrics:
+            print(f"Warning: No economy metrics extracted for team: {team_identifier}")
+            continue
+        
+        print(f"Successfully extracted economy metrics for match ID: {match_id}")
             
         # Aggregate stats
         total_pistol_won += our_team_metrics.get('pistol_rounds_won', 0)
-        total_pistol_rounds += our_team_metrics.get('total_pistol_rounds', 2)  # Usually 2 pistol rounds per match
+        total_pistol_rounds += our_team_metrics.get('total_pistol_rounds', 2)  # Usually 2 pistol rounds per map
         
         total_eco_won += our_team_metrics.get('eco_won', 0)
         total_eco_rounds += our_team_metrics.get('eco_total', 0)
@@ -679,7 +937,14 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         total_efficiency_sum += our_team_metrics.get('economy_efficiency', 0)
         economy_matches_count += 1
     
-    # Calculate aggregate economy stats
+    # Debug summary
+    print(f"Economy data summary for {team_name}:")
+    print(f"- Economy matches processed: {economy_matches_count}")
+    print(f"- Total pistol rounds: {total_pistol_rounds}, Won: {total_pistol_won}")
+    print(f"- Total eco rounds: {total_eco_rounds}, Won: {total_eco_won}")
+    print(f"- Total full buy rounds: {total_full_buy_rounds}, Won: {total_full_buy_won}")
+    
+    # Calculate aggregate economy stats if we have data
     if economy_matches_count > 0:
         economy_stats['total_economy_matches'] = economy_matches_count
         economy_stats['pistol_win_rate'] = total_pistol_won / total_pistol_rounds if total_pistol_rounds > 0 else 0
@@ -694,9 +959,23 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         economy_stats['high_economy_win_rate'] = (total_semi_buy_won + total_full_buy_won) / (total_semi_buy_rounds + total_full_buy_rounds) if (total_semi_buy_rounds + total_full_buy_rounds) > 0 else 0
         economy_stats['pistol_round_sample_size'] = total_pistol_rounds
         economy_stats['pistol_confidence'] = 1.0 - (1.0 / (1.0 + 0.1 * total_pistol_rounds)) 
+        
+        print(f"Successfully calculated economy stats for {team_name}")
+        print(f"- Pistol win rate: {economy_stats['pistol_win_rate']:.2f}")
+        print(f"- Eco win rate: {economy_stats['eco_win_rate']:.2f}")
+        print(f"- Full buy win rate: {economy_stats['full_buy_win_rate']:.2f}")
+    else:
+        print(f"No economy data calculated for {team_name} - no matches with valid economy data")
     
     # Add economy stats to base stats
     base_stats.update(economy_stats)
+    
+    # Also check for and add map statistics
+    if team_id:
+        map_stats = fetch_team_map_statistics(team_id)
+        if map_stats:
+            base_stats['map_statistics'] = map_stats
+            print(f"Added map statistics for {team_name} ({len(map_stats)} maps)")
     
     return base_stats
 
@@ -1904,6 +2183,81 @@ def prepare_data_for_model_with_economy(team1_stats, team2_stats):
     # Create completely symmetrical features
     features = prepare_fully_symmetrical_data(team1_stats, team2_stats)
     
+    # Add map-specific features if available for both teams
+    if ('map_statistics' in team1_stats and 'map_statistics' in team2_stats and
+        team1_stats['map_statistics'] and team2_stats['map_statistics']):
+        
+        # Find common maps
+        team1_maps = set(team1_stats['map_statistics'].keys())
+        team2_maps = set(team2_stats['map_statistics'].keys())
+        common_maps = team1_maps.intersection(team2_maps)
+        
+        # Add general map statistics
+        features['common_maps_count'] = len(common_maps)
+        features['team1_map_pool_size'] = len(team1_maps)
+        features['team2_map_pool_size'] = len(team2_maps)
+        
+        # Prepare map-specific comparisons
+        for map_name in common_maps:
+            t1_map = team1_stats['map_statistics'][map_name]
+            t2_map = team2_stats['map_statistics'][map_name]
+            
+            # Win percentage comparison
+            features[f'{map_name}_win_rate_diff'] = t1_map['win_percentage'] - t2_map['win_percentage']
+            features[f'better_{map_name}_team1'] = 1 if t1_map['win_percentage'] > t2_map['win_percentage'] else 0
+            
+            # Side preference comparison
+            features[f'{map_name}_side_pref_diff'] = (1 if t1_map['side_preference'] == 'Attack' else -1) - (1 if t2_map['side_preference'] == 'Attack' else -1)
+            features[f'{map_name}_atk_win_rate_diff'] = t1_map['atk_win_rate'] - t2_map['atk_win_rate']
+            features[f'{map_name}_def_win_rate_diff'] = t1_map['def_win_rate'] - t2_map['def_win_rate']
+            
+            # Overtime performance
+            if t1_map['overtime_stats']['matches'] > 0 and t2_map['overtime_stats']['matches'] > 0:
+                features[f'{map_name}_ot_win_rate_diff'] = t1_map['overtime_stats']['win_rate'] - t2_map['overtime_stats']['win_rate']
+            
+            # Recent form on this map
+            features[f'{map_name}_recent_form_diff'] = t1_map['recent_form'] - t2_map['recent_form']
+            
+            # Agent flexibility
+            features[f'{map_name}_comp_variety_diff'] = t1_map['composition_variety'] - t2_map['composition_variety']
+            
+            # Common agents - calculate overlap in most played agents
+            t1_agents = set(t1_map['most_played_agents'])
+            t2_agents = set(t2_map['most_played_agents'])
+            agent_overlap = len(t1_agents.intersection(t2_agents))
+            features[f'{map_name}_agent_overlap'] = agent_overlap
+        
+        # Add strongest/weakest map comparisons
+        if 'strongest_maps' in team1_stats and 'strongest_maps' in team2_stats:
+            t1_strong = set(team1_stats.get('strongest_maps', []))
+            t2_strong = set(team2_stats.get('strongest_maps', []))
+            
+            # Calculate strongest map overlap
+            strong_overlap = len(t1_strong.intersection(t2_strong))
+            features['strong_map_overlap'] = strong_overlap
+            
+            # Calculate if team1's strongest maps are team2's weakest
+            t2_weak = set(team2_stats.get('weakest_maps', []))
+            advantage_maps = len(t1_strong.intersection(t2_weak))
+            features['team1_map_advantage_count'] = advantage_maps
+            
+            # And vice versa
+            t1_weak = set(team1_stats.get('weakest_maps', []))
+            disadvantage_maps = len(t2_strong.intersection(t1_weak))
+            features['team1_map_disadvantage_count'] = disadvantage_maps
+        
+        # Add aggregate map-based metrics
+        if 'avg_map_win_rate' in team1_stats and 'avg_map_win_rate' in team2_stats:
+            features['avg_map_win_rate_diff'] = team1_stats['avg_map_win_rate'] - team2_stats['avg_map_win_rate']
+        
+        if 'avg_atk_win_rate' in team1_stats and 'avg_atk_win_rate' in team2_stats:
+            features['avg_atk_win_rate_diff'] = team1_stats['avg_atk_win_rate'] - team2_stats['avg_atk_win_rate']
+            features['avg_def_win_rate_diff'] = team1_stats['avg_def_win_rate'] - team2_stats['avg_def_win_rate']
+        
+        if 'overtime_win_rate' in team1_stats and 'overtime_win_rate' in team2_stats:
+            features['overtime_win_rate_diff'] = team1_stats['overtime_win_rate'] - team2_stats['overtime_win_rate']
+            features['better_overtime_team1'] = 1 if team1_stats['overtime_win_rate'] > team2_stats['overtime_win_rate'] else 0
+
     # Debug: Check for non-numeric values
     for key, value in list(features.items()):
         if not isinstance(value, (int, float)):
@@ -1915,6 +2269,409 @@ def prepare_data_for_model_with_economy(team1_stats, team2_stats):
     print("===== FEATURE PREPARATION COMPLETE =====\n")
     
     return features
+
+def display_prediction_results_with_economy_and_maps(prediction, team1_stats, team2_stats):
+    """Display detailed prediction results including economy data and map-specific statistics."""
+    # First use the original display function
+    display_prediction_results_with_economy(prediction, team1_stats, team2_stats)
+    
+    # Now add map-specific display
+    if not prediction:
+        return
+    
+    team1 = prediction['team1']
+    team2 = prediction['team2']
+    
+    width = 70  # Total width of the display
+    
+    # Check if map statistics are available
+    if ('map_statistics' in team1_stats and 'map_statistics' in team2_stats and
+        team1_stats['map_statistics'] and team2_stats['map_statistics']):
+        
+        print("\n" + "=" * width)
+        print(f"{' Map Performance Comparison ':=^{width}}")
+        
+        # Find common maps
+        team1_maps = set(team1_stats['map_statistics'].keys())
+        team2_maps = set(team2_stats['map_statistics'].keys())
+        common_maps = sorted(team1_maps.intersection(team2_maps))
+        
+        if common_maps:
+            print(f"{'Map':<10} {'Win Rate':<23} {'ATK Win Rate':<23} {'DEF Win Rate'}")
+            print("-" * width)
+            
+            for map_name in common_maps:
+                t1_map = team1_stats['map_statistics'][map_name]
+                t2_map = team2_stats['map_statistics'][map_name]
+                
+                t1_win = f"{t1_map['win_percentage']*100:.1f}%"
+                t2_win = f"{t2_map['win_percentage']*100:.1f}%"
+                
+                t1_atk = f"{t1_map['atk_win_rate']*100:.1f}%"
+                t2_atk = f"{t2_map['atk_win_rate']*100:.1f}%"
+                
+                t1_def = f"{t1_map['def_win_rate']*100:.1f}%"
+                t2_def = f"{t2_map['def_win_rate']*100:.1f}%"
+                
+                print(f"{map_name:<10} {team1}: {t1_win:<12} {team2}: {t2_win:<7} "
+                      f"{team1}: {t1_atk:<12} {team2}: {t2_atk:<7} "
+                      f"{team1}: {t1_def:<12} {team2}: {t2_def:<7}")
+            
+            # Print side preferences
+            print()
+            print(f"{' Side Preferences ':—^{width}}")
+            for map_name in common_maps:
+                t1_map = team1_stats['map_statistics'][map_name]
+                t2_map = team2_stats['map_statistics'][map_name]
+                
+                t1_pref = t1_map['side_preference']
+                t2_pref = t2_map['side_preference']
+                
+                t1_strength = t1_map['side_preference_strength'] * 100
+                t2_strength = t2_map['side_preference_strength'] * 100
+                
+                print(f"{map_name:<10} {team1}: {t1_pref:<8} ({t1_strength:.1f}% advantage)   "
+                      f"{team2}: {t2_pref:<8} ({t2_strength:.1f}% advantage)")
+            
+            # Print overtime performance
+            print()
+            print(f"{' Overtime Performance ':—^{width}}")
+            for map_name in common_maps:
+                t1_map = team1_stats['map_statistics'][map_name]
+                t2_map = team2_stats['map_statistics'][map_name]
+                
+                t1_ot_matches = t1_map['overtime_stats']['matches']
+                t2_ot_matches = t2_map['overtime_stats']['matches']
+                
+                if t1_ot_matches > 0 or t2_ot_matches > 0:
+                    t1_ot_rate = t1_map['overtime_stats']['win_rate'] * 100 if t1_ot_matches > 0 else 'N/A'
+                    t2_ot_rate = t2_map['overtime_stats']['win_rate'] * 100 if t2_ot_matches > 0 else 'N/A'
+                    
+                    t1_display = f"{t1_ot_rate:.1f}% ({t1_ot_matches} matches)" if t1_ot_matches > 0 else "N/A"
+                    t2_display = f"{t2_ot_rate:.1f}% ({t2_ot_matches} matches)" if t2_ot_matches > 0 else "N/A"
+                    
+                    print(f"{map_name:<10} {team1}: {t1_display:<25} {team2}: {t2_display}")
+            
+            # Print top agent compositions
+            print()
+            print(f"{' Top Agent Compositions ':—^{width}}")
+            for map_name in common_maps:
+                t1_map = team1_stats['map_statistics'][map_name]
+                t2_map = team2_stats['map_statistics'][map_name]
+                
+                if t1_map['most_played_composition'] or t2_map['most_played_composition']:
+                    print(f"{map_name}:")
+                    
+                    if t1_map['most_played_composition']:
+                        t1_comp = ', '.join(t1_map['most_played_composition'])
+                        print(f"  {team1}: {t1_comp}")
+                    
+                    if t2_map['most_played_composition']:
+                        t2_comp = ', '.join(t2_map['most_played_composition'])
+                        print(f"  {team2}: {t2_comp}")
+                    
+                    print()
+        
+        # Print strongest/weakest maps
+        if ('strongest_maps' in team1_stats and 'strongest_maps' in team2_stats and
+            team1_stats['strongest_maps'] and team2_stats['strongest_maps']):
+            
+            print(f"{' Strongest and Weakest Maps ':—^{width}}")
+            
+            # Team 1 strong maps
+            t1_strong = ', '.join(team1_stats['strongest_maps'])
+            print(f"{team1} strongest maps: {t1_strong}")
+            
+            # Team 2 strong maps
+            t2_strong = ', '.join(team2_stats['strongest_maps'])
+            print(f"{team2} strongest maps: {t2_strong}")
+            
+            if 'weakest_maps' in team1_stats and 'weakest_maps' in team2_stats:
+                # Team 1 weak maps
+                t1_weak = ', '.join(team1_stats['weakest_maps'])
+                print(f"{team1} weakest maps: {t1_weak}")
+                
+                # Team 2 weak maps
+                t2_weak = ', '.join(team2_stats['weakest_maps'])
+                print(f"{team2} weakest maps: {t2_weak}")
+            
+            # Calculate potential map advantages
+            t1_strong_set = set(team1_stats['strongest_maps'])
+            t2_weak_set = set(team2_stats.get('weakest_maps', []))
+            t1_advantage_maps = t1_strong_set.intersection(t2_weak_set)
+            
+            t2_strong_set = set(team2_stats['strongest_maps'])
+            t1_weak_set = set(team1_stats.get('weakest_maps', []))
+            t2_advantage_maps = t2_strong_set.intersection(t1_weak_set)
+            
+            if t1_advantage_maps:
+                print(f"\nPotential {team1} advantage maps: {', '.join(t1_advantage_maps)}")
+            
+            if t2_advantage_maps:
+                print(f"Potential {team2} advantage maps: {', '.join(t2_advantage_maps)}")
+        
+        print("=" * width + "\n")
+
+def visualize_prediction_with_economy_and_maps(prediction_result):
+    """Visualize the match prediction with player stats, economy data, and map-specific information."""
+    if not prediction_result:
+        print("No prediction to visualize.")
+        return
+    
+    team1 = prediction_result['team1']
+    team2 = prediction_result['team2']
+    team1_prob = prediction_result['team1_win_probability']
+    team2_prob = prediction_result['team2_win_probability']
+    predicted_winner = prediction_result['predicted_winner']
+    confidence = prediction_result['confidence']
+    
+    # Create figure with four subplots
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(20, 16))
+    
+    # Bar chart for win probabilities in first subplot
+    teams = [team1, team2]
+    probs = [team1_prob, team2_prob]
+    colors = ['#3498db' if team == predicted_winner else '#e74c3c' for team in teams]
+    
+    bars = ax1.bar(teams, probs, color=colors, alpha=0.7)
+    
+    # Add value labels on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1%}',
+                ha='center', va='bottom', fontsize=12)
+    
+    # Add title and labels
+    ax1.set_title(f'Win Probabilities', fontsize=16)
+    ax1.set_ylabel('Win Probability', fontsize=12)
+    ax1.set_ylim(0, 1)
+    ax1.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax1.set_yticklabels(['0%', '25%', '50%', '75%', '100%'])
+    
+    # Player stats comparison in second subplot
+    t1_summary = prediction_result.get('team1_stats_summary', {})
+    t2_summary = prediction_result.get('team2_stats_summary', {})
+    
+    # Extract player stats if available
+    metrics = []
+    t1_values = []
+    t2_values = []
+    
+    if 'avg_player_rating' in t1_summary and 'avg_player_rating' in t2_summary:
+        metrics.append('Player Rating')
+        t1_values.append(t1_summary['avg_player_rating'])
+        t2_values.append(t2_summary['avg_player_rating'])
+        
+        if 'star_player_rating' in t1_summary and 'star_player_rating' in t2_summary:
+            metrics.append('Star Player Rating')
+            t1_values.append(t1_summary['star_player_rating'])
+            t2_values.append(t2_summary['star_player_rating'])
+    
+    # Add more traditional metrics
+    metrics.extend(['Win Rate', 'Recent Form'])
+    t1_values.extend([t1_summary.get('win_rate', 0), t1_summary.get('recent_form', 0)])
+    t2_values.extend([t2_summary.get('win_rate', 0), t2_summary.get('recent_form', 0)])
+    
+    # Convert to numpy arrays for easier computation
+    metrics = np.array(metrics)
+    t1_values = np.array(t1_values)
+    t2_values = np.array(t2_values)
+    
+    # Set up bar positions
+    x = np.arange(len(metrics))
+    width = 0.35
+    
+    # Create bars
+    rects1 = ax2.bar(x - width/2, t1_values, width, label=team1, color='#3498db', alpha=0.7)
+    rects2 = ax2.bar(x + width/2, t2_values, width, label=team2, color='#e74c3c', alpha=0.7)
+    
+    # Add value labels
+    for rect in rects1:
+        height = rect.get_height()
+        ax2.text(rect.get_x() + rect.get_width()/2., height,
+                f'{height:.2f}',
+                ha='center', va='bottom', fontsize=10)
+                
+    for rect in rects2:
+        height = rect.get_height()
+        ax2.text(rect.get_x() + rect.get_width()/2., height,
+                f'{height:.2f}',
+                ha='center', va='bottom', fontsize=10)
+    
+    # Add labels and title
+    ax2.set_title(f'Team Stats Comparison', fontsize=16)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(metrics, rotation=0)
+    ax2.legend()
+    
+    # Economy metrics in third subplot
+    econ_metrics = []
+    t1_econ_values = []
+    t2_econ_values = []
+    
+    # Check if economy metrics are available
+    if ('pistol_win_rate' in t1_summary and 'pistol_win_rate' in t2_summary):
+        econ_metrics.extend(['Pistol Win Rate', 'Eco Win Rate', 'Full Buy Win Rate'])
+        t1_econ_values.extend([
+            t1_summary.get('pistol_win_rate', 0),
+            t1_summary.get('eco_win_rate', 0),
+            t1_summary.get('full_buy_win_rate', 0)
+        ])
+        t2_econ_values.extend([
+            t2_summary.get('pistol_win_rate', 0),
+            t2_summary.get('eco_win_rate', 0),
+            t2_summary.get('full_buy_win_rate', 0)
+        ])
+    
+    if econ_metrics:
+        # Convert to numpy arrays
+        econ_metrics = np.array(econ_metrics)
+        t1_econ_values = np.array(t1_econ_values)
+        t2_econ_values = np.array(t2_econ_values)
+        
+        # Set up bar positions
+        x_econ = np.arange(len(econ_metrics))
+        
+        # Create bars
+        rects1_econ = ax3.bar(x_econ - width/2, t1_econ_values, width, label=team1, color='#3498db', alpha=0.7)
+        rects2_econ = ax3.bar(x_econ + width/2, t2_econ_values, width, label=team2, color='#e74c3c', alpha=0.7)
+        
+        # Add value labels
+        for rect in rects1_econ:
+            height = rect.get_height()
+            ax3.text(rect.get_x() + rect.get_width()/2., height,
+                    f'{height:.2f}',
+                    ha='center', va='bottom', fontsize=10)
+                    
+        for rect in rects2_econ:
+            height = rect.get_height()
+            ax3.text(rect.get_x() + rect.get_width()/2., height,
+                    f'{height:.2f}',
+                    ha='center', va='bottom', fontsize=10)
+        
+        # Add labels and title
+        ax3.set_title(f'Economy Performance', fontsize=16)
+        ax3.set_xticks(x_econ)
+        ax3.set_xticklabels(econ_metrics, rotation=15)
+        ax3.set_ylim(0, 1)
+        ax3.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+        ax3.set_yticklabels(['0%', '25%', '50%', '75%', '100%'])
+        ax3.legend()
+    else:
+        # No economy data available
+        ax3.text(0.5, 0.5, 'No Economy Data Available',
+                ha='center', va='center', fontsize=14)
+    
+    # Map performance in fourth subplot
+    team1_stats = prediction_result.get('team1_stats', {})
+    team2_stats = prediction_result.get('team2_stats', {})
+    
+    if ('map_statistics' in team1_stats and 'map_statistics' in team2_stats and
+        team1_stats['map_statistics'] and team2_stats['map_statistics']):
+        
+        # Find common maps
+        team1_maps = set(team1_stats['map_statistics'].keys())
+        team2_maps = set(team2_stats['map_statistics'].keys())
+        common_maps = sorted(team1_maps.intersection(team2_maps))
+        
+        if common_maps:
+            # Select up to 5 most played maps for visualization
+            map_play_counts = []
+            for map_name in common_maps:
+                t1_count = team1_stats['map_statistics'][map_name]['matches_played']
+                t2_count = team2_stats['map_statistics'][map_name]['matches_played']
+                avg_count = (t1_count + t2_count) / 2
+                map_play_counts.append((map_name, avg_count))
+            
+            # Sort by play count and take top 5
+            top_maps = [m[0] for m in sorted(map_play_counts, key=lambda x: x[1], reverse=True)[:5]]
+            
+            # Get win rates for visualization
+            map_names = []
+            t1_map_win_rates = []
+            t2_map_win_rates = []
+            
+            for map_name in top_maps:
+                map_names.append(map_name)
+                t1_map_win_rates.append(team1_stats['map_statistics'][map_name]['win_percentage'])
+                t2_map_win_rates.append(team2_stats['map_statistics'][map_name]['win_percentage'])
+            
+            # Set up bar positions
+            x_maps = np.arange(len(map_names))
+            
+            # Create bars
+            rects1_maps = ax4.bar(x_maps - width/2, t1_map_win_rates, width, label=team1, color='#3498db', alpha=0.7)
+            rects2_maps = ax4.bar(x_maps + width/2, t2_map_win_rates, width, label=team2, color='#e74c3c', alpha=0.7)
+            
+            # Add value labels
+            for rect in rects1_maps:
+                height = rect.get_height()
+                ax4.text(rect.get_x() + rect.get_width()/2., height,
+                        f'{height:.2f}',
+                        ha='center', va='bottom', fontsize=10)
+                        
+            for rect in rects2_maps:
+                height = rect.get_height()
+                ax4.text(rect.get_x() + rect.get_width()/2., height,
+                        f'{height:.2f}',
+                        ha='center', va='bottom', fontsize=10)
+            
+            # Add labels and title
+            ax4.set_title(f'Map Win Rates', fontsize=16)
+            ax4.set_xticks(x_maps)
+            ax4.set_xticklabels(map_names, rotation=0)
+            ax4.set_ylim(0, 1)
+            ax4.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+            ax4.set_yticklabels(['0%', '25%', '50%', '75%', '100%'])
+            ax4.legend()
+            
+            # Highlight predicted best map
+            best_diff = -1
+            best_map = None
+            worst_diff = -1
+            worst_map = None
+            
+            for map_name in map_names:
+                t1_win = team1_stats['map_statistics'][map_name]['win_percentage']
+                t2_win = team2_stats['map_statistics'][map_name]['win_percentage']
+                diff = t1_win - t2_win
+                
+                if diff > best_diff:
+                    best_diff = diff
+                    best_map = map_name
+                
+                if -diff > worst_diff:
+                    worst_diff = -diff
+                    worst_map = map_name
+            
+            if best_map:
+                best_index = map_names.index(best_map)
+                ax4.axvline(x=x_maps[best_index] - width/2, color='green', linestyle='--', alpha=0.7)
+                ax4.text(x_maps[best_index] - width/2, 0.95, f"Best for {team1}", 
+                        ha='center', va='top', rotation=90, color='green', fontsize=10)
+            
+            if worst_map:
+                worst_index = map_names.index(worst_map)
+                ax4.axvline(x=x_maps[worst_index] + width/2, color='green', linestyle='--', alpha=0.7)
+                ax4.text(x_maps[worst_index] + width/2, 0.95, f"Best for {team2}", 
+                        ha='center', va='top', rotation=90, color='green', fontsize=10)
+        else:
+            ax4.text(0.5, 0.5, 'No Common Maps Data Available',
+                    ha='center', va='center', fontsize=14)
+    else:
+        ax4.text(0.5, 0.5, 'No Map Stats Available',
+                ha='center', va='center', fontsize=14)
+    
+    # Add prediction summary
+    plt.figtext(0.5, 0.01, 
+                f"Predicted Winner: {predicted_winner} (Confidence: {confidence:.1%})",
+                ha="center", fontsize=14, bbox={"facecolor":"#f9f9f9", "alpha":0.5, "pad":5})
+    
+    # Save figure
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+    plt.savefig('match_prediction_with_maps.png')
+    plt.show()        
 
 def build_training_dataset_with_economy(team_data_collection):
     """Build a training dataset with economy and player features from team data collection."""
@@ -2702,6 +3459,164 @@ def debug_and_fix_match_data(team_data_collection):
     
     return team_data_collection
 
+def analyze_selected_features(selected_features):
+    """
+    Analyze the types of features selected by the model.
+    
+    Args:
+        selected_features (list): List of selected feature names
+        
+    Returns:
+        dict: Categorized features
+    """
+    print("\n" + "="*60)
+    print("FEATURE ANALYSIS")
+    print("="*60)
+    
+    # Categorize features
+    economy_features = [f for f in selected_features if any(term in str(f).lower() for term in 
+                                                ['eco', 'pistol', 'buy', 'economy'])]
+    
+    player_features = [f for f in selected_features if any(term in str(f).lower() for term in 
+                                               ['rating', 'acs', 'kd', 'adr', 'headshot',
+                                                'clutch', 'aces', 'first_blood', 'player'])]
+    
+    map_features = [f for f in selected_features if 'map_' in str(f).lower()]
+    
+    consistency_features = [f for f in selected_features if 'consistency' in str(f).lower()]
+    
+    differential_features = [f for f in selected_features if 'diff' in str(f).lower()]
+    
+    form_features = [f for f in selected_features if 'form' in str(f).lower() or 
+                                               'recent' in str(f).lower()]
+    
+    win_rate_features = [f for f in selected_features if 'win_rate' in str(f).lower()]
+    
+    # Calculate category counts
+    categories = {
+        'Economy': len(economy_features),
+        'Player Statistics': len(player_features),
+        'Map-specific': len(map_features),
+        'Consistency': len(consistency_features),
+        'Differential': len(differential_features),
+        'Form/Recent Performance': len(form_features),
+        'Win Rate': len(win_rate_features),
+        'Other': len(selected_features) - len(economy_features) - len(player_features) - 
+                len(map_features) - len(consistency_features) - len(differential_features) - 
+                len(form_features) - len(win_rate_features)
+    }
+    
+    # Print categorization
+    print("\nFeature Category Breakdown:")
+    for category, count in categories.items():
+        percentage = count / len(selected_features) * 100
+        print(f"  {category}: {count} features ({percentage:.1f}%)")
+    
+    # Print sample features from each non-empty category
+    print("\nSample Features by Category:")
+    if economy_features:
+        print("\nEconomy Features:")
+        for f in economy_features[:5]:
+            print(f"  - {f}")
+        if len(economy_features) > 5:
+            print(f"  ... and {len(economy_features) - 5} more")
+    
+    if player_features:
+        print("\nPlayer Statistics Features:")
+        for f in player_features[:5]:
+            print(f"  - {f}")
+        if len(player_features) > 5:
+            print(f"  ... and {len(player_features) - 5} more")
+    
+    if map_features:
+        print("\nMap-specific Features:")
+        for f in map_features[:5]:
+            print(f"  - {f}")
+        if len(map_features) > 5:
+            print(f"  ... and {len(map_features) - 5} more")
+    
+    result = {
+        'economy_features': economy_features,
+        'player_features': player_features,
+        'map_features': map_features,
+        'consistency_features': consistency_features,
+        'differential_features': differential_features,
+        'form_features': form_features,
+        'win_rate_features': win_rate_features,
+        'all_features': selected_features,
+        'counts': categories
+    }
+    
+    return result
+
+def check_prediction_consistency(prediction, team1_stats, team2_stats):
+    """Verify that model predictions align with basic statistical advantages."""
+    team1_advantages = 0
+    team2_advantages = 0
+    
+    key_metrics = [
+        ('win_rate', 'Win rate'),
+        ('recent_form', 'Recent form'),
+        ('avg_player_rating', 'Player rating'),
+        ('score_differential', 'Score differential')
+    ]
+    
+    print("\nStatistical advantages check:")
+    for key, label in key_metrics:
+        t1_value = team1_stats.get(key, 0)
+        t2_value = team2_stats.get(key, 0)
+        advantage = "Team 1" if t1_value > t2_value else "Team 2" if t2_value > t1_value else "Even"
+        
+        if advantage == "Team 1":
+            team1_advantages += 1
+        elif advantage == "Team 2":
+            team2_advantages += 1
+            
+        print(f"  {label}: {advantage} ({t1_value:.2f} vs {t2_value:.2f})")
+    
+    # Check head-to-head if available
+    h2h_advantage = "Unknown"
+    if 'opponent_stats' in team1_stats and team2_stats.get('name') in team1_stats['opponent_stats']:
+        h2h_win_rate = team1_stats['opponent_stats'][team2_stats.get('name')].get('win_rate', 0.5)
+        
+        if h2h_win_rate > 0.55:
+            h2h_advantage = "Team 1"
+            team1_advantages += 1
+        elif h2h_win_rate < 0.45:
+            h2h_advantage = "Team 2"
+            team2_advantages += 1
+        else:
+            h2h_advantage = "Even"
+            
+        print(f"  Head-to-head: {h2h_advantage} ({h2h_win_rate:.2f} win rate for Team 1)")
+    
+    predicted_winner = "Team 1" if prediction > 0.5 else "Team 2"
+    statistical_favorite = "Team 1" if team1_advantages > team2_advantages else "Team 2" if team2_advantages > team1_advantages else "Even"
+    
+    print(f"\nStatistical favorite: {statistical_favorite} ({team1_advantages}-{team2_advantages})")
+    print(f"Model prediction: {predicted_winner} ({prediction:.2f})")
+    
+    if statistical_favorite != "Even" and statistical_favorite != predicted_winner:
+        print("WARNING: Model prediction contradicts statistical advantages!")
+        
+    return {
+        'team1_advantages': team1_advantages,
+        'team2_advantages': team2_advantages,
+        'statistical_favorite': statistical_favorite,
+        'prediction_consistent': statistical_favorite == "Even" or statistical_favorite == predicted_winner
+    }
+
+def create_learning_rate_scheduler():
+    """Create a cosine annealing learning rate scheduler for better convergence."""
+    def lr_scheduler(epoch, lr):
+        # Warm-up phase
+        if epoch < 5:
+            return 0.001 * (1 + epoch/5)
+        # Cosine annealing
+        else:
+            return 0.001 * (1 + np.cos((epoch-5) * np.pi / 45))
+    
+    return tf.keras.callbacks.LearningRateScheduler(lr_scheduler, verbose=1)
 
 def build_training_dataset_from_matches(matches, team_data_collection):
     """Build a dataset for model training from a specific set of matches."""
@@ -2820,12 +3735,20 @@ def fetch_match_economy_details(match_id):
 
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     return economy_details
 
-def extract_economy_metrics(match_economy_data, team_tag=None):
-    """Extract relevant economic performance metrics from match economy data for a specific team."""
+def extract_economy_metrics(match_economy_data, team_identifier=None):
+    """Extract relevant economic performance metrics from match economy data for a specific team.
+    
+    Args:
+        match_economy_data (dict): The economy data from the match
+        team_identifier (str): The team tag or team name to identify the team
+        
+    Returns:
+        dict: Economy metrics for the team, or empty dict if not found
+    """
     if not match_economy_data or 'data' not in match_economy_data or 'teams' not in match_economy_data['data']:
         print("\nNo valid economy data found in match_economy_data")
         return {}
@@ -2835,20 +3758,22 @@ def extract_economy_metrics(match_economy_data, team_tag=None):
         print("\nNot enough teams found in economy data")
         return {}
     
-    print("\nLooking for team with tag:", team_tag)
+    print(f"\nLooking for team with identifier: {team_identifier}")
     
-    # Find the team with matching tag
+    # Find the team with matching tag or name
     target_team_data = None
     for team in teams_data:
-        if team.get('name', '').lower() == team_tag.lower():
+        # Try to match by name (lowercase for case-insensitive comparison)
+        if team.get('name', '').lower() == team_identifier.lower():
             target_team_data = team
+            print(f"Found team by name: {team.get('name', '')}")
             break
     
     if not target_team_data:
-        print(f"\nNo team found with tag: {team_tag}")
+        print(f"\nNo team found with identifier: {team_identifier}")
         return {}
     
-    print(f"\nFound team data for {team_tag}")
+    print(f"\nFound team data for {team_identifier}")
     
     # Extract metrics for the target team only
     metrics = {
@@ -2900,7 +3825,7 @@ def extract_economy_metrics(match_economy_data, team_tag=None):
     else:
         metrics['economy_efficiency'] = 0
     
-    print(f"\nExtracted metrics for {team_tag}:")
+    print(f"\nExtracted metrics for {team_identifier}:")
     print(json.dumps(metrics, indent=2))
     
     return metrics
@@ -2928,7 +3853,7 @@ def fetch_player_stats(player_name):
     player_data = response.json()
     
     # Be nice to the API
-    time.sleep(0.5)
+     
     
     # Return player stats if successful
     if player_data.get('status') == 'OK' and 'data' in player_data:
@@ -3428,6 +4353,159 @@ def train_model_with_overfitting_detection(X, y, test_size=0.2, random_state=42)
             feature_names = pickle.load(f)
         
         return model, scaler, feature_names
+
+def train_with_fixed_feature_count(X, y, feature_count=71, test_size=0.2, random_state=42):
+    """
+    Train model using a fixed number of top features.
+    
+    Args:
+        X (list/DataFrame): Feature data
+        y (list/array): Target labels
+        feature_count (int): Number of top features to use (default: 71)
+        test_size (float): Validation split ratio
+        random_state (int): Random seed for reproducibility
+        
+    Returns:
+        tuple: (model, scaler, selected_features)
+    """
+    print(f"\n{'='*60}")
+    print(f"TRAINING WITH FIXED TOP {feature_count} FEATURES")
+    print(f"{'='*60}")
+    
+    # Convert data to DataFrame
+    if isinstance(X, list):
+        df = pd.DataFrame(X)
+    else:
+        df = X.copy()
+    
+    # Fill missing values and handle non-numeric columns
+    df = df.fillna(0)
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            try:
+                df[col] = df[col].astype(float)
+            except (ValueError, TypeError):
+                print(f"Dropping column {col} due to non-numeric values")
+                df = df.drop(columns=[col])
+    
+    # Convert to numpy array for scaling
+    X_arr = df.values
+    y_arr = np.array(y)
+    
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_arr)
+    
+    # Split data
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_scaled, y_arr, test_size=test_size, random_state=random_state, stratify=y_arr
+    )
+    
+    # Train a Random Forest to determine feature importance
+    print("Training Random Forest for feature selection...")
+    rf = RandomForestClassifier(n_estimators=100, random_state=random_state)
+    rf.fit(X_train, y_train)
+    
+    # Get feature importances
+    importances = rf.feature_importances_
+    indices = np.argsort(importances)[::-1]
+    
+    # Print top features
+    print(f"\nTop {min(10, feature_count)} most important features:")
+    feature_names = list(df.columns)
+    for i in range(min(10, feature_count)):
+        print(f"{i+1}. {feature_names[indices[i]]}: {importances[indices[i]]:.4f}")
+    
+    # Select top features
+    top_indices = indices[:feature_count]
+    top_features = [feature_names[i] for i in top_indices]
+    
+    print(f"\nSelected {feature_count} top features")
+    
+    # Extract selected features
+    X_train_selected = X_train[:, top_indices]
+    X_val_selected = X_val[:, top_indices]
+    
+    # Create model
+    print("\nTraining neural network model with selected features...")
+    input_dim = X_train_selected.shape[1]
+    model = create_deep_learning_model_with_economy(input_dim)
+    
+    # Train model
+    early_stopping = EarlyStopping(
+        monitor='val_loss', patience=15, restore_best_weights=True, verbose=1
+    )
+    
+    reduce_lr = ReduceLROnPlateau(
+        monitor='val_loss', factor=0.2, patience=5, min_lr=0.0001, verbose=1
+    )
+    
+    model_checkpoint = ModelCheckpoint(
+        f'valorant_model_top{feature_count}.h5', 
+        save_best_only=True, 
+        monitor='val_accuracy'
+    )
+    
+    history = model.fit(
+        X_train_selected, y_train,
+        epochs=100,
+        batch_size=32,
+        validation_data=(X_val_selected, y_val),
+        callbacks=[early_stopping, reduce_lr, model_checkpoint],
+        verbose=1
+    )
+    
+    # Evaluate model
+    val_metrics = model.evaluate(X_val_selected, y_val)
+    y_pred = (model.predict(X_val_selected) > 0.5).astype(int).flatten()
+    
+    print("\n" + "="*60)
+    print(f"MODEL EVALUATION (TOP {feature_count} FEATURES)")
+    print("="*60)
+    print(f"Validation Loss: {val_metrics[0]:.4f}")
+    print(f"Validation Accuracy: {val_metrics[1]:.4f}")
+    
+    # Calculate additional metrics
+    precision = precision_score(y_val, y_pred)
+    recall = recall_score(y_val, y_pred)
+    f1 = f1_score(y_val, y_pred)
+    auc = roc_auc_score(y_val, model.predict(X_val_selected))
+    
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"AUC: {auc:.4f}")
+    
+    # Calculate overfitting metrics
+    train_acc = history.history['accuracy'][-1]
+    val_acc = history.history['val_accuracy'][-1]
+    acc_gap = train_acc - val_acc
+    
+    print(f"\nTraining Accuracy: {train_acc:.4f}")
+    print(f"Validation Accuracy: {val_acc:.4f}")
+    print(f"Accuracy Gap (Overfitting): {acc_gap:.4f}")
+    
+    # Save model and feature information
+    model.save(f'valorant_model_top{feature_count}.h5')
+    
+    with open(f'feature_scaler_top{feature_count}.pkl', 'wb') as f:
+        pickle.dump(scaler, f)
+        
+    with open(f'selected_features_top{feature_count}.pkl', 'wb') as f:
+        pickle.dump(top_features, f)
+        
+    # Save feature importance information
+    importance_dict = {feature_names[i]: float(importances[i]) for i in top_indices}
+    with open(f'feature_importance_top{feature_count}.json', 'w') as f:
+        json.dump(importance_dict, f, indent=2)
+    
+    print(f"\nModel and feature information saved:")
+    print(f"  - Model: valorant_model_top{feature_count}.h5")
+    print(f"  - Scaler: feature_scaler_top{feature_count}.pkl")
+    print(f"  - Features: selected_features_top{feature_count}.pkl")
+    print(f"  - Importance: feature_importance_top{feature_count}.json")
+    
+    return model, scaler, top_features
 
 # 1. Add k-fold cross-validation functionality
 def train_with_cross_validation(X, y, n_splits=5, random_state=42):
@@ -4462,6 +5540,65 @@ def train_and_evaluate_model(X, y, n_splits=5, random_state=42):
     
     return ensemble_models, stable_features, scaler, ensemble_metadata
 
+def train_with_optimal_features(X, y, optimal_count=71):
+    """Train model using only the optimal number of features."""
+    # Convert data to DataFrame
+    df = pd.DataFrame(X)
+    
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df.values)
+    
+    # Split data
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_scaled, y, test_size=0.2, random_state=42, stratify=y
+    )
+    
+    # Train a simple model to get feature importance
+    rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf.fit(X_train, y_train)
+    
+    # Get feature importances
+    importances = rf.feature_importances_
+    feature_importances = list(zip(df.columns, importances))
+    feature_importances.sort(key=lambda x: x[1], reverse=True)
+    
+    # Select top features
+    top_features = [feature for feature, _ in feature_importances[:optimal_count]]
+    X_train_selected = X_train[:, [list(df.columns).index(feature) for feature in top_features]]
+    X_val_selected = X_val[:, [list(df.columns).index(feature) for feature in top_features]]
+    
+    # Train neural network with selected features
+    input_dim = X_train_selected.shape[1]
+    model = create_deep_learning_model_with_economy(input_dim)
+    
+    # Add learning rate scheduler
+    lr_scheduler = create_learning_rate_scheduler()
+    
+    # Train model
+    model.fit(
+        X_train_selected, y_train,
+        epochs=100,
+        batch_size=32,
+        validation_data=(X_val_selected, y_val),
+        callbacks=[
+            EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True),
+            lr_scheduler,
+            ModelCheckpoint('valorant_model_optimal_features.h5', save_best_only=True, monitor='val_accuracy')
+        ],
+        verbose=1
+    )
+    
+    # Save selected features
+    with open('optimal_features.pkl', 'wb') as f:
+        pickle.dump(top_features, f)
+    
+    # Save scaler
+    with open('feature_scaler_optimal.pkl', 'wb') as f:
+        pickle.dump(scaler, f)
+    
+    return model, scaler, top_features
+
 def predict_match_with_ensemble(team1_name, team2_name):
     """Predict match outcome using the ensemble model for improved stability."""
     print(f"Predicting match between {team1_name} and {team2_name} using ensemble model...")
@@ -4656,8 +5793,8 @@ def predict_match_with_ensemble(team1_name, team2_name):
     return result
 
 def predict_match_with_optimized_model(team1_name, team2_name, model=None, scaler=None, feature_names=None, export_data=True, display_details=True):
-    """Predict match outcome using the optimized model with selected features and regularization."""
-    print(f"Predicting match between {team1_name} and {team2_name} using optimized model...")
+    """Predict match outcome using the optimized model with enhanced map-specific features."""
+    print(f"Predicting match between {team1_name} and {team2_name} using optimized model with map data...")
     
     # Get team IDs
     team1_id = get_team_id(team1_name)
@@ -4684,12 +5821,14 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     team1_matches = parse_match_data(team1_history, team1_name)
     team2_matches = parse_match_data(team2_history, team2_name)
 
-    # Store team tags for use in economy data matching
+    # Store team tags and IDs for use in data extraction
     for match in team1_matches:
         match['team_tag'] = team1_tag
+        match['team_id'] = team1_id
     
     for match in team2_matches:
         match['team_tag'] = team2_tag
+        match['team_id'] = team2_id
     
     # Fetch player stats for both teams
     team1_player_stats = fetch_team_player_stats(team1_id)
@@ -4699,35 +5838,26 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     team1_stats = calculate_team_stats_with_economy(team1_matches, team1_player_stats)
     team2_stats = calculate_team_stats_with_economy(team2_matches, team2_player_stats)
     
-    # Store team tags in the stats
+    # Store team tags and names in the stats
     team1_stats['team_tag'] = team1_tag
+    team1_stats['team_name'] = team1_name
+    team1_stats['team_id'] = team1_id
+    
     team2_stats['team_tag'] = team2_tag
+    team2_stats['team_name'] = team2_name
+    team2_stats['team_id'] = team2_id
     
-    # Extract additional metrics
-    team1_map_performance = extract_map_performance(team1_matches)
-    team2_map_performance = extract_map_performance(team2_matches)
+    # Fetch and add map-specific statistics
+    team1_map_stats = fetch_team_map_statistics(team1_id)
+    team2_map_stats = fetch_team_map_statistics(team2_id)
     
-    team1_tournament_performance = extract_tournament_performance(team1_matches)
-    team2_tournament_performance = extract_tournament_performance(team2_matches)
+    if team1_map_stats:
+        team1_stats['map_statistics'] = team1_map_stats
+        print(f"Added map statistics for {team1_name} ({len(team1_map_stats)} maps)")
     
-    team1_performance_trends = analyze_performance_trends(team1_matches)
-    team2_performance_trends = analyze_performance_trends(team2_matches)
-    
-    team1_opponent_quality = analyze_opponent_quality(team1_matches, team1_id)
-    team2_opponent_quality = analyze_opponent_quality(team2_matches, team2_id)
-    
-    # Add derived metrics to team stats
-    team1_stats['map_performance'] = team1_map_performance
-    team2_stats['map_performance'] = team2_map_performance
-    
-    team1_stats['tournament_performance'] = team1_tournament_performance
-    team2_stats['tournament_performance'] = team2_tournament_performance
-    
-    team1_stats['performance_trends'] = team1_performance_trends
-    team2_stats['performance_trends'] = team2_performance_trends
-    
-    team1_stats['opponent_quality'] = team1_opponent_quality
-    team2_stats['opponent_quality'] = team2_opponent_quality
+    if team2_map_stats:
+        team2_stats['map_statistics'] = team2_map_stats
+        print(f"Added map statistics for {team2_name} ({len(team2_map_stats)} maps)")
     
     # Prepare data for model
     all_features = prepare_data_for_model_with_economy(team1_stats, team2_stats)
@@ -4736,7 +5866,7 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
         print("Could not prepare features for prediction.")
         return None
     
-    # Load optimized model if not provided
+    # Load model if not provided
     if model is None:
         try:
             # Try to load optimized model first
@@ -4769,7 +5899,7 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     # Convert features to DataFrame
     features_df = pd.DataFrame([all_features])
     
-    # Select only the features used in the optimized model
+    # Select only the features used in the model
     if feature_names:
         # Add missing features with default values
         for feature in feature_names:
@@ -4785,15 +5915,86 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     # Make prediction
     prediction = model.predict(X)[0][0]
     
-    # Calculate confidence
-    confidence = max(prediction, 1 - prediction)
+    # Determine if prediction should be adjusted based on statistical norms
+    team1_advantage_count = 0
+    team2_advantage_count = 0
     
+    # Check win rate
+    if team1_stats.get('win_rate', 0) > team2_stats.get('win_rate', 0):
+        team1_advantage_count += 1
+    else:
+        team2_advantage_count += 1
+    
+    # Check recent form
+    if team1_stats.get('recent_form', 0) > team2_stats.get('recent_form', 0):
+        team1_advantage_count += 1
+    else:
+        team2_advantage_count += 1
+    
+    # Check player ratings
+    if team1_stats.get('avg_player_rating', 0) > team2_stats.get('avg_player_rating', 0):
+        team1_advantage_count += 1
+    else:
+        team2_advantage_count += 1
+    
+    # Check map advantages
+    if ('map_statistics' in team1_stats and 'map_statistics' in team2_stats):
+        team1_maps = set(team1_stats['map_statistics'].keys())
+        team2_maps = set(team2_stats['map_statistics'].keys())
+        common_maps = team1_maps.intersection(team2_maps)
+        
+        team1_map_advantages = 0
+        team2_map_advantages = 0
+        
+        for map_name in common_maps:
+            t1_win_rate = team1_stats['map_statistics'][map_name]['win_percentage']
+            t2_win_rate = team2_stats['map_statistics'][map_name]['win_percentage']
+            
+            if t1_win_rate > t2_win_rate + 0.1:  # 10% advantage threshold
+                team1_map_advantages += 1
+            elif t2_win_rate > t1_win_rate + 0.1:
+                team2_map_advantages += 1
+        
+        if team1_map_advantages > team2_map_advantages:
+            team1_advantage_count += 1
+        elif team2_map_advantages > team1_map_advantages:
+            team2_advantage_count += 1
+    
+    # Check head-to-head
+    h2h_win_rate = 0.5  # Default to even
+    if 'opponent_stats' in team1_stats and team2_name in team1_stats['opponent_stats']:
+        h2h_win_rate = team1_stats['opponent_stats'][team2_name].get('win_rate', 0.5)
+    
+    if h2h_win_rate > 0.5:
+        team1_advantage_count += 2  # Give extra weight to head-to-head
+    elif h2h_win_rate < 0.5:
+        team2_advantage_count += 2
+    
+    # Determine if prediction seems flipped
+    team1_should_be_favored = team1_advantage_count > team2_advantage_count
+    prediction_favors_team1 = prediction > 0.5
+    
+    print(f"Team1 advantages: {team1_advantage_count}, Team2 advantages: {team2_advantage_count}")
+    print(f"Team1 should be favored based on stats: {team1_should_be_favored}")
+    print(f"Prediction favors Team1: {prediction_favors_team1}")
+    
+    # Fix for "flipped" predictions
+    adjusted_prediction = prediction
+    if team1_should_be_favored != prediction_favors_team1:
+        print("WARNING: Model prediction appears to be inverted based on team statistics!")
+        print(f"Adjusting prediction from {prediction:.4f} to {1-prediction:.4f}")
+        adjusted_prediction = 1 - prediction
+    
+    # Calculate confidence
+    confidence = max(adjusted_prediction, 1 - adjusted_prediction)
+    
+    # Prepare result object with all statistics
     result = {
         'team1': team1_name,
         'team2': team2_name,
-        'team1_win_probability': float(prediction),
-        'team2_win_probability': float(1 - prediction),
-        'predicted_winner': team1_name if prediction > 0.5 else team2_name,
+        'team1_win_probability': float(adjusted_prediction),
+        'team2_win_probability': float(1 - adjusted_prediction),
+        'predicted_winner': team1_name if adjusted_prediction > 0.5 else team2_name,
         'confidence': float(confidence),
         'team1_stats_summary': {
             'matches_played': team1_stats['matches'] if isinstance(team1_stats['matches'], int) else len(team1_stats['matches']),
@@ -4822,8 +6023,11 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
         'model_info': {
             'features_used': len(feature_names) if feature_names else 'all',
             'feature_names': feature_names if feature_names else 'all',
-            'model_type': 'optimized' if os.path.exists('valorant_model_optimized.h5') else 'regular'
-        }
+            'model_type': 'optimized' if os.path.exists('valorant_model_optimized.h5') else 'regular',
+            'prediction_adjusted': team1_should_be_favored != prediction_favors_team1
+        },
+        'team1_stats': team1_stats,
+        'team2_stats': team2_stats
     }
     
     # Export prediction data if requested
@@ -4832,33 +6036,10 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     
     # Display detailed results if requested
     if display_details:
-        display_prediction_results_with_economy(result, team1_stats, team2_stats)
-        
-        # Additionally display model information
-        print("\n" + "="*60)
-        print("MODEL INFORMATION")
-        print("="*60)
-        print(f"Model type: {result['model_info']['model_type']}")
-        print(f"Features used: {result['model_info']['features_used']}")
-        
-        if feature_names and len(feature_names) <= 20:
-            print("\nSelected features:")
-            for feature in feature_names:
-                print(f"  - {feature}")
-        elif feature_names:
-            print(f"\nUsing {len(feature_names)} selected features")
-            
-            # Count feature types
-            economy_features = sum(1 for f in feature_names if any(term in f.lower() for term in 
-                                                     ['eco', 'pistol', 'buy', 'economy']))
-            player_features = sum(1 for f in feature_names if any(term in f.lower() for term in 
-                                                    ['rating', 'acs', 'kd', 'adr', 'headshot',
-                                                     'clutch', 'aces', 'first_blood']))
-            map_features = sum(1 for f in feature_names if 'map_' in f.lower())
-            
-            print(f"  Economy features: {economy_features}")
-            print(f"  Player features: {player_features}")
-            print(f"  Map features: {map_features}")
+        display_prediction_results_with_economy_and_maps(result, team1_stats, team2_stats)
+    
+    # Visualize the prediction with maps
+    visualize_prediction_with_economy_and_maps(result)
     
     return result
 
@@ -5346,13 +6527,14 @@ def analyze_upcoming_matches():
                 plt.figure()  # Create a new figure for the next prediction
 
 
-def collect_all_team_data(include_player_stats=True, include_economy=True, verbose=False):
-    """Collect data for all teams to use in backtesting, with improved economy and player stats."""
+def collect_all_team_data(include_player_stats=True, include_economy=True, include_maps=False, verbose=False):
+    """Collect data for all teams to use in backtesting, with improved economy, player stats, and map data."""
     print("\n========================================================")
     print("COLLECTING TEAM DATA WITH ECONOMY AND PLAYER STATISTICS")
     print("========================================================")
     print(f"Including player stats: {include_player_stats}")
     print(f"Including economy data: {include_economy}")
+    print(f"Including map data: {include_maps}")
     
     # Fetch all teams
     teams_response = requests.get(f"{API_URL}/teams?limit=500")
@@ -5375,7 +6557,7 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, verbo
     # If no teams with rankings were found, just take the first 20 teams
     if not top_teams:
         print("No teams with rankings found. Using the first 20 teams instead.")
-        top_teams = teams_data['data'][:20]
+        top_teams = teams_data['data'][:5]
     
     print(f"Selected {len(top_teams)} teams for data collection.")
     
@@ -5385,6 +6567,7 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, verbo
     # Track counts for data availability
     economy_data_count = 0
     player_stats_count = 0
+    map_stats_count = 0
     
     for team in tqdm(top_teams, desc="Collecting team data"):
         team_id = team['id']
@@ -5416,6 +6599,7 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, verbo
         # Add team tag to all matches for economy data extraction
         for match in team_matches:
             match['team_tag'] = team_tag
+            match['team_id'] = team_id
         
         # Fetch player stats if requested
         team_player_stats = None
@@ -5456,7 +6640,33 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, verbo
         
         # Store team tag in the stats
         team_stats['team_tag'] = team_tag
-        
+        team_stats['team_id'] = team_id
+
+        # Fetch and process map statistics if requested
+        if include_maps:
+            print(f"\nFetching map statistics for {team_name}")
+            map_stats = fetch_team_map_statistics(team_id)
+            
+            if map_stats:
+                map_stats_count += 1
+                team_stats['map_statistics'] = map_stats
+                print(f"Successfully collected map statistics for {team_name} ({len(map_stats)} maps)")
+                
+                # Print a sample of the map stats if verbose
+                if verbose:
+                    print("\nSample map statistics:")
+                    maps_to_show = list(map_stats.keys())[:3]  # Show stats for first 3 maps
+                    for map_name in maps_to_show:
+                        print(f"  {map_name}:")
+                        print(f"    Win Rate: {map_stats[map_name]['win_percentage']*100:.2f}%")
+                        print(f"    ATK Win Rate: {map_stats[map_name]['atk_win_rate']*100:.2f}%")
+                        print(f"    DEF Win Rate: {map_stats[map_name]['def_win_rate']*100:.2f}%")
+                    
+                    if len(map_stats) > 3:
+                        print(f"  ... and {len(map_stats) - 3} more maps")
+            else:
+                print(f"No map statistics found for {team_name}")
+
         # Extract additional analyses
         team_map_performance = extract_map_performance(team_matches)
         team_tournament_performance = extract_tournament_performance(team_matches)
@@ -5481,7 +6691,8 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, verbo
     print(f"Collected data for {len(team_data_collection)} teams:")
     print(f"  - Teams with economy data: {economy_data_count}")
     print(f"  - Teams with player stats: {player_stats_count}")
-    print(f"  - Teams with both: {min(economy_data_count, player_stats_count)}")
+    print(f"  - Teams with map stats: {map_stats_count}")
+    print(f"  - Teams with both economy and player stats: {min(economy_data_count, player_stats_count)}")
     
     return team_data_collection
 
@@ -5492,7 +6703,7 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
     """Backtest the model using historical data split by date with economy and player stats."""
     # Get all teams and matches with economy data
     print("Collecting team data for backtesting with economy and player statistics...")
-    team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True)
+    team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True, include_maps=True)
     
     if not team_data_collection:
         print("Failed to collect team data. Aborting backtesting.")
@@ -5655,7 +6866,7 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
 # Update export_prediction_data function to include player stats
 def export_prediction_data_with_economy(prediction, team1_stats, team2_stats, filename=None):
     """
-    Export the prediction data and team statistics to a JSON file with player stats and economy data.
+    Export the prediction data including map statistics to a JSON file.
     
     Args:
         prediction (dict): The prediction result
@@ -5680,7 +6891,7 @@ def export_prediction_data_with_economy(prediction, team1_stats, team2_stats, fi
         team2_name = prediction['team2'].replace(" ", "_")
         filename = f"betting_predictions/{team1_name}_vs_{team2_name}_{timestamp}.json"
     
-    # Clean up team stats to make them JSON serializable
+    # Clean up stats to make them JSON serializable
     def clean_for_json(obj):
         if isinstance(obj, dict):
             return {k: clean_for_json(v) for k, v in obj.items() if k != 'matches'}
@@ -5707,15 +6918,111 @@ def export_prediction_data_with_economy(prediction, team1_stats, team2_stats, fi
         },
         "analysis": {
             "key_factors": [],  # Will be populated below
-            "economy_factors": []  # New section for economy insights
+            "economy_factors": [],  # Economy insights
+            "map_factors": []   # Map insights
         }
     }
     
-    # Add key matchup factors (same as original function)
-    # ...
+    # Add map-specific analysis
+    if ('map_statistics' in team1_stats and 'map_statistics' in team2_stats and
+        team1_stats['map_statistics'] and team2_stats['map_statistics']):
+        
+        # Find common maps
+        team1_maps = set(team1_stats['map_statistics'].keys())
+        team2_maps = set(team2_stats['map_statistics'].keys())
+        common_maps = team1_maps.intersection(team2_maps)
+        
+        # Calculate significant map advantages
+        for map_name in common_maps:
+            t1_map = team1_stats['map_statistics'][map_name]
+            t2_map = team2_stats['map_statistics'][map_name]
+            
+            # Win rate comparison
+            win_diff = t1_map['win_percentage'] - t2_map['win_percentage']
+            if abs(win_diff) > 0.15:  # 15% threshold for significant advantage
+                better_team = prediction['team1'] if win_diff > 0 else prediction['team2']
+                worse_team = prediction['team2'] if win_diff > 0 else prediction['team1']
+                win_pct_better = max(t1_map['win_percentage'], t2_map['win_percentage']) * 100
+                win_pct_worse = min(t1_map['win_percentage'], t2_map['win_percentage']) * 100
+                
+                export_data['analysis']['map_factors'].append(
+                    f"{better_team} has a significant win rate advantage on {map_name} ({win_pct_better:.1f}% vs {win_pct_worse:.1f}%)"
+                )
+            
+            # Side performance comparison
+            if 'side_preference' in t1_map and 'side_preference' in t2_map:
+                t1_side = t1_map['side_preference']
+                t2_side = t2_map['side_preference']
+                t1_strength = t1_map.get('side_preference_strength', 0) * 100
+                t2_strength = t2_map.get('side_preference_strength', 0) * 100
+                
+                # If teams have different side preferences with significant strength
+                if t1_side != t2_side and (t1_strength > 10 or t2_strength > 10):
+                    export_data['analysis']['map_factors'].append(
+                        f"On {map_name}, {prediction['team1']} prefers {t1_side} ({t1_strength:.1f}% better) while {prediction['team2']} prefers {t2_side} ({t2_strength:.1f}% better)"
+                    )
+            
+            # Overtime performance
+            if ('overtime_stats' in t1_map and 'overtime_stats' in t2_map and
+                t1_map['overtime_stats']['matches'] > 1 and t2_map['overtime_stats']['matches'] > 1):
+                
+                t1_ot_rate = t1_map['overtime_stats']['win_rate']
+                t2_ot_rate = t2_map['overtime_stats']['win_rate']
+                ot_diff = t1_ot_rate - t2_ot_rate
+                
+                if abs(ot_diff) > 0.25:  # 25% threshold for significant OT advantage
+                    better_ot_team = prediction['team1'] if ot_diff > 0 else prediction['team2']
+                    export_data['analysis']['map_factors'].append(
+                        f"{better_ot_team} performs significantly better in overtime on {map_name}"
+                    )
+            
+            # Agent composition comparison
+            if ('agent_compositions' in t1_map and 'agent_compositions' in t2_map and
+                t1_map['agent_compositions'] and t2_map['agent_compositions']):
+                
+                t1_agents = set(t1_map.get('most_played_agents', []))
+                t2_agents = set(t2_map.get('most_played_agents', []))
+                
+                # Calculate agent overlap percentage
+                common_agents = t1_agents.intersection(t2_agents)
+                total_agents = t1_agents.union(t2_agents)
+                
+                if total_agents:
+                    overlap_pct = (len(common_agents) / len(total_agents)) * 100
+                    
+                    if overlap_pct < 40:  # Low agent overlap
+                        export_data['analysis']['map_factors'].append(
+                            f"Teams use very different agent compositions on {map_name} (only {overlap_pct:.1f}% overlap)"
+                        )
+        
+        # Add strongest/weakest map comparison
+        if ('strongest_maps' in team1_stats and 'strongest_maps' in team2_stats and
+            'weakest_maps' in team1_stats and 'weakest_maps' in team2_stats):
+            
+            t1_strong = set(team1_stats['strongest_maps'])
+            t2_weak = set(team2_stats['weakest_maps'])
+            
+            # Find maps where team1's strength overlaps with team2's weakness
+            advantage_maps = t1_strong.intersection(t2_weak)
+            
+            if advantage_maps:
+                export_data['analysis']['map_factors'].append(
+                    f"{prediction['team1']}'s strongest maps ({', '.join(advantage_maps)}) are {prediction['team2']}'s weakest maps"
+                )
+            
+            # And vice versa
+            t2_strong = set(team2_stats['strongest_maps'])
+            t1_weak = set(team1_stats['weakest_maps'])
+            
+            disadvantage_maps = t2_strong.intersection(t1_weak)
+            
+            if disadvantage_maps:
+                export_data['analysis']['map_factors'].append(
+                    f"{prediction['team2']}'s strongest maps ({', '.join(disadvantage_maps)}) are {prediction['team1']}'s weakest maps"
+                )
     
-    # Add economy analysis
-    if 'pistol_win_rate' in team1_stats and 'pistol_win_rate' in team2_stats:
+    # Add economy analysis - reusing logic from original function
+    if ('pistol_win_rate' in team1_stats and 'pistol_win_rate' in team2_stats):
         # Compare pistol win rates
         t1_pistol = team1_stats.get('pistol_win_rate', 0)
         t2_pistol = team2_stats.get('pistol_win_rate', 0)
@@ -5750,6 +7057,44 @@ def export_prediction_data_with_economy(prediction, team1_stats, team2_stats, fi
             better_eff = prediction['team1'] if t1_eff > t2_eff else prediction['team2']
             export_data['analysis']['economy_factors'].append(
                 f"{better_eff} shows better overall economy management efficiency ({max(t1_eff, t2_eff):.2f} vs {min(t1_eff, t2_eff):.2f})"
+            )
+    
+    # Add key matchup factors
+    # Win rate difference
+    win_rate_diff = abs(team1_stats.get('win_rate', 0) - team2_stats.get('win_rate', 0))
+    if win_rate_diff > 0.15:
+        better_team = prediction['team1'] if team1_stats.get('win_rate', 0) > team2_stats.get('win_rate', 0) else prediction['team2']
+        export_data['analysis']['key_factors'].append(
+            f"{better_team} has a significantly better overall win rate ({win_rate_diff:.1%} difference)"
+        )
+    
+    # Recent form
+    form_diff = abs(team1_stats.get('recent_form', 0) - team2_stats.get('recent_form', 0))
+    if form_diff > 0.2:
+        better_form = prediction['team1'] if team1_stats.get('recent_form', 0) > team2_stats.get('recent_form', 0) else prediction['team2']
+        export_data['analysis']['key_factors'].append(
+            f"{better_form} has much better recent form ({form_diff:.1%} difference)"
+        )
+    
+    # Player rating comparison
+    if ('avg_player_rating' in team1_stats and 'avg_player_rating' in team2_stats):
+        rating_diff = abs(team1_stats.get('avg_player_rating', 0) - team2_stats.get('avg_player_rating', 0))
+        if rating_diff > 0.2:
+            better_rated = prediction['team1'] if team1_stats.get('avg_player_rating', 0) > team2_stats.get('avg_player_rating', 0) else prediction['team2']
+            export_data['analysis']['key_factors'].append(
+                f"{better_rated} has higher-rated players ({rating_diff:.2f} rating difference)"
+            )
+    
+    # Head-to-head analysis
+    h2h_win_rate = 0.5  # Default to even
+    if 'opponent_stats' in team1_stats and prediction['team2'] in team1_stats['opponent_stats']:
+        h2h_win_rate = team1_stats['opponent_stats'][prediction['team2']].get('win_rate', 0.5)
+        h2h_matches = team1_stats['opponent_stats'][prediction['team2']].get('matches', 0)
+        
+        if h2h_matches >= 3 and abs(h2h_win_rate - 0.5) > 0.15:
+            h2h_better = prediction['team1'] if h2h_win_rate > 0.5 else prediction['team2']
+            export_data['analysis']['key_factors'].append(
+                f"{h2h_better} has a significant head-to-head advantage ({max(h2h_win_rate, 1-h2h_win_rate):.1%} win rate in {h2h_matches} matches)"
             )
     
     # Save to JSON file
@@ -6124,8 +7469,8 @@ def visualize_optimization_results(original_metrics, optimized_metrics):
 
 # Update main function to include player stats
 def main():
-    """Main function to handle command line arguments and run the program."""
-    parser = argparse.ArgumentParser(description="Valorant Match Predictor with Overfitting Detection and Optimization")
+    """Main function to handle command line arguments and run the program with enhanced map statistics."""
+    parser = argparse.ArgumentParser(description="Valorant Match Predictor with Map Statistics")
     
     # Add command line arguments
     parser.add_argument("--train", action="store_true", help="Train a new model")
@@ -6141,15 +7486,20 @@ def main():
     parser.add_argument("--confidence", type=float, default=0.7, help="Confidence threshold for backtesting")
     parser.add_argument("--players", action="store_true", help="Include player stats in analysis")
     parser.add_argument("--economy", action="store_true", help="Include economy data in analysis")
+    parser.add_argument("--maps", action="store_true", help="Include enhanced map statistics")
     parser.add_argument("--learning-curves", action="store_true", help="Generate detailed learning curves")
     parser.add_argument("--verbose", action="store_true", help="Show detailed progress")
     parser.add_argument("--cross-validate", action="store_true", 
                       help="Train with cross-validation and create ensemble model")
     parser.add_argument("--folds", type=int, default=5, 
                       help="Number of folds for cross-validation")   
-
+    parser.add_argument("--feature-count", type=int, default=71, 
+                      help="Number of top features to use (default: 71)")
 
     args = parser.parse_args()
+    
+    # Set default behavior - include map stats if --maps is specified
+    include_maps = args.maps
     
     if args.train:
         print("Training a new model with player statistics and economy data...")
@@ -6169,6 +7519,9 @@ def main():
         # Select teams for testing or use ranked teams
         top_teams = []
         
+        if args.train and args.feature_count:
+            print(f"Training model with top {args.feature_count} features...")
+
         # Use specific teams if provided
         if args.test_teams and len(args.test_teams) > 0:
             print(f"Using {len(args.test_teams)} specified test teams.")
@@ -6202,13 +7555,13 @@ def main():
             # If no teams with rankings were found, just take the first 50 teams
             if not top_teams:
                 print("No teams with rankings found. Using the first 20 teams instead.")
-                top_teams = teams_data['data'][:40]
+                top_teams = teams_data['data'][:50]
         
         print(f"Selected {len(top_teams)} teams for training data.")
         
-        # Collect match data for each team with enhanced economy and player stats
         team_data_collection = {}
         
+
         for team in tqdm(top_teams, desc="Collecting team data"):
             team_id = team['id']
             team_name = team['name']
@@ -6237,9 +7590,10 @@ def main():
                     print(f"No match data found for {team_name}")
                 continue
             
-            # Add team tag to all matches for economy data extraction
+            # Add team tag and ID to all matches for data extraction
             for match in team_matches:
                 match['team_tag'] = team_tag
+                match['team_id'] = team_id
             
             # Fetch player stats if requested
             team_player_stats = None
@@ -6257,7 +7611,7 @@ def main():
                     else:
                         print(f"No player stats found for {team_name}")
             
-            # Calculate team stats with the right method based on flags
+            # Calculate team stats with appropriate features
             if args.economy:
                 if args.verbose:
                     print(f"\nUsing enhanced economy stats calculation for {team_name}")
@@ -6267,8 +7621,18 @@ def main():
                     print(f"\nUsing standard team stats calculation for {team_name}")
                 team_stats = calculate_team_stats(team_matches, team_player_stats)
             
-            # Store team tag in the stats
+            # Store team tag and ID in the stats
             team_stats['team_tag'] = team_tag
+            team_stats['team_name'] = team_name
+            team_stats['team_id'] = team_id
+            
+            # Fetch and add map statistics if requested
+            if include_maps:
+                map_stats = fetch_team_map_statistics(team_id)
+                if map_stats:
+                    team_stats['map_statistics'] = map_stats
+                    if args.verbose:
+                        print(f"Added map statistics for {team_name} ({len(map_stats)} maps)")
             
             # Extract additional analyses
             team_map_performance = extract_map_performance(team_matches)
@@ -6309,6 +7673,14 @@ def main():
                     print(f"  Eco Win Rate: {team_stats.get('eco_win_rate', 0)*100:.2f}%")
                     print(f"  Full Buy Win Rate: {team_stats.get('full_buy_win_rate', 0)*100:.2f}%")
                     print(f"  Economy Efficiency: {team_stats.get('economy_efficiency', 0):.3f}")
+                
+                # Print map stats if available
+                if include_maps and 'map_statistics' in team_stats:
+                    print(f"\nMap stats summary for {team_name}:")
+                    for map_name, map_data in team_stats['map_statistics'].items():
+                        print(f"  {map_name}: {map_data.get('win_percentage', 0)*100:.1f}% win rate, "
+                              f"ATK: {map_data.get('atk_win_rate', 0)*100:.1f}%, "
+                              f"DEF: {map_data.get('def_win_rate', 0)*100:.1f}%")
         
         print(f"Collected data for {len(team_data_collection)} teams.")
         
@@ -6319,8 +7691,14 @@ def main():
         teams_with_economy_stats = sum(1 for team_data in team_data_collection.values() 
                                       if 'pistol_win_rate' in team_data and team_data['pistol_win_rate'] > 0)
         
+        teams_with_map_stats = sum(1 for team_data in team_data_collection.values()
+                                  if 'map_statistics' in team_data and team_data['map_statistics'])
+        
         print(f"\nTeams with player statistics: {teams_with_player_stats}/{len(team_data_collection)}")
         print(f"Teams with economy statistics: {teams_with_economy_stats}/{len(team_data_collection)}")
+        
+        if include_maps:
+            print(f"Teams with map statistics: {teams_with_map_stats}/{len(team_data_collection)}")
         
         if teams_with_player_stats == 0 and args.players:
             print("\nWARNING: No teams have player statistics even though --players flag was used.")
@@ -6337,9 +7715,17 @@ def main():
             if user_continue.lower() != 'y':
                 print("Training aborted.")
                 return
+                
+        if teams_with_map_stats == 0 and include_maps:
+            print("\nWARNING: No teams have map statistics even though --maps flag was used.")
+            print("Check your fetch_team_map_statistics function for errors.")
+            user_continue = input("Continue with training without map stats? (y/n): ")
+            if user_continue.lower() != 'y':
+                print("Training aborted.")
+                return
 
-        # Build training dataset with economy features
-        print("\nBuilding training dataset with player and economy features...")
+        # Build training dataset with all features
+        print("\nBuilding training dataset with all specified features...")
         X, y = build_training_dataset_with_economy(team_data_collection)
         
         print(f"Built training dataset with {len(X)} samples.")
@@ -6349,32 +7735,25 @@ def main():
             print("Not enough training data. Please collect more match data.")
             return
         
-    # In your if-else logic, add:
-    if args.cross_validate:
-        print(f"Training with {args.folds}-fold cross-validation and ensemble modeling...")
-        
-        team_data_collection = debug_and_fix_match_data(team_data_collection)   
-
-        # Build training dataset
-        print("\nBuilding training dataset with player and economy features...")
-        X, y = build_training_dataset_with_economy(team_data_collection)
-        
-        print(f"Built training dataset with {len(X)} samples.")
-        
-        # Check if we have enough data
-        if len(X) < args.folds * 2:  # Need at least 2 samples per fold
-            print(f"Not enough training data for {args.folds}-fold cross-validation.")
-            print(f"Need at least {args.folds * 2} samples, but only have {len(X)}.")
-            return
+        # Train with appropriate method based on args
+        if args.cross_validate:
+            print(f"Training with {args.folds}-fold cross-validation and ensemble modeling...")
             
-        # Train with cross-validation
-        ensemble_models, stable_features, scaler, ensemble_metadata = train_and_evaluate_model(
-            X, y, n_splits=args.folds, random_state=42
-        )
-        
-        print("Ensemble model training complete.")
-
-        if args.learning_curves:
+            team_data_collection = debug_and_fix_match_data(team_data_collection)   
+            
+            # Check if we have enough data
+            if len(X) < args.folds * 2:  # Need at least 2 samples per fold
+                print(f"Not enough training data for {args.folds}-fold cross-validation.")
+                print(f"Need at least {args.folds * 2} samples, but only have {len(X)}.")
+                return
+                
+            # Train with cross-validation
+            ensemble_models, stable_features, scaler, ensemble_metadata = train_and_evaluate_model(
+                X, y, n_splits=args.folds, random_state=42
+            )
+            
+            print("Ensemble model training complete.")
+        elif args.learning_curves:
             # Train model with detailed learning curves for overfitting detection
             print("\nTraining model with detailed learning curves for overfitting detection...")
             model, scaler, feature_names, learning_curve_data = train_model_with_learning_curves(X, y)
@@ -6388,6 +7767,14 @@ def main():
             # Run complete model optimization pipeline
             print("\nRunning complete model optimization pipeline...")
             model, scaler, feature_names = optimize_model_pipeline(X, y)
+        elif args.feature_count:
+            # Train with fixed feature count
+            model, scaler, selected_features = train_with_fixed_feature_count(
+                X, y, feature_count=args.feature_count
+            )    
+            
+            # Analyze selected features
+            feature_analysis = analyze_selected_features(selected_features)
         else:
             # Train regular model
             print("\nTraining standard model...")
@@ -6402,15 +7789,18 @@ def main():
         if ensemble_exists:
             print(f"Predicting match between {args.team1} and {args.team2} using ensemble model...")
             prediction = predict_match_with_ensemble(args.team1, args.team2)
-        elif os.path.exists('valorant_model_optimized.h5'):
-            print(f"Predicting match between {args.team1} and {args.team2} using optimized model...")
+        elif include_maps:
+            print(f"Predicting match between {args.team1} and {args.team2} with enhanced map statistics...")
             prediction = predict_match_with_optimized_model(args.team1, args.team2)
         else:
             print(f"Predicting match between {args.team1} and {args.team2} with standard model...")
             prediction = predict_match_with_optimized_model(args.team1, args.team2)
         
         if prediction:
-            visualize_prediction_with_economy(prediction)
+            if include_maps:
+                visualize_prediction_with_economy_and_maps(prediction)
+            else:
+                visualize_prediction_with_economy(prediction)
         else:
             print(f"Could not generate prediction for {args.team1} vs {args.team2}")
     
@@ -6423,7 +7813,12 @@ def main():
                 feature_names = pickle.load(f)
                 
             # Collect new data for optimization
-            team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True, verbose=args.verbose)
+            team_data_collection = collect_all_team_data(
+                include_player_stats=True, 
+                include_economy=True, 
+                include_maps=include_maps,
+                verbose=args.verbose
+            )
             
             if team_data_collection:
                 X, y = build_training_dataset_with_economy(team_data_collection)
@@ -6449,7 +7844,12 @@ def main():
                 feature_names = pickle.load(f)
                 
             # Collect new data for analysis
-            team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True, verbose=args.verbose)
+            team_data_collection = collect_all_team_data(
+                include_player_stats=True, 
+                include_economy=True, 
+                include_maps=include_maps,
+                verbose=args.verbose
+            )
             
             if team_data_collection:
                 X, y = build_training_dataset_with_economy(team_data_collection)
@@ -6473,9 +7873,9 @@ def main():
     
     elif args.analyze:
         # Analyze upcoming matches using the best available model
-        if os.path.exists('valorant_model_optimized.h5'):
-            print("Analyzing upcoming matches with optimized model...")
-            # [update analyze_upcoming_matches function to use optimized model]
+        if include_maps:
+            print("Analyzing upcoming matches with enhanced map statistics...")
+            analyze_upcoming_matches_with_maps()
         else:
             print("Analyzing upcoming matches with standard model...")
             analyze_upcoming_matches()
@@ -6489,14 +7889,20 @@ def main():
         print(f"Bet amount: ${args.bet_amount}, Confidence threshold: {args.confidence}")
         
         # Determine which model to use for backtesting
-        if os.path.exists('valorant_model_optimized.h5'):
-            print("Using optimized model for backtesting...")
-            # [modify backtest_model to use optimized model]
+        if include_maps:
+            print("Using enhanced map statistics for backtesting...")
+            results = backtest_model_with_maps(
+                args.cutoff_date, 
+                bet_amount=args.bet_amount, 
+                confidence_threshold=args.confidence
+            )
         else:
             print("Using standard model for backtesting...")
-            results = backtest_model(args.cutoff_date, 
-                                    bet_amount=args.bet_amount, 
-                                    confidence_threshold=args.confidence)
+            results = backtest_model(
+                args.cutoff_date, 
+                bet_amount=args.bet_amount, 
+                confidence_threshold=args.confidence
+            )
         
         if results:
             print("\nBacktesting Results:")
@@ -6507,6 +7913,11 @@ def main():
             print(f"Total bets: {results['total_bets']}")
             avg_profit = results['total_profit']/results['total_bets'] if results['total_bets'] > 0 else 0
             print(f"Average profit per bet: ${avg_profit:.2f}")
+            
+            if include_maps and 'map_accuracy' in results:
+                print("\nMap-Specific Accuracy:")
+                for map_name, acc in results['map_accuracy'].items():
+                    print(f"  {map_name}: {acc:.4f}")
         else:
             print("Backtesting failed or returned no results.")
     
@@ -6516,9 +7927,8 @@ def main():
         print("For backtesting, specify --cutoff-date YYYY/MM/DD")
         print("To include player statistics, add --players")
         print("To include economy data, add --economy")
+        print("To include map statistics, add --maps")
         print("To test with specific teams, use --train --test-teams \"Team Name 1\" \"Team Name 2\" ...")
-
-
 
 if __name__ == "__main__":
     main()

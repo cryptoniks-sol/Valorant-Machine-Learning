@@ -1,24 +1,44 @@
 {
-  "timestamp": "2025-04-23 00:31:32",
-  "bankroll": 100.0,
+  "timestamp": "2025-04-23 22:58:37",
+  "bankroll": 60.0,
   "value_bets": [
     {
-      "match": "T1 Academy vs SLT",
+      "match": "SHERPA vs FN Pocheon",
       "bet_type": "Moneyline",
-      "pick": "T1 Academy",
-      "model_probability": 0.9068083167076111,
-      "implied_probability": 0.6756756756756757,
-      "edge": 0.23113264103193543,
-      "odds": 1.48,
-      "confidence": 0.9068083167076111,
-      "kelly_bet_size": 0.17816474412878355,
-      "recommended_bet": 17.816474412878357,
+      "pick": "SHERPA",
+      "model_probability": 0.7021262645721436,
+      "implied_probability": 0.4,
+      "edge": 0.30212626457214353,
+      "odds": 2.5,
+      "confidence": 0.7021262645721436,
+      "kelly_bet_size": 0.12588594357172647,
+      "recommended_bet": 7.553156614303588,
       "key_factors": [],
       "team_stats": {
-        "win_rate": 0.7,
-        "recent_form": 0.6,
-        "avg_player_rating": 1.0,
-        "star_player": "DH"
+        "win_rate": 0.46153846153846156,
+        "recent_form": 0.4,
+        "avg_player_rating": 0.8620000000000001,
+        "star_player": "Wolverine"
+      },
+      "h2h_data": {}
+    },
+    {
+      "match": "SHERPA vs FN Pocheon",
+      "bet_type": "Handicap +1.5",
+      "pick": "SHERPA",
+      "model_probability": 0.9106378793716431,
+      "implied_probability": 0.6756756756756757,
+      "edge": 0.23496220369596743,
+      "odds": 1.48,
+      "confidence": 0.7021262645721436,
+      "kelly_bet_size": 0.1811166986823082,
+      "recommended_bet": 10.867001920938492,
+      "key_factors": [],
+      "team_stats": {
+        "win_rate": 0.46153846153846156,
+        "recent_form": 0.4,
+        "avg_player_rating": 0.8620000000000001,
+        "star_player": "Wolverine"
       },
       "h2h_data": {}
     }

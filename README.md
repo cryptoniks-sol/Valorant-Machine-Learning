@@ -170,13 +170,13 @@ python test1.py --train --players --economy --cross-validate --folds 10 --learni
 
 python test1.py --backtest --cutoff-date 2025/01/01 --bet-amount 100 
 
-python bets.py betting_predictions/T1_Academy_vs_SLT_20250423_002321.json --bankroll 100
+python betscache.py betting_predictions/SHERPA_vs_FN_Pocheon_20250423_225441.json --bankroll 60
 
 python bets.py betting_predictions/Zero_Tenacity_vs_PIXEL_LUMINA_20250421_160309.json --bankroll 100
 
 Basic Training
 bash# Train a standard model with 30 teams
-python test1.py --train --players --economy --test-teams "Sentinels" "Cloud9" "100 Thieves" "LOUD" "Fnatic" "Team Liquid" "G2 Esports" "NRG" "Evil Geniuses" "KRÜ Esports" "FURIA" "MIBR" "Team Heretics" "FUT Esports" "Gen.G" "DRX" "ZETA DIVISION" "DetonatioN" "Paper Rex" "T1" "NAVI" "FPX" "BBL Esports" "Team Secret" "Talon Esports" "Global Esports" "Team Vitality" "Karmine Corp" "Leviatán" "Team Liquid Brazil"
+python test1.py --train --players --economy --test-teams "TSM" "Cloud9" "100 Thieves" "LOUD" "Fnatic" "Team Liquid" "G2 Esports" "NRG" "Evil Geniuses" "KRÜ Esports" "FURIA" "MIBR" "Team Heretics" "FUT Esports" "Gen.G" "DRX" "ZETA DIVISION" "DetonatioN" "Paper Rex" "T1" "NAVI" "FPX" "BBL Esports" "Team Secret" "Talon Esports" "Global Esports" "Team Vitality" "Karmine Corp" "Leviatán" "Team Liquid Brazil"
 
 # Train with top 100 teams automatically
 python test1.py --train --players --economy
@@ -189,15 +189,15 @@ python test1.py --train --players --economy --optimize
 
 # Train with cross-validation and ensemble modeling (5 folds)
 
-python test1.py --train --players --economy --cross-validatef optimal_features and isinstance(optimal_features[0], int):
+python test1.py --train --cross-validate --folds 5 --players --economy --learning-curves --feature-count 71 
 
 # Train with cross-validation and 10 folds
 
-python test1.py --train --players --economy --cross-validate --folds 10 --learning-curves
+python test1.py --train --players --economy --maps --cross-validate --folds 5 --learning-curves
 
 Match Prediction
 bash# Predict a specific match (will automatically use the best available model)
-python test1.py --predict --team1 "GIANTX" --team2 "Apeks"
+python test1.py --predict --team1 "KOI" --team2 "Gentle Mates"
 
 Analysis and Evaluation
 bash# Analyze all upcoming matches
@@ -213,7 +213,7 @@ python test1.py --learning-curves
 python test1.py --optimize
 Additional Options
 bash# Show detailed progress during operations
-python test1.py --train --players --economy --verbose
+python test1.py --train --players --economy --verbose --optimize
 
 # Use specific test teams
 python test1.py --train --players --economy --test-teams "Team1" "Team2"
