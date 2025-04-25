@@ -166,7 +166,7 @@ python test1.py --predict --team1 "T1 Academy" --team2 "SLT"
 
 python test1.py --train --players --economy --learning-curves
 
-python test1.py --train --players --economy --cross-validate --folds 10 --learning-curves
+python test1.py --train --players --economy --maps --cross-validate --folds 10 --learning-curves
 
 python test1.py --backtest --cutoff-date 2025/01/01 --bet-amount 100 
 
@@ -189,7 +189,7 @@ python test1.py --train --players --economy --optimize
 
 # Train with cross-validation and ensemble modeling (5 folds)
 
-python test1.py --train --cross-validate --folds 5 --players --economy --learning-curves --feature-count 71 
+python test1.py --train --cross-validate --folds 5 --players --economy --learning-curves 
 
 # Train with cross-validation and 10 folds
 

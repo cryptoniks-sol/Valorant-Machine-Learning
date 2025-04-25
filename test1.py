@@ -203,119 +203,108 @@ def extract_map_statistics(team_stats_data):
     Returns:
         dict: Processed map statistics with various metrics
     """
+    def safe_percentage(value):
+        try:
+            return float(value.strip('%')) / 100
+        except (ValueError, AttributeError, TypeError):
+            return 0
+
+    def safe_int(value):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return 0
+
     if not team_stats_data or 'data' not in team_stats_data:
         return {}
-    
+
     maps_data = team_stats_data['data']
     map_statistics = {}
-    
+
     for map_entry in maps_data:
-        map_name = map_entry.get('map', '').split(' ')[0]  # Extract just the map name without count
+        map_name = map_entry.get('map', '').split(' ')[0]
         if not map_name:
             continue
-            
-        # Get the main stats for this map
-        stats = map_entry.get('stats', [])
-        if not stats or len(stats) == 0:
-            continue
-            
-        main_stats = stats[0]  # First entry contains the summary stats
-        
-        # Extract basic win/loss statistics
-        win_percentage = main_stats.get('WIN%', '0%').strip('%')
-        try:
-            win_percentage = float(win_percentage) / 100
-        except (ValueError, TypeError):
-            win_percentage = 0
 
-        
-        wins = int(main_stats.get('W', '0'))
-        losses = int(main_stats.get('L', '0'))
-        
-        # Extract side preferences and win rates
-        atk_first = int(main_stats.get('ATK 1st', '0'))
-        def_first = int(main_stats.get('DEF 1st', '0'))
-        
-        atk_win_rate = main_stats.get('ATK RWin%', '0%').strip('%')
-        atk_win_rate = float(atk_win_rate) / 100 if atk_win_rate else 0
-        
-        def_win_rate = main_stats.get('DEF RWin%', '0%').strip('%')
-        def_win_rate = float(def_win_rate) / 100 if def_win_rate else 0
-        
-        # Calculate round statistics
-        atk_rounds_won = int(main_stats.get('RW', '0')) 
-        atk_rounds_lost = int(main_stats.get('RL', '0'))
-        
-        # Process agent compositions
+        stats = map_entry.get('stats', [])
+        if not stats:
+            continue
+
+        main_stats = stats[0]
+
+        win_percentage = safe_percentage(main_stats.get('WIN%', '0%'))
+
+        wins = safe_int(main_stats.get('W', '0'))
+        losses = safe_int(main_stats.get('L', '0'))
+
+        atk_first = safe_int(main_stats.get('ATK 1st', '0'))
+        def_first = safe_int(main_stats.get('DEF 1st', '0'))
+
+        atk_win_rate = safe_percentage(main_stats.get('ATK RWin%', '0%'))
+        def_win_rate = safe_percentage(main_stats.get('DEF RWin%', '0%'))
+
+        atk_rounds_won = safe_int(main_stats.get('RW', '0'))
+        atk_rounds_lost = safe_int(main_stats.get('RL', '0'))
+
         agent_compositions = main_stats.get('Agent Compositions', [])
-        
-        # Group agents into actual team compositions (5 agents per comp)
+
+        # Group agents into teams of 5
         team_compositions = []
         current_comp = []
-        
+
         for agent in agent_compositions:
             current_comp.append(agent)
             if len(current_comp) == 5:
                 team_compositions.append(current_comp)
                 current_comp = []
-        
-        # Calculate agent usage frequency
+
         agent_usage = {}
         for comp in team_compositions:
             for agent in comp:
                 agent_usage[agent] = agent_usage.get(agent, 0) + 1
-        
-        # Sort agents by usage
+
         sorted_agents = sorted(agent_usage.items(), key=lambda x: x[1], reverse=True)
-        
-        # Process match history with detailed results
+
         match_history = []
         for i in range(1, len(stats)):
             match_stat = stats[i]
             match_details = match_stat.get('Expand', '')
-            
             if not match_details:
                 continue
-                
-            # Parse match details: date, opponent, score, side scores, event type
+
             parts = match_details.split()
-            
             try:
-                date = parts[0] if len(parts) > 0 else ''
-                opponent = ' '.join(parts[1:parts.index(parts[next(i for i, p in enumerate(parts) if '/' in p and i > 0)])]) if len(parts) > 1 else ''
-                
-                # Find score parts using pattern matching
-                score_index = next((i for i, p in enumerate(parts) if '/' in p and i > 0), -1)
+                date = parts[0] if parts else ''
+                score_index = next((i for i, p in enumerate(parts) if '/' in p), -1)
+
+                opponent = ' '.join(parts[1:score_index]) if score_index != -1 else ''
+
+                team_score, opponent_score = 0, 0
                 if score_index != -1:
                     score_parts = parts[score_index].split('/')
-                    team_score = int(score_parts[0])
-                    opponent_score = int(score_parts[1])
-                else:
-                    team_score = 0
-                    opponent_score = 0
-                
-                # Parse side scores and overtime
+                    team_score = safe_int(score_parts[0])
+                    opponent_score = safe_int(score_parts[1])
+
                 side_scores = {}
-                sides = ['atk', 'def', 'OT']
-                for side in sides:
-                    side_index = next((i for i, p in enumerate(parts) if p.lower() == side), -1)
-                    if side_index != -1 and side_index + 1 < len(parts):
-                        side_score_part = parts[side_index + 1]
-                        if '/' in side_score_part:
-                            side_score_parts = side_score_part.split('/')
-                            side_scores[side] = {
-                                'won': int(side_score_parts[0]),
-                                'lost': int(side_score_parts[1])
-                            }
-                
-                # Extract event type
-                event_type = ' '.join(parts[parts.index(sides[-1]) + 2:]) if sides[-1] in parts else ''
-                if not event_type and sides[1] in parts:
-                    event_type = ' '.join(parts[parts.index(sides[1]) + 2:])
-                
-                # Check if match went to overtime
+                for side in ['atk', 'def', 'OT']:
+                    try:
+                        idx = parts.index(side)
+                        score_part = parts[idx + 1]
+                        if '/' in score_part:
+                            won, lost = map(safe_int, score_part.split('/'))
+                            side_scores[side] = {'won': won, 'lost': lost}
+                    except:
+                        continue
+
                 went_to_ot = 'OT' in parts
-                
+                event_type = ''
+                for side in ['OT', 'def', 'atk']:
+                    if side in parts:
+                        idx = parts.index(side)
+                        if idx + 2 < len(parts):
+                            event_type = ' '.join(parts[idx + 2:])
+                            break
+
                 match_result = {
                     'date': date,
                     'opponent': opponent,
@@ -326,23 +315,20 @@ def extract_map_statistics(team_stats_data):
                     'went_to_ot': went_to_ot,
                     'event_type': event_type
                 }
-                
+
                 match_history.append(match_result)
             except Exception as e:
                 print(f"Error parsing match details '{match_details}': {e}")
-        
-        # Calculate additional metrics
-        overtime_matches = sum(1 for m in match_history if m.get('went_to_ot', False))
-        overtime_wins = sum(1 for m in match_history if m.get('went_to_ot', False) and m.get('won', False))
-        
+
+        overtime_matches = sum(1 for m in match_history if m.get('went_to_ot'))
+        overtime_wins = sum(1 for m in match_history if m.get('went_to_ot') and m.get('won'))
+
         playoff_matches = sum(1 for m in match_history if 'Playoff' in m.get('event_type', ''))
-        playoff_wins = sum(1 for m in match_history if 'Playoff' in m.get('event_type', '') and m.get('won', False))
-        
-        # Calculate recent form (last 3 matches)
-        recent_matches = match_history[:3] if len(match_history) >= 3 else match_history
-        recent_win_rate = sum(1 for m in recent_matches if m.get('won', False)) / len(recent_matches) if recent_matches else 0
-        
-        # Store all processed data
+        playoff_wins = sum(1 for m in match_history if 'Playoff' in m.get('event_type', '') and m.get('won'))
+
+        recent_matches = match_history[:3]
+        recent_win_rate = sum(1 for m in recent_matches if m.get('won')) / len(recent_matches) if recent_matches else 0
+
         map_statistics[map_name] = {
             'win_percentage': win_percentage,
             'wins': wins,
@@ -372,9 +358,9 @@ def extract_map_statistics(team_stats_data):
             'recent_form': recent_win_rate,
             'composition_variety': len(team_compositions),
             'most_played_composition': team_compositions[0] if team_compositions else [],
-            'most_played_agents': [agent for agent, count in sorted_agents[:5]] if sorted_agents else []
+            'most_played_agents': [agent for agent, _ in sorted_agents[:5]] if sorted_agents else []
         }
-    
+
     return map_statistics
 
 def fetch_team_map_statistics(team_id):
@@ -603,17 +589,31 @@ def fetch_upcoming_matches():
     return matches_data.get('data', [])
 
 def parse_match_data(match_history, team_name):
-    """Parse match history data for a team."""
+    """Parse match history data for a team with correct team tag assignment."""
     if not match_history or 'data' not in match_history:
         return []
     
     matches = []
-    
+    filtered_count = 0
+
     # Add debug output
     print(f"Parsing {len(match_history['data'])} matches for {team_name}")
     
     for match in match_history['data']:
         try:
+
+            team_found = False
+            if 'teams' in match and len(match['teams']) >= 2:
+                for team in match['teams']:
+                    if (team.get('name', '').lower() == team_name.lower() or 
+                        team_name.lower() in team.get('name', '').lower()):
+                        team_found = True
+                        break
+           
+            if not team_found:
+                filtered_count += 1
+                print(f"Skipping match {match.get('id', 'unknown')} - does not involve {team_name}")
+                continue
             # Extract basic match info
             match_info = {
                 'match_id': match.get('id', ''),
@@ -655,20 +655,39 @@ def parse_match_data(match_history, team_name):
                 # Add our team's info
                 match_info['team_name'] = our_team.get('name', '')
                 match_info['team_score'] = int(our_team.get('score', 0))
-                match_info['team_won'] = team_won  # Use calculated value
+                match_info['team_won'] = team_won
                 match_info['team_country'] = our_team.get('country', '')
+                
+                # Use actual team tag if available, don't hardcode it
+                # First try to get it from the team data
+                match_info['team_tag'] = our_team.get('tag', '')
+                
+                # If tag not in team data, try to extract it from name (common formats: "TAG Name" or "Name [TAG]")
+                if not match_info['team_tag']:
+                    team_name_parts = our_team.get('name', '').split()
+                    if len(team_name_parts) > 0:
+                        # Check if first word might be a tag (all caps, 2-5 letters)
+                        first_word = team_name_parts[0]
+                        if first_word.isupper() and 2 <= len(first_word) <= 5:
+                            match_info['team_tag'] = first_word
+                    
+                    # If still no tag, check for [TAG] format
+                    if not match_info['team_tag'] and '[' in our_team.get('name', '') and ']' in our_team.get('name', ''):
+                        tag_match = re.search(r'\[(.*?)\]', our_team.get('name', ''))
+                        if tag_match:
+                            match_info['team_tag'] = tag_match.group(1)
                 
                 # Add opponent's info
                 match_info['opponent_name'] = opponent_team.get('name', '')
                 match_info['opponent_score'] = int(opponent_team.get('score', 0))
                 match_info['opponent_won'] = not team_won  # Opponent's result is opposite of our team
                 match_info['opponent_country'] = opponent_team.get('country', '')
-             # *** ADD THIS LINE ***
+                match_info['opponent_tag'] = opponent_team.get('tag', '')
+                
+                # Add the result field
                 match_info['result'] = 'win' if team_won else 'loss'               
 
-
-                print(f"  Determined: {match_info['team_name']} won? {match_info['team_won']}")
-                
+                print(f"  Determined: {match_info['team_name']} (Tag: {match_info['team_tag']}) won? {match_info['team_won']}")
 
                 # Fetch match details for deeper statistics
                 match_details = fetch_match_details(match_info['match_id'])
@@ -682,6 +701,7 @@ def parse_match_data(match_history, team_name):
             print(f"Error parsing match: {e}")
             continue
     
+    print(f"Skipped {filtered_count} matches that did not involve {team_name}")   
     # Summarize wins/losses
     wins = sum(1 for match in matches if match['team_won'])
     print(f"Processed {len(matches)} matches for {team_name}: {wins} wins, {len(matches) - wins} losses")
@@ -811,24 +831,33 @@ def fetch_match_economy_details(match_id):
         return None
     
     print(f"Fetching economy details for match ID: {match_id}")
-    response = requests.get(f"{API_URL}/match-details/{match_id}?tab=economy")
-    
-    if response.status_code != 200:
-        print(f"Error fetching economy details for match {match_id}: {response.status_code}")
+    try:
+        response = requests.get(f"{API_URL}/match-details/{match_id}?tab=economy")
+        
+        if response.status_code != 200:
+            print(f"Error fetching economy details for match {match_id}: {response.status_code}")
+            return None
+        
+        economy_details = response.json()
+        
+        # Print response structure for debugging
+        if 'data' in economy_details and 'teams' in economy_details['data']:
+            teams = [team.get('name', 'Unknown') for team in economy_details['data']['teams']]
+            print(f"Teams in economy data: {teams}")
+        else:
+            print("No teams found in economy data response")
+        
+        return economy_details
+    except Exception as e:
+        print(f"Exception while fetching economy details: {e}")
         return None
-    
-    economy_details = response.json()
 
-    # Be nice to the API
-     
-    return economy_details
-
-def calculate_team_stats_with_economy(matches, player_stats=None):
+def calculate_team_stats_with_economy(team_matches, player_stats=None):
     """Calculate comprehensive statistics for a team from its matches, including economy data."""
     # First use the original function to get base stats
-    base_stats = calculate_team_stats_original(matches, player_stats)
+    base_stats = calculate_team_stats_original(team_matches, player_stats)
     
-    if not matches:
+    if not team_matches:
         return base_stats
     
     # Initialize economy stats
@@ -839,18 +868,19 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         'semi_buy_win_rate': 0,
         'full_buy_win_rate': 0,
         'economy_efficiency': 0,
-        'total_economy_matches': 0
+        'total_economy_matches': 0,
+        'economy_data_missing_count': 0  # Track how many matches had missing economy data
     }
     
-    # Get team tag or name from the matches if available
+    # Get team info from the matches if available
     team_tag = None
     team_name = None
     team_id = None
     
-    if matches:
-        team_tag = matches[0].get('team_tag')
-        team_name = matches[0].get('team_name')
-        team_id = matches[0].get('team_id')
+    if team_matches:
+        team_tag = team_matches[0].get('team_tag')
+        team_name = team_matches[0].get('team_name')
+        team_id = team_matches[0].get('team_id')
     
     print(f"Processing economy data for team: {team_name} (Tag: {team_tag}, ID: {team_id})")
     
@@ -867,16 +897,17 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
     total_full_buy_rounds = 0
     total_efficiency_sum = 0
     economy_matches_count = 0
+    economy_data_missing_count = 0
     
     # Process each match to extract economy data
-    for match in matches:
+    for match in team_matches:
         match_id = match.get('match_id')
         if not match_id:
             continue
             
-        # Get team tag and name for better matching
-        match_team_tag = match.get('team_tag', team_tag)
-        match_team_name = match.get('team_name', team_name)
+        # Get team tag and name for better matching - use those specific to this match!
+        match_team_tag = match.get('team_tag')  # This should be the correct tag for this specific match
+        match_team_name = match.get('team_name')
         
         # Debug output
         print(f"Processing match ID {match_id} economy data for team: {match_team_name} (Tag: {match_team_tag})")
@@ -892,28 +923,33 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         if 'data' not in economy_data:
             print(f"No 'data' field in economy response for match ID: {match_id}")
             continue
-            
-        if 'teams' not in economy_data['data']:
-            print(f"No 'teams' field in economy data for match ID: {match_id}")
-            continue
-            
-        # Try to use team_tag first if available
-        team_identifier = match_team_tag if match_team_tag else match_team_name
         
-        if not team_identifier:
+        # Skip teams field check since our function will handle that
+        
+        # Try to use team_tag first if available, otherwise fall back to team_name
+        team_identifier = match_team_tag
+        fallback_name = match_team_name
+        
+        if not team_identifier and not fallback_name:
             print(f"Warning: No team identifier (tag or name) available for match ID: {match_id}")
             continue
             
         # Debug: show teams in economy data
-        teams_in_data = [team.get('name', 'Unknown') for team in economy_data['data']['teams']]
-        print(f"Teams in economy data: {teams_in_data}")
-            
+        if 'teams' in economy_data['data']:
+            teams_in_data = [team.get('name', 'Unknown') for team in economy_data['data']['teams']]
+            print(f"Teams in economy data: {teams_in_data}")
+        
         # Extract team-specific economy data using the identifier with more debug info
-        print(f"Looking for team with identifier: {team_identifier}")
-        our_team_metrics = extract_economy_metrics(economy_data, team_identifier)
+        our_team_metrics = extract_economy_metrics(economy_data, team_identifier, fallback_name)
         
         if not our_team_metrics:
-            print(f"Warning: No economy metrics extracted for team: {team_identifier}")
+            print(f"Warning: No economy metrics extracted for team: {team_identifier or fallback_name}")
+            continue
+        
+        # Check if economy data was missing
+        if our_team_metrics.get('economy_data_missing', False):
+            print(f"Note: Economy data was missing for match ID: {match_id}, using defaults")
+            economy_data_missing_count += 1
             continue
         
         print(f"Successfully extracted economy metrics for match ID: {match_id}")
@@ -940,6 +976,7 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
     # Debug summary
     print(f"Economy data summary for {team_name}:")
     print(f"- Economy matches processed: {economy_matches_count}")
+    print(f"- Matches with missing economy data: {economy_data_missing_count}")
     print(f"- Total pistol rounds: {total_pistol_rounds}, Won: {total_pistol_won}")
     print(f"- Total eco rounds: {total_eco_rounds}, Won: {total_eco_won}")
     print(f"- Total full buy rounds: {total_full_buy_rounds}, Won: {total_full_buy_won}")
@@ -947,6 +984,7 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
     # Calculate aggregate economy stats if we have data
     if economy_matches_count > 0:
         economy_stats['total_economy_matches'] = economy_matches_count
+        economy_stats['economy_data_missing_count'] = economy_data_missing_count
         economy_stats['pistol_win_rate'] = total_pistol_won / total_pistol_rounds if total_pistol_rounds > 0 else 0
         economy_stats['eco_win_rate'] = total_eco_won / total_eco_rounds if total_eco_rounds > 0 else 0
         economy_stats['semi_eco_win_rate'] = total_semi_eco_won / total_semi_eco_rounds if total_semi_eco_rounds > 0 else 0
@@ -966,6 +1004,8 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         print(f"- Full buy win rate: {economy_stats['full_buy_win_rate']:.2f}")
     else:
         print(f"No economy data calculated for {team_name} - no matches with valid economy data")
+        # Add a field to indicate no economy data was found
+        economy_stats['economy_data_available'] = False
     
     # Add economy stats to base stats
     base_stats.update(economy_stats)
@@ -3739,43 +3779,135 @@ def fetch_match_economy_details(match_id):
     
     return economy_details
 
-def extract_economy_metrics(match_economy_data, team_identifier=None):
+def extract_economy_metrics(match_economy_data, team_identifier=None, fallback_name=None):
     """Extract relevant economic performance metrics from match economy data for a specific team.
     
     Args:
         match_economy_data (dict): The economy data from the match
-        team_identifier (str): The team tag or team name to identify the team
+        team_identifier (str): The team tag to identify the team
+        fallback_name (str): The team name to use as fallback if tag matching fails
         
     Returns:
         dict: Economy metrics for the team, or empty dict if not found
     """
-    if not match_economy_data or 'data' not in match_economy_data or 'teams' not in match_economy_data['data']:
-        print("\nNo valid economy data found in match_economy_data")
+    # Add more detailed logging for debugging
+    print("\nDEBUG: Starting economy data extraction")
+    print(f"Looking for team with identifier: {team_identifier} (Fallback: {fallback_name})")
+    
+    # Check basic structure
+    if not match_economy_data or 'data' not in match_economy_data:
+        print("DEBUG: No 'data' field in economy_data")
+        return {}
+    
+    # Check if we have the expected teams field
+    if 'teams' not in match_economy_data['data']:
+        print("DEBUG: No 'teams' field in economy data")
         return {}
     
     teams_data = match_economy_data['data']['teams']
-    if len(teams_data) < 2:
-        print("\nNot enough teams found in economy data")
+    if len(teams_data) < 1:
+        print("DEBUG: Not enough teams found in economy data")
         return {}
     
-    print(f"\nLooking for team with identifier: {team_identifier}")
+    # Print team names for debugging
+    print(f"DEBUG: Teams in economy data: {[team.get('name', 'Unknown') for team in teams_data]}")
     
     # Find the team with matching tag or name
     target_team_data = None
-    for team in teams_data:
-        # Try to match by name (lowercase for case-insensitive comparison)
-        if team.get('name', '').lower() == team_identifier.lower():
-            target_team_data = team
-            print(f"Found team by name: {team.get('name', '')}")
-            break
+    
+    # First try to match by name field directly (which often contains the tag in economy data)
+    if team_identifier:
+        for team in teams_data:
+            # Direct match on name field (case-insensitive)
+            team_name = team.get('name', '').lower()
+            if team_identifier and team_name == team_identifier.lower():
+                target_team_data = team
+                print(f"Found team by exact name match: {team.get('name', '')}")
+                break
+            # Check if team name starts with the identifier (common pattern)
+            elif team_identifier and team_name.startswith(team_identifier.lower()):
+                target_team_data = team
+                print(f"Found team by name prefix: {team.get('name', '')}")
+                break
+            # Check if team name contains the identifier
+            elif team_identifier and team_identifier.lower() in team_name:
+                target_team_data = team
+                print(f"Found team by name contains: {team.get('name', '')}")
+                break
+    
+    # If no match by team identifier and fallback_name is provided, try matching by name
+    if not target_team_data and fallback_name:
+        print(f"No match found by tag, trying fallback name: {fallback_name}")
+        for team in teams_data:
+            # Check different name variants
+            team_name = team.get('name', '').lower()
+            fallback_lower = fallback_name.lower()
+            
+            # Name similarity checks
+            # 1. Exact match
+            if team_name == fallback_lower:
+                target_team_data = team
+                print(f"Found team by exact fallback name: {team.get('name', '')}")
+                break
+            
+            # 2. Name contains each other
+            elif fallback_lower in team_name or team_name in fallback_lower:
+                target_team_data = team
+                print(f"Found team by partial fallback name: {team.get('name', '')}")
+                break
+            
+            # 3. Word-by-word matching (e.g., "Paper Rex" might match "PRX")
+            # Split both names into words and check if any words match
+            team_words = team_name.split()
+            fallback_words = fallback_lower.split()
+            
+            common_words = set(team_words) & set(fallback_words)
+            if common_words:
+                target_team_data = team
+                print(f"Found team by common words: {team.get('name', '')} (common: {common_words})")
+                break
     
     if not target_team_data:
-        print(f"\nNo team found with identifier: {team_identifier}")
+        print(f"\nNo team found with identifier: {team_identifier} or fallback name: {fallback_name}")
+        print(f"Available teams: {[team.get('name', 'Unknown') for team in teams_data]}")
         return {}
     
-    print(f"\nFound team data for {team_identifier}")
+    print(f"\nFound team data for {fallback_name or team_identifier}")
     
-    # Extract metrics for the target team only
+    # Check if we have the expected economy fields
+    has_economy_data = ('eco' in target_team_data or 
+                        'pistolWon' in target_team_data or
+                        'semiEco' in target_team_data or
+                        'semiBuy' in target_team_data or
+                        'fullBuy' in target_team_data)
+    
+    if not has_economy_data:
+        print(f"WARNING: Found team but no economy data fields are present")
+        # Create default metrics with missing data flag
+        return {
+            'team_name': target_team_data.get('name', fallback_name or team_identifier or 'Unknown'),
+            'pistol_rounds_won': 0,
+            'total_pistol_rounds': 0,
+            'pistol_win_rate': 0,
+            'eco_total': 0,
+            'eco_won': 0,
+            'eco_win_rate': 0,
+            'semi_eco_total': 0,
+            'semi_eco_won': 0,
+            'semi_eco_win_rate': 0,
+            'semi_buy_total': 0, 
+            'semi_buy_won': 0,
+            'semi_buy_win_rate': 0,
+            'full_buy_total': 0,
+            'full_buy_won': 0,
+            'full_buy_win_rate': 0,
+            'total_rounds': 0,
+            'overall_economy_win_rate': 0,
+            'economy_efficiency': 0,
+            'economy_data_missing': True  # Flag to indicate missing data
+        }
+    
+    # Extract metrics for the target team
     metrics = {
         'team_name': target_team_data.get('name', 'Unknown'),
         'pistol_rounds_won': target_team_data.get('pistolWon', 0),
@@ -3797,11 +3929,11 @@ def extract_economy_metrics(match_economy_data, team_identifier=None):
     
     # Calculate additional derived metrics
     metrics['total_rounds'] = (metrics['eco_total'] + metrics['semi_eco_total'] + 
-                               metrics['semi_buy_total'] + metrics['full_buy_total'])
+                              metrics['semi_buy_total'] + metrics['full_buy_total'])
     
     metrics['overall_economy_win_rate'] = ((metrics['eco_won'] + metrics['semi_eco_won'] + 
-                                           metrics['semi_buy_won'] + metrics['full_buy_won']) / 
-                                           metrics['total_rounds']) if metrics['total_rounds'] > 0 else 0
+                                          metrics['semi_buy_won'] + metrics['full_buy_won']) / 
+                                          metrics['total_rounds']) if metrics['total_rounds'] > 0 else 0
     
     # Calculate economy efficiency (weighted win rate based on investment)
     if metrics['total_rounds'] > 0:
@@ -3812,21 +3944,22 @@ def extract_economy_metrics(match_economy_data, team_identifier=None):
         full_buy_weight = 1.0  # Baseline expectation is to win full buys
         
         weighted_wins = (metrics['eco_won'] * eco_weight +
-                        metrics['semi_eco_won'] * semi_eco_weight +
-                        metrics['semi_buy_won'] * semi_buy_weight +
-                        metrics['full_buy_won'] * full_buy_weight)
+                       metrics['semi_eco_won'] * semi_eco_weight +
+                       metrics['semi_buy_won'] * semi_buy_weight +
+                       metrics['full_buy_won'] * full_buy_weight)
         
         weighted_total = (metrics['eco_total'] * eco_weight +
-                         metrics['semi_eco_total'] * semi_eco_weight +
-                         metrics['semi_buy_total'] * semi_buy_weight +
-                         metrics['full_buy_total'] * full_buy_weight)
+                        metrics['semi_eco_total'] * semi_eco_weight +
+                        metrics['semi_buy_total'] * semi_buy_weight +
+                        metrics['full_buy_total'] * full_buy_weight)
         
         metrics['economy_efficiency'] = weighted_wins / weighted_total if weighted_total > 0 else 0
     else:
         metrics['economy_efficiency'] = 0
     
-    print(f"\nExtracted metrics for {team_identifier}:")
-    print(json.dumps(metrics, indent=2))
+    print(f"\nExtracted metrics for {fallback_name or team_identifier}:")
+    for key, value in metrics.items():
+        print(f"  {key}: {value}")
     
     return metrics
 
@@ -5807,7 +5940,7 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     # Fetch team details to get team tags
     team1_details, team1_tag = fetch_team_details(team1_id)
     team2_details, team2_tag = fetch_team_details(team2_id)    
-    print(f"Team tags: {team1_name} = {team1_tag}, {team2_name} = {team2_tag}")
+    print(f"Team tags: {team1_name} = {team1_tag or 'None (will use name as fallback)'}, {team2_name} = {team2_tag or 'None (will use name as fallback)'}")
     
     # Fetch match histories
     team1_history = fetch_team_match_history(team1_id)
@@ -5825,10 +5958,12 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     for match in team1_matches:
         match['team_tag'] = team1_tag
         match['team_id'] = team1_id
+        match['team_name'] = team1_name  # Ensure team_name is explicitly set for fallback
     
     for match in team2_matches:
         match['team_tag'] = team2_tag
         match['team_id'] = team2_id
+        match['team_name'] = team2_name  # Ensure team_name is explicitly set for fallback
     
     # Fetch player stats for both teams
     team1_player_stats = fetch_team_player_stats(team1_id)
@@ -5914,6 +6049,8 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     
     # Make prediction
     prediction = model.predict(X)[0][0]
+    
+    # Rest of the function remains unchanged...
     
     # Determine if prediction should be adjusted based on statistical norms
     team1_advantage_count = 0
@@ -6535,6 +6672,7 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
     print(f"Including player stats: {include_player_stats}")
     print(f"Including economy data: {include_economy}")
     print(f"Including map data: {include_maps}")
+    print(f"Using team name fallbacks for missing team tags: enabled")
     
     # Fetch all teams
     teams_response = requests.get(f"{API_URL}/teams?limit=500")
@@ -6568,6 +6706,8 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
     economy_data_count = 0
     player_stats_count = 0
     map_stats_count = 0
+    teams_with_tag = 0
+    teams_using_fallback = 0
     
     for team in tqdm(top_teams, desc="Collecting team data"):
         team_id = team['id']
@@ -6580,9 +6720,12 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
         # Fetch team details to get team tag for economy matching
         team_details, team_tag = fetch_team_details(team_id)
         if team_tag:
-            print(f"Team tag found: {team_tag}")
+            teams_with_tag += 1
+            if verbose:
+                print(f"Team tag found: {team_tag}")
         else:
-            print(f"No team tag found for {team_name}")
+            teams_using_fallback += 1
+            print(f"No team tag found for {team_name}. Will use team name as fallback.")
         
         team_history = fetch_team_match_history(team_id)
         if not team_history:
@@ -6596,17 +6739,19 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
             print(f"No parsed match data found for {team_name}")
             continue
             
-        # Add team tag to all matches for economy data extraction
+        # Add team tag and team name to all matches for economy data extraction
         for match in team_matches:
             match['team_tag'] = team_tag
             match['team_id'] = team_id
+            match['team_name'] = team_name  # Always set team_name for fallback purposes
         
         # Fetch player stats if requested
         team_player_stats = None
         if include_player_stats:
-            print(f"\n{'*'*30}")
-            print(f"Fetching player stats for team: {team_name}")
-            print(f"{'*'*30}")
+            if verbose:
+                print(f"\n{'*'*30}")
+                print(f"Fetching player stats for team: {team_name}")
+                print(f"{'*'*30}")
             
             team_player_stats = fetch_team_player_stats(team_id)
             
@@ -6623,6 +6768,7 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
         # Calculate team stats with the right method based on flags
         if include_economy:
             print(f"\nUsing enhanced economy stats calculation for {team_name}")
+            print(f"Team identifier: {team_tag or team_name} (using {'tag' if team_tag else 'name as fallback'})")
             team_stats = calculate_team_stats_with_economy(team_matches, team_player_stats)
             
             # Check if we actually got economy data
@@ -6632,15 +6778,21 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
                 print(f"  - Pistol win rate: {team_stats['pistol_win_rate']:.2f}")
                 print(f"  - Eco win rate: {team_stats['eco_win_rate']:.2f}")
                 print(f"  - Full buy win rate: {team_stats['full_buy_win_rate']:.2f}")
+                
+                # Log whether we used tag or fallback name
+                if not team_tag:
+                    print(f"  - Successfully used team name fallback for economy data")
             else:
                 print(f"No valid economy data found for {team_name}")
         else:
             print(f"\nUsing standard team stats calculation for {team_name}")
             team_stats = calculate_team_stats(team_matches, team_player_stats)
         
-        # Store team tag in the stats
+        # Store team tag and name in the stats
         team_stats['team_tag'] = team_tag
+        team_stats['team_name'] = team_name
         team_stats['team_id'] = team_id
+        team_stats['used_name_fallback'] = not bool(team_tag)  # Track if we used fallback
 
         # Fetch and process map statistics if requested
         if include_maps:
@@ -6693,6 +6845,18 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
     print(f"  - Teams with player stats: {player_stats_count}")
     print(f"  - Teams with map stats: {map_stats_count}")
     print(f"  - Teams with both economy and player stats: {min(economy_data_count, player_stats_count)}")
+    print(f"\nTeam identification summary:")
+    print(f"  - Teams with tags: {teams_with_tag}")
+    print(f"  - Teams using name fallback: {teams_using_fallback}")
+    
+    # Calculate how many teams with no tag still got economy data
+    fallback_success_count = sum(1 for name, data in team_data_collection.items() 
+                                if data.get('used_name_fallback', False) and 
+                                   'pistol_win_rate' in data and data['pistol_win_rate'] > 0)
+    
+    if teams_using_fallback > 0:
+        fallback_success_rate = fallback_success_count / teams_using_fallback * 100
+        print(f"  - Teams successfully using name fallback: {fallback_success_count}/{teams_using_fallback} ({fallback_success_rate:.1f}%)")
     
     return team_data_collection
 
@@ -7467,6 +7631,932 @@ def visualize_optimization_results(original_metrics, optimized_metrics):
     plt.savefig('optimization_results.png', dpi=300)
     plt.show()
 
+#preidction with betting
+def extract_historical_map_distributions(team_data_collection):
+    """
+    Extract historical map score distributions from team data collection.
+    
+    Args:
+        team_data_collection (dict): Collection of team data
+        
+    Returns:
+        dict: Statistics about map score distributions
+    """
+    # Initialize counters
+    total_matches = 0
+    score_2_0_count = 0
+    score_2_1_count = 0
+    
+    # Team-specific distributions
+    team_distributions = {}
+    
+    # For tracking favorite vs underdog patterns
+    favorite_won_2_0 = 0
+    favorite_won_2_1 = 0
+    underdog_won_2_0 = 0
+    underdog_won_2_1 = 0
+    total_favorite_wins = 0
+    total_underdog_wins = 0
+    
+    # Process all matches from all teams
+    for team_name, team_data in team_data_collection.items():
+        if 'matches' not in team_data:
+            continue
+            
+        # Initialize team-specific distribution if not exists
+        if team_name not in team_distributions:
+            team_distributions[team_name] = {
+                'total_matches': 0,
+                'wins_2_0': 0,
+                'wins_2_1': 0,
+                'losses_0_2': 0,
+                'losses_1_2': 0
+            }
+            
+        # Process each match
+        for match in team_data['matches']:
+            # Skip matches without scores
+            if 'team_score' not in match or 'opponent_score' not in match:
+                continue
+                
+            team_score = match.get('team_score', 0)
+            opponent_score = match.get('opponent_score', 0)
+            
+            # Skip invalid scores
+            if team_score > 2 or opponent_score > 2:
+                continue
+                
+            # Skip incomplete matches
+            if team_score < 2 and opponent_score < 2:
+                continue
+                
+            # Count match
+            total_matches += 1
+            team_distributions[team_name]['total_matches'] += 1
+            
+            # Determine match favorite
+            team_win_rate = team_data.get('win_rate', 0)
+            opponent_name = match.get('opponent_name', '')
+            opponent_win_rate = 0
+            
+            if opponent_name in team_data_collection:
+                opponent_win_rate = team_data_collection[opponent_name].get('win_rate', 0)
+            
+            is_favorite = team_win_rate > opponent_win_rate
+            
+            # Record score distribution
+            if team_score > opponent_score:  # Team won
+                if team_score == 2 and opponent_score == 0:  # 2-0 win
+                    score_2_0_count += 1
+                    team_distributions[team_name]['wins_2_0'] += 1
+                    
+                    if is_favorite:
+                        favorite_won_2_0 += 1
+                        total_favorite_wins += 1
+                    else:
+                        underdog_won_2_0 += 1
+                        total_underdog_wins += 1
+                        
+                elif team_score == 2 and opponent_score == 1:  # 2-1 win
+                    score_2_1_count += 1
+                    team_distributions[team_name]['wins_2_1'] += 1
+                    
+                    if is_favorite:
+                        favorite_won_2_1 += 1
+                        total_favorite_wins += 1
+                    else:
+                        underdog_won_2_1 += 1
+                        total_underdog_wins += 1
+            else:  # Team lost
+                if team_score == 0 and opponent_score == 2:  # 0-2 loss
+                    score_2_0_count += 1
+                    team_distributions[team_name]['losses_0_2'] += 1
+                    
+                    if not is_favorite:  # Opponent was favorite
+                        favorite_won_2_0 += 1
+                        total_favorite_wins += 1
+                    else:  # Team was favorite but lost
+                        underdog_won_2_0 += 1
+                        total_underdog_wins += 1
+                        
+                elif team_score == 1 and opponent_score == 2:  # 1-2 loss
+                    score_2_1_count += 1
+                    team_distributions[team_name]['losses_1_2'] += 1
+                    
+                    if not is_favorite:  # Opponent was favorite
+                        favorite_won_2_1 += 1
+                        total_favorite_wins += 1
+                    else:  # Team was favorite but lost
+                        underdog_won_2_1 += 1
+                        total_underdog_wins += 1
+    
+    # Calculate global distributions
+    if total_matches > 0:
+        pct_2_0 = score_2_0_count / total_matches
+        pct_2_1 = score_2_1_count / total_matches
+    else:
+        pct_2_0 = 0.5
+        pct_2_1 = 0.5
+        
+    # Calculate favorite/underdog distributions
+    if total_favorite_wins > 0:
+        favorite_pct_2_0 = favorite_won_2_0 / total_favorite_wins
+        favorite_pct_2_1 = favorite_won_2_1 / total_favorite_wins
+    else:
+        favorite_pct_2_0 = 0.6  # Default assumption
+        favorite_pct_2_1 = 0.4
+        
+    if total_underdog_wins > 0:
+        underdog_pct_2_0 = underdog_won_2_0 / total_underdog_wins
+        underdog_pct_2_1 = underdog_won_2_1 / total_underdog_wins
+    else:
+        underdog_pct_2_0 = 0.3  # Default assumption
+        underdog_pct_2_1 = 0.7
+    
+    # Calculate team-specific distributions
+    for team_name, dist in team_distributions.items():
+        total_team_matches = dist['total_matches']
+        total_team_wins = dist['wins_2_0'] + dist['wins_2_1']
+        total_team_losses = dist['losses_0_2'] + dist['losses_1_2']
+        
+        if total_team_wins > 0:
+            dist['win_pct_2_0'] = dist['wins_2_0'] / total_team_wins
+            dist['win_pct_2_1'] = dist['wins_2_1'] / total_team_wins
+        else:
+            # Use global distributions as defaults
+            dist['win_pct_2_0'] = favorite_pct_2_0  # Assume similar to favorites
+            dist['win_pct_2_1'] = favorite_pct_2_1
+            
+        if total_team_losses > 0:
+            dist['loss_pct_0_2'] = dist['losses_0_2'] / total_team_losses
+            dist['loss_pct_1_2'] = dist['losses_1_2'] / total_team_losses
+        else:
+            # Use global distributions as defaults
+            dist['loss_pct_0_2'] = favorite_pct_2_0  # Assume opponents similar to favorites
+            dist['loss_pct_1_2'] = favorite_pct_2_1
+            
+        # Overall map win percentage
+        if total_team_matches > 0:
+            map_wins = (dist['wins_2_0'] * 2) + (dist['wins_2_1'] * 2) + dist['losses_1_2']
+            map_losses = (dist['losses_0_2'] * 2) + (dist['losses_1_2'] * 2) + dist['wins_2_1']
+            total_maps = map_wins + map_losses
+            
+            dist['map_win_pct'] = map_wins / total_maps if total_maps > 0 else 0.5
+    
+    return {
+        'total_matches': total_matches,
+        'global_pct_2_0': pct_2_0,
+        'global_pct_2_1': pct_2_1,
+        'favorite_pct_2_0': favorite_pct_2_0,
+        'favorite_pct_2_1': favorite_pct_2_1,
+        'underdog_pct_2_0': underdog_pct_2_0,
+        'underdog_pct_2_1': underdog_pct_2_1,
+        'team_distributions': team_distributions
+    }
+
+def analyze_betting_value_with_history(prediction_result, betting_odds, map_distributions=None, team_data_collection=None):
+    """
+    Analyze the betting value based on model prediction and provided odds,
+    using historical map score distributions for more accurate probabilities.
+    
+    Args:
+        prediction_result (dict): The match prediction result
+        betting_odds (dict): Dictionary containing the betting odds:
+            {
+                'team1_ml': +150,  # Team 1 moneyline odds (American format)
+                'team2_ml': -180,  # Team 2 moneyline odds
+                'team1_plus_1_5': -200,  # Team 1 +1.5 maps handicap
+                'team1_minus_1_5': +350,  # Team 1 -1.5 maps handicap
+                'team2_plus_1_5': -180,  # Team 2 +1.5 maps handicap
+                'team2_minus_1_5': +160,  # Team 2 -1.5 maps handicap
+                'over_2_5': -110,  # Over 2.5 maps
+                'under_2_5': -110,  # Under 2.5 maps
+            }
+        map_distributions (dict, optional): Pre-calculated map distributions
+        team_data_collection (dict, optional): Collection of team data for calculating distributions
+    
+    Returns:
+        dict: Analysis results with recommended bets and expected values
+    """
+    if not prediction_result or not betting_odds:
+        return {"error": "Missing prediction or odds data"}
+    
+    team1 = prediction_result['team1']
+    team2 = prediction_result['team2']
+    team1_win_prob = prediction_result['team1_win_probability']
+    team2_win_prob = prediction_result['team2_win_probability']
+    
+    # Get map distributions if not provided
+    if not map_distributions and team_data_collection:
+        map_distributions = extract_historical_map_distributions(team_data_collection)
+    
+    # Convert American odds to probability and extract implied probability
+    def american_to_prob(odds):
+        if odds > 0:
+            return 100 / (odds + 100)
+        else:
+            return abs(odds) / (abs(odds) + 100)
+
+    def decimal_to_prob(odds):
+        return 1 / odds
+# Calculate expected value
+    def expected_value(win_prob, decimal_odds):
+        implied_prob = decimal_to_prob(decimal_odds)
+        payout = 100 * (decimal_odds - 1)  # Profit from a $100 bet
+        ev = (win_prob * payout) - ((1 - win_prob) * 100)
+        value_pct = (win_prob - implied_prob) * 100
+
+        return {
+            "win_probability": win_prob,
+            "implied_probability": implied_prob,
+            "value_percentage": value_pct,
+            "ev_per_100": ev,
+            "recommended": value_pct > 5  # Customize this threshold if you want
+        }
+
+    # Example betting odds in decimal format
+    betting_odds = {
+        'team1_ml': 2.50,
+        'team2_ml': 1.67,
+        'team1_plus_1_5': 1.50,
+        'team1_minus_1_5': 4.50,
+        'team2_plus_1_5': 1.55,
+        'team2_minus_1_5': 2.60,
+        'over_2_5': 1.91,
+        'under_2_5': 1.91,
+    }
+
+    # Example model win probabilities
+    model_win_probs = {
+        'team1_ml': 0.46,
+        'team2_ml': 0.54,
+        'team1_plus_1_5': 0.75,
+        'team1_minus_1_5': 0.23,
+        'team2_plus_1_5': 0.70,
+        'team2_minus_1_5': 0.26,
+        'over_2_5': 0.52,
+        'under_2_5': 0.48,
+    }
+
+    # Run expected value analysis
+    for bet, odds in betting_odds.items():
+        win_prob = model_win_probs.get(bet)
+        if win_prob is not None:
+            result = expected_value(win_prob, odds)
+            print(f"{bet}: {result}")
+    
+    # Determine if teams are favorite or underdog based on model probability
+    is_team1_favorite = team1_win_prob > team2_win_prob
+    
+    # Use historical data for map score distributions if available
+    if map_distributions:
+        # Get team-specific distributions if available
+        team1_dist = map_distributions['team_distributions'].get(team1, None)
+        team2_dist = map_distributions['team_distributions'].get(team2, None)
+        
+        # Calculate 2-0 and 2-1 win probabilities for team1
+        if team1_dist and team1_dist['total_matches'] >= 5:  # Enough data for team-specific distribution
+            if is_team1_favorite:
+                team1_2_0_prob = team1_win_prob * team1_dist['win_pct_2_0']
+                team1_2_1_prob = team1_win_prob * team1_dist['win_pct_2_1']
+            else:
+                # For underdogs, adjust slightly
+                team1_2_0_prob = team1_win_prob * (team1_dist['win_pct_2_0'] * 0.8 + map_distributions['underdog_pct_2_0'] * 0.2)
+                team1_2_1_prob = team1_win_prob * (team1_dist['win_pct_2_1'] * 0.8 + map_distributions['underdog_pct_2_1'] * 0.2)
+        else:
+            # Use global favorite/underdog distributions
+            if is_team1_favorite:
+                team1_2_0_prob = team1_win_prob * map_distributions['favorite_pct_2_0']
+                team1_2_1_prob = team1_win_prob * map_distributions['favorite_pct_2_1']
+            else:
+                team1_2_0_prob = team1_win_prob * map_distributions['underdog_pct_2_0']
+                team1_2_1_prob = team1_win_prob * map_distributions['underdog_pct_2_1']
+        
+        # Calculate 2-0 and 2-1 win probabilities for team2
+        if team2_dist and team2_dist['total_matches'] >= 5:  # Enough data for team-specific distribution
+            if not is_team1_favorite:  # Team2 is favorite
+                team2_2_0_prob = team2_win_prob * team2_dist['win_pct_2_0']
+                team2_2_1_prob = team2_win_prob * team2_dist['win_pct_2_1']
+            else:
+                # For underdogs, adjust slightly
+                team2_2_0_prob = team2_win_prob * (team2_dist['win_pct_2_0'] * 0.8 + map_distributions['underdog_pct_2_0'] * 0.2)
+                team2_2_1_prob = team2_win_prob * (team2_dist['win_pct_2_1'] * 0.8 + map_distributions['underdog_pct_2_1'] * 0.2)
+        else:
+            # Use global favorite/underdog distributions
+            if not is_team1_favorite:  # Team2 is favorite
+                team2_2_0_prob = team2_win_prob * map_distributions['favorite_pct_2_0']
+                team2_2_1_prob = team2_win_prob * map_distributions['favorite_pct_2_1']
+            else:
+                team2_2_0_prob = team2_win_prob * map_distributions['underdog_pct_2_0']
+                team2_2_1_prob = team2_win_prob * map_distributions['underdog_pct_2_1']
+    else:
+        # Default assumptions if no historical data
+        if is_team1_favorite:
+            team1_2_0_prob = team1_win_prob * 0.6  # Favorites more likely to win 2-0
+            team1_2_1_prob = team1_win_prob * 0.4
+            team2_2_0_prob = team2_win_prob * 0.3  # Underdogs more likely to win 2-1
+            team2_2_1_prob = team2_win_prob * 0.7
+        else:
+            team1_2_0_prob = team1_win_prob * 0.3  # Underdogs more likely to win 2-1
+            team1_2_1_prob = team1_win_prob * 0.7
+            team2_2_0_prob = team2_win_prob * 0.6  # Favorites more likely to win 2-0
+            team2_2_1_prob = team2_win_prob * 0.4
+    
+    # Calculate handicap and total maps probabilities for both teams
+    team1_plus_1_5_prob = team1_win_prob + team2_2_1_prob  # Team1 wins OR loses 1-2
+    team1_minus_1_5_prob = team1_2_0_prob  # Team1 wins 2-0
+    
+    team2_plus_1_5_prob = team2_win_prob + team1_2_1_prob  # Team2 wins OR loses 1-2
+    team2_minus_1_5_prob = team2_2_0_prob  # Team2 wins 2-0
+    
+    # Over/Under 2.5 maps (Over means match goes to 3 maps)
+    over_2_5_prob = team1_2_1_prob + team2_2_1_prob
+    under_2_5_prob = team1_2_0_prob + team2_2_0_prob
+    
+    # Calculate expected values for each bet
+    results = {
+        "moneyline": {
+            team1: expected_value(team1_win_prob, betting_odds['team1_ml']),
+            team2: expected_value(team2_win_prob, betting_odds['team2_ml']),
+        },
+        "map_handicap": {
+            f"{team1} +1.5": expected_value(team1_plus_1_5_prob, betting_odds['team1_plus_1_5']),
+            f"{team1} -1.5": expected_value(team1_minus_1_5_prob, betting_odds['team1_minus_1_5']),
+            f"{team2} +1.5": expected_value(team2_plus_1_5_prob, betting_odds['team2_plus_1_5']),
+            f"{team2} -1.5": expected_value(team2_minus_1_5_prob, betting_odds['team2_minus_1_5']),
+        },
+        "total_maps": {
+            "Over 2.5": expected_value(over_2_5_prob, betting_odds['over_2_5']),
+            "Under 2.5": expected_value(under_2_5_prob, betting_odds['under_2_5']),
+        }
+    }
+    
+    # Find best bets (highest expected value)
+    all_bets = []
+    
+    # Moneyline
+    for team, ev_data in results["moneyline"].items():
+        all_bets.append({
+            "bet_type": "Moneyline",
+            "selection": team,
+            "win_probability": ev_data["win_probability"],
+            "implied_probability": ev_data["implied_probability"],
+            "value_percentage": ev_data["value_percentage"],
+            "ev_per_100": ev_data["ev_per_100"],
+            "recommended": ev_data["recommended"]
+        })
+    
+    # Map handicap
+    for handicap, ev_data in results["map_handicap"].items():
+        all_bets.append({
+            "bet_type": "Map Handicap",
+            "selection": handicap,
+            "win_probability": ev_data["win_probability"],
+            "implied_probability": ev_data["implied_probability"],
+            "value_percentage": ev_data["value_percentage"],
+            "ev_per_100": ev_data["ev_per_100"],
+            "recommended": ev_data["recommended"]
+        })
+    
+    # Total maps
+    for total, ev_data in results["total_maps"].items():
+        all_bets.append({
+            "bet_type": "Total Maps",
+            "selection": total,
+            "win_probability": ev_data["win_probability"],
+            "implied_probability": ev_data["implied_probability"],
+            "value_percentage": ev_data["value_percentage"],
+            "ev_per_100": ev_data["ev_per_100"],
+            "recommended": ev_data["recommended"]
+        })
+    
+    # Sort bets by expected value
+    sorted_bets = sorted(all_bets, key=lambda x: x["ev_per_100"], reverse=True)
+    recommended_bets = [bet for bet in sorted_bets if bet["recommended"]]
+    
+    # Add diagnostic info
+    diagnostics = {
+        "score_probabilities": {
+            f"{team1} 2-0": team1_2_0_prob,
+            f"{team1} 2-1": team1_2_1_prob,
+            f"{team2} 2-0": team2_2_0_prob,
+            f"{team2} 2-1": team2_2_1_prob,
+        },
+        "handicap_probabilities": {
+            f"{team1} +1.5": team1_plus_1_5_prob,
+            f"{team1} -1.5": team1_minus_1_5_prob,
+            f"{team2} +1.5": team2_plus_1_5_prob,
+            f"{team2} -1.5": team2_minus_1_5_prob,
+        },
+        "is_team1_favorite": is_team1_favorite,
+        "has_historical_data": map_distributions is not None,
+        "team1_historical_sample_size": map_distributions['team_distributions'].get(team1, {}).get('total_matches', 0) if map_distributions else 0,
+        "team2_historical_sample_size": map_distributions['team_distributions'].get(team2, {}).get('total_matches', 0) if map_distributions else 0,
+    }
+    
+    return {
+        "all_bets": sorted_bets,
+        "recommended_bets": recommended_bets,
+        "best_bet": sorted_bets[0] if sorted_bets else None,
+        "detailed_analysis": results,
+        "diagnostics": diagnostics
+    }            
+
+def display_enhanced_betting_analysis(analysis, team_data_collection=None):
+    """
+    Display the enhanced betting analysis in a formatted console output.
+    
+    Args:
+        analysis (dict): The result from analyze_betting_value_with_history function
+        team_data_collection (dict, optional): Collection of team data for showing team stats
+    """
+    if "error" in analysis:
+        print(f"Error: {analysis['error']}")
+        return
+    
+    # Display header
+    width = 100  # Increased width for better display
+    print("\n" + "=" * width)
+    print(f"{' ENHANCED BETTING VALUE ANALYSIS ':=^{width}}")
+    print("=" * width)
+    
+    # Show historical distribution info
+    if "diagnostics" in analysis:
+        diag = analysis["diagnostics"]
+        print(f"\n{' MATCH INFORMATION ':—^{width}}")
+        
+        # Extract team names from first bet
+        if analysis["all_bets"]:
+            team1 = None
+            team2 = None
+            for bet in analysis["all_bets"]:
+                if bet["bet_type"] == "Moneyline":
+                    if team1 is None:
+                        team1 = bet["selection"]
+                    elif team2 is None and bet["selection"] != team1:
+                        team2 = bet["selection"]
+                        break
+        
+            if team1 and team2:
+                print(f"Team 1: {team1} (Favorite: {'Yes' if diag['is_team1_favorite'] else 'No'})")
+                print(f"Team 2: {team2} (Favorite: {'Yes' if not diag['is_team1_favorite'] else 'No'})")
+                print()
+                
+                # Print score probabilities
+                print(f"{' PREDICTED MAP SCORE PROBABILITIES ':—^{width}}")
+                print(f"{'Score':<15}{'Probability':<15}{'Percentage'}")
+                print("-" * width)
+                for score, prob in diag["score_probabilities"].items():
+                    print(f"{score:<15}{prob:.4f}{'':<10}{prob*100:.2f}%")
+                
+                # Print handicap probabilities
+                print(f"\n{' HANDICAP PROBABILITIES ':—^{width}}")
+                print(f"{'Handicap':<15}{'Probability':<15}{'Percentage'}")
+                print("-" * width)
+                for handicap, prob in diag["handicap_probabilities"].items():
+                    print(f"{handicap:<15}{prob:.4f}{'':<10}{prob*100:.2f}%")
+                
+                # Show sample sizes
+                print(f"\nHistorical Match Sample Size:")
+                print(f"  {team1}: {diag['team1_historical_sample_size']} matches")
+                print(f"  {team2}: {diag['team2_historical_sample_size']} matches")
+                
+                # Show team stats if available
+                if team_data_collection and team1 in team_data_collection and team2 in team_data_collection:
+                    print(f"\n{' TEAM STATISTICS ':—^{width}}")
+                    print(f"{'Statistic':<20} {team1:<25} {team2}")
+                    print("-" * width)
+                    print(f"{'Win Rate':<20} {team_data_collection[team1].get('win_rate', 0)*100:.2f}%{'':<20} {team_data_collection[team2].get('win_rate', 0)*100:.2f}%")
+                    
+                    # Show map win rates if available
+                    if 'map_performance' in team_data_collection[team1] and 'map_performance' in team_data_collection[team2]:
+                        t1_map_perf = team_data_collection[team1]['map_performance']
+                        t2_map_perf = team_data_collection[team2]['map_performance']
+                        
+                        # Find common maps
+                        common_maps = set(t1_map_perf.keys()) & set(t2_map_perf.keys())
+                        if common_maps:
+                            print(f"\nMap Win Rates:")
+                            for map_name in common_maps:
+                                if map_name != "Unknown":
+                                    t1_wr = t1_map_perf[map_name].get('win_rate', 0) * 100
+                                    t2_wr = t2_map_perf[map_name].get('win_rate', 0) * 100
+                                    print(f"  {map_name}: {t1_wr:.1f}% vs {t2_wr:.1f}%")
+    
+    # Display recommended bets
+    if analysis["recommended_bets"]:
+        print(f"\n{' RECOMMENDED BETS ':—^{width}}")
+        for i, bet in enumerate(analysis["recommended_bets"], 1):
+            print(f"{i}. {bet['bet_type']} - {bet['selection']}")
+            print(f"   Win probability: {bet['win_probability']:.2%}")
+            print(f"   Implied probability: {bet['implied_probability']:.2%}")
+            print(f"   Value: {bet['value_percentage']:.2f}%")
+            print(f"   Expected value: ${bet['ev_per_100']:.2f} per $100 wagered")
+            print()
+    else:
+        print("\nNo recommended bets found with positive expected value.")
+    
+    # Display best overall bet
+    if analysis["best_bet"]:
+        print(f"\n{' BEST OVERALL BET ':—^{width}}")
+        best = analysis["best_bet"]
+        print(f"Bet type: {best['bet_type']}")
+        print(f"Selection: {best['selection']}")
+        print(f"Win probability: {best['win_probability']:.2%}")
+        print(f"Implied probability: {best['implied_probability']:.2%}")
+        print(f"Value: {best['value_percentage']:.2f}%")
+        print(f"Expected value: ${best['ev_per_100']:.2f} per $100 wagered")
+        if best["recommended"]:
+            print("✓ RECOMMENDED")
+        else:
+            print("✗ NOT RECOMMENDED (value below threshold)")
+    
+    # Display all bets sorted by expected value
+    print(f"\n{' ALL BETS RANKED BY EXPECTED VALUE ':—^{width}}")
+    print(f"{'Rank':<5}{'Bet Type':<15}{'Selection':<25}{'Win Prob':<12}{'Imp Prob':<12}{'Value %':<10}{'EV/$100':<10}{'Rec'}")
+    print("-" * width)
+    
+    for i, bet in enumerate(analysis["all_bets"], 1):
+        rec_symbol = "✓" if bet["recommended"] else "✗"
+        print(f"{i:<5}{bet['bet_type']:<15}{bet['selection']:<25}{bet['win_probability']:.2%}{'':<5}{bet['implied_probability']:.2%}{'':<5}{bet['value_percentage']:.2f}%{'':<4}${bet['ev_per_100']:.2f}{'':<4}{rec_symbol}")
+    
+    print("\n" + "=" * width)
+    print("NOTE: Recommendations are based on model predictions and historical score distributions.")
+    print("      These are enhanced by actual team performance data for more accurate probabilities.")
+    print("=" * width)
+
+def predict_match_with_enhanced_betting(team1_name, team2_name, betting_odds, team_data_collection, model=None, scaler=None, feature_names=None):
+    """
+    Predict match outcome and provide enhanced betting analysis based on historical data.
+    
+    Args:
+        team1_name (str): First team name
+        team2_name (str): Second team name
+        betting_odds (dict): Dictionary containing the betting odds
+        team_data_collection (dict): Collection of team data for historical analysis
+        model (Model, optional): Trained model, will load if not provided
+        scaler (Scaler, optional): Feature scaler, will load if not provided
+        feature_names (list, optional): Selected feature names, will load if not provided
+        
+    Returns:
+        dict: Complete prediction and betting analysis results
+    """
+    # First get the standard match prediction
+    prediction = predict_match_with_optimized_model(
+        team1_name, team2_name, 
+        model=model, 
+        scaler=scaler, 
+        feature_names=feature_names,
+        export_data=True,  # Save prediction data
+        display_details=True  # Show detailed results
+    )
+    
+    if not prediction:
+        print("Could not generate match prediction. Skipping betting analysis.")
+        return None
+    
+    # Extract historical map distributions
+    print("\nExtracting historical map score distributions...")
+    map_distributions = extract_historical_map_distributions(team_data_collection)
+    
+    # Log some stats about the distributions
+    team1_matches = map_distributions['team_distributions'].get(team1_name, {}).get('total_matches', 0)
+    team2_matches = map_distributions['team_distributions'].get(team2_name, {}).get('total_matches', 0)
+    
+    print(f"Found {map_distributions['total_matches']} total matches in historical data")
+    print(f"Team match counts: {team1_name}: {team1_matches}, {team2_name}: {team2_matches}")
+    
+    # Global distributions
+    print(f"\nGlobal map score distributions:")
+    print(f"2-0 scoreline: {map_distributions['global_pct_2_0']:.1%}")
+    print(f"2-1 scoreline: {map_distributions['global_pct_2_1']:.1%}")
+    
+    # Favorite/underdog patterns
+    print(f"\nFavorite team patterns:")
+    print(f"2-0 wins: {map_distributions['favorite_pct_2_0']:.1%}")
+    print(f"2-1 wins: {map_distributions['favorite_pct_2_1']:.1%}")
+    
+    print(f"\nUnderdog team patterns:")
+    print(f"2-0 wins: {map_distributions['underdog_pct_2_0']:.1%}")
+    print(f"2-1 wins: {map_distributions['underdog_pct_2_1']:.1%}")
+    
+    # Analyze betting value with historical data
+    print("\nAnalyzing betting value based on provided odds and historical data...")
+    betting_analysis = analyze_betting_value_with_history(prediction, betting_odds, map_distributions, team_data_collection)
+    display_enhanced_betting_analysis(betting_analysis, team_data_collection)
+    
+    # Add betting analysis to prediction result
+    prediction['enhanced_betting_analysis'] = betting_analysis
+    
+    return prediction
+
+def analyze_prediction_with_bets(prediction_file, betting_odds):
+    """
+    Run enhanced betting analysis on an existing prediction file.
+    
+    Args:
+        prediction_file (str): Path to a JSON prediction file
+        betting_odds (dict): Dictionary containing the betting odds
+    """
+    try:
+        with open(prediction_file, 'r') as f:
+            prediction = json.load(f)
+            
+        # Collect team data for historical analysis
+        team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True)
+        
+        # Extract team names from prediction
+        team1 = prediction.get('prediction', {}).get('team1', None)
+        team2 = prediction.get('prediction', {}).get('team2', None)
+        
+        if not team1 or not team2:
+            print("Could not extract team names from prediction file.")
+            return
+            
+        print(f"Running enhanced betting analysis for {team1} vs {team2}...")
+        
+        # Extract map distributions
+        map_distributions = extract_historical_map_distributions(team_data_collection)
+        
+        # Run betting analysis
+        betting_analysis = analyze_betting_value_with_history(
+            prediction['prediction'], 
+            betting_odds,
+            map_distributions,
+            team_data_collection
+        )
+        
+        # Display results
+        display_enhanced_betting_analysis(betting_analysis, team_data_collection)
+        
+        # Save the betting analysis to the prediction file
+        prediction['enhanced_betting_analysis'] = betting_analysis
+        
+        # Save updated prediction
+        output_file = f"betting_analysis_{os.path.basename(prediction_file)}"
+        with open(output_file, 'w') as f:
+            json.dump(prediction, f, indent=2)
+            
+        print(f"Enhanced betting analysis saved to {output_file}")
+        
+    except Exception as e:
+        print(f"Error analyzing prediction with bets: {e}")
+
+# Example usage of the enhanced betting system
+def example_of_enhanced_betting():
+    """Example demonstrating the enhanced betting analysis with historical data."""
+    # First collect team data
+    team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True)
+    
+    # Create a prediction
+    prediction = predict_match_with_optimized_model("Team Liquid", "Fnatic")
+    
+    # Define betting odds
+    betting_odds = {
+        'team1_ml': +120,  # Team Liquid at +120
+        'team2_ml': -150,  # Fnatic at -150
+        'team1_plus_1_5': -200,
+        'team2_minus_1_5': +160,
+        'over_2_5': -110,
+        'under_2_5': -110,
+    }
+    
+    # Run enhanced betting analysis
+    map_distributions = extract_historical_map_distributions(team_data_collection)
+    betting_analysis = analyze_betting_value_with_history(
+        prediction,
+        betting_odds,
+        map_distributions,
+        team_data_collection
+    )
+    
+    # Display results
+    display_enhanced_betting_analysis(betting_analysis, team_data_collection)
+    
+    # Generate visualizations of historical data
+    visualize_map_score_distributions(map_distributions)
+    
+    return betting_analysis
+
+def visualize_map_score_distributions(map_distributions):
+    """Create visualizations of historical map score distributions."""
+    plt.figure(figsize=(15, 10))
+    
+    # Plot global distributions
+    plt.subplot(2, 2, 1)
+    labels = ['2-0 Scoreline', '2-1 Scoreline']
+    values = [map_distributions['global_pct_2_0'], map_distributions['global_pct_2_1']]
+    plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#3498db', '#e74c3c'])
+    plt.title('Global Map Score Distribution', fontsize=14)
+    
+    # Plot favorite vs underdog distributions
+    plt.subplot(2, 2, 2)
+    labels = ['Favorite 2-0', 'Favorite 2-1', 'Underdog 2-0', 'Underdog 2-1']
+    values = [
+        map_distributions['favorite_pct_2_0'], 
+        map_distributions['favorite_pct_2_1'],
+        map_distributions['underdog_pct_2_0'],
+        map_distributions['underdog_pct_2_1']
+    ]
+    
+    x = np.arange(len(labels))
+    width = 0.35
+    
+    plt.bar(x, values, width, color=['#2ecc71', '#3498db', '#e74c3c', '#f39c12'])
+    plt.xticks(x, labels)
+    plt.title('Favorite vs Underdog Win Patterns', fontsize=14)
+    plt.ylabel('Proportion of Wins')
+    
+    # Plot team win distributions for a sample of teams
+    plt.subplot(2, 2, 3)
+    
+    # Select a sample of teams with sufficient data
+    team_samples = []
+    for team, dist in map_distributions['team_distributions'].items():
+        if dist.get('total_matches', 0) >= 10:
+            team_samples.append((team, dist))
+            if len(team_samples) >= 5:
+                break
+                
+    if team_samples:
+        team_names = [t[0] for t in team_samples]
+        win_2_0_values = [t[1].get('win_pct_2_0', 0) for t in team_samples]
+        win_2_1_values = [t[1].get('win_pct_2_1', 0) for t in team_samples]
+        
+        x = np.arange(len(team_names))
+        width = 0.35
+        
+        plt.bar(x - width/2, win_2_0_values, width, label='2-0 Wins', color='#2ecc71')
+        plt.bar(x + width/2, win_2_1_values, width, label='2-1 Wins', color='#3498db')
+        
+        plt.xticks(x, team_names, rotation=45, ha='right')
+        plt.title('Team Win Patterns (Sample)', fontsize=14)
+        plt.ylabel('Proportion of Wins')
+        plt.legend()
+    
+    # Plot distribution of map counts
+    plt.subplot(2, 2, 4)
+    
+    two_map_count = int(map_distributions['total_matches'] * map_distributions['global_pct_2_0'])
+    three_map_count = int(map_distributions['total_matches'] * map_distributions['global_pct_2_1'])
+    
+    labels = ['2 Maps', '3 Maps']
+    values = [two_map_count, three_map_count]
+    
+    plt.bar(labels, values, color=['#3498db', '#e74c3c'])
+    plt.title('Match Length Distribution', fontsize=14)
+    plt.ylabel('Number of Matches')
+    
+    plt.tight_layout()
+    plt.savefig('map_score_distributions.png', dpi=300)
+    plt.show()
+
+# Function to batch analyze multiple upcoming matches
+def analyze_upcoming_matches_with_betting(odds_file=None):
+    """
+    Analyze all upcoming matches with betting odds.
+    
+    Args:
+        odds_file (str, optional): Path to JSON file with betting odds for upcoming matches
+    """
+    # Fetch upcoming matches
+    upcoming = fetch_upcoming_matches()
+    
+    if not upcoming:
+        print("No upcoming matches found.")
+        return
+    
+    print(f"Found {len(upcoming)} upcoming matches.")
+    
+    # Load betting odds if provided
+    betting_odds_dict = {}
+    if odds_file:
+        try:
+            with open(odds_file, 'r') as f:
+                betting_odds_dict = json.load(f)
+            print(f"Loaded betting odds for {len(betting_odds_dict)} matches")
+        except Exception as e:
+            print(f"Error loading betting odds file: {e}")
+    
+    # Collect team data for historical analysis
+    team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True)
+    
+    # Try to load existing model
+    try:
+        model = load_model('valorant_model.h5')
+        with open('feature_scaler.pkl', 'rb') as f:
+            scaler = pickle.load(f)
+        with open('feature_names.pkl', 'rb') as f:
+            feature_names = pickle.load(f)
+        
+        print("Loaded existing model for predictions.")
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        print("Please train a model first.")
+        return
+    
+    # Extract historical map distributions
+    map_distributions = extract_historical_map_distributions(team_data_collection)
+    
+    # Make predictions for each match
+    predictions = []
+    for match in tqdm(upcoming, desc="Predicting matches"):
+        if 'teams' in match and len(match['teams']) >= 2:
+            team1_name = match['teams'][0].get('name', '')
+            team2_name = match['teams'][1].get('name', '')
+            
+            if team1_name and team2_name:
+                # Get betting odds if available
+                match_key = f"{team1_name} vs {team2_name}"
+                betting_odds = betting_odds_dict.get(match_key, None)
+                
+                # Generate prediction
+                prediction = predict_match_with_optimized_model(
+                    team1_name, team2_name, 
+                    model, scaler, feature_names,
+                    export_data=True,
+                    display_details=False  # Don't display detailed results for batch processing
+                )
+                
+                if prediction:
+                    # Add match details to prediction
+                    prediction['match_id'] = match.get('id', '')
+                    
+                    # Handle both string and dictionary event formats
+                    if isinstance(match.get('event'), dict):
+                        prediction['event'] = match.get('event', {}).get('name', '')
+                    else:
+                        prediction['event'] = str(match.get('event', ''))
+                        
+                    prediction['date'] = match.get('date', '')
+                    
+                    # Add betting analysis if odds are available
+                    if betting_odds:
+                        betting_analysis = analyze_betting_value_with_history(
+                            prediction, 
+                            betting_odds,
+                            map_distributions,
+                            team_data_collection
+                        )
+                        prediction['enhanced_betting_analysis'] = betting_analysis
+                        
+                        # Print betting recommendations
+                        if betting_analysis['recommended_bets']:
+                            print(f"\nRecommended bets for {team1_name} vs {team2_name}:")
+                            for bet in betting_analysis['recommended_bets']:
+                                print(f"  {bet['bet_type']} - {bet['selection']} (Value: {bet['value_percentage']:.1f}%, EV: ${bet['ev_per_100']:.2f})")
+                    
+                    predictions.append(prediction)
+    
+    # Save predictions to file
+    if predictions:
+        df = pd.DataFrame([
+            {
+                'match': f"{p['team1']} vs {p['team2']}",
+                'date': p.get('date', ''),
+                'event': p.get('event', ''),
+                'predicted_winner': p['predicted_winner'],
+                'confidence': p['confidence'],
+                'has_betting_analysis': 'enhanced_betting_analysis' in p,
+                'best_bet': p.get('enhanced_betting_analysis', {}).get('best_bet', {}).get('selection', 'N/A') if 'enhanced_betting_analysis' in p else 'N/A',
+                'best_bet_value': p.get('enhanced_betting_analysis', {}).get('best_bet', {}).get('value_percentage', 0) if 'enhanced_betting_analysis' in p else 0,
+                'best_bet_ev': p.get('enhanced_betting_analysis', {}).get('best_bet', {}).get('ev_per_100', 0) if 'enhanced_betting_analysis' in p else 0
+            }
+            for p in predictions
+        ])
+        
+        df.to_csv('upcoming_match_predictions_with_betting.csv', index=False)
+        
+        # Save full data to JSON
+        with open('upcoming_match_predictions_with_betting.json', 'w') as f:
+            json.dump(predictions, f, indent=2)
+        
+        print(f"Made predictions for {len(predictions)} matches.")
+        print("Results saved to 'upcoming_match_predictions_with_betting.csv' and 'upcoming_match_predictions_with_betting.json'")
+        
+        # Find matches with best betting value
+        best_value_matches = []
+        for p in predictions:
+            if 'enhanced_betting_analysis' in p and p['enhanced_betting_analysis']['best_bet']:
+                best_bet = p['enhanced_betting_analysis']['best_bet']
+                if best_bet['value_percentage'] > 5:  # At least 5% value
+                    best_value_matches.append({
+                        'match': f"{p['team1']} vs {p['team2']}",
+                        'date': p.get('date', ''),
+                        'event': p.get('event', ''),
+                        'best_bet': best_bet['selection'],
+                        'value': best_bet['value_percentage'],
+                        'ev': best_bet['ev_per_100']
+                    })
+        
+        # Sort by expected value
+        best_value_matches.sort(key=lambda x: x['ev'], reverse=True)
+        
+        if best_value_matches:
+            print("\nTop Value Betting Opportunities:")
+            for i, match in enumerate(best_value_matches[:5], 1):
+                print(f"{i}. {match['match']} - {match['best_bet']} (Value: {match['value']:.1f}%, EV: ${match['ev']:.2f})")
+
 # Update main function to include player stats
 def main():
     """Main function to handle command line arguments and run the program with enhanced map statistics."""
@@ -7495,6 +8585,16 @@ def main():
                       help="Number of folds for cross-validation")   
     parser.add_argument("--feature-count", type=int, default=71, 
                       help="Number of top features to use (default: 71)")
+    parser.add_argument("--betting", action="store_true", help="Perform betting analysis")
+    parser.add_argument("--enhanced-betting", action="store_true", help="Perform enhanced betting analysis with historical data")
+    parser.add_argument("--team1-ml", type=float, help="Team 1 moneyline odds (American format)")
+    parser.add_argument("--team2-ml", type=float, help="Team 2 moneyline odds (American format)")
+    parser.add_argument("--team1-plus-1-5", type=float, help="Team 1 +1.5 maps handicap odds")
+    parser.add_argument("--team1-minus-1-5", type=float, help="Team 1 -1.5 maps handicap odds")
+    parser.add_argument("--team2-plus-1-5", type=float, help="Team 2 +1.5 maps handicap odds")
+    parser.add_argument("--team2-minus-1-5", type=float, help="Team 2 -1.5 maps handicap odds")
+    parser.add_argument("--over-2-5", type=float, help="Over 2.5 maps total odds")
+    parser.add_argument("--under-2-5", type=float, help="Under 2.5 maps total odds")
 
     args = parser.parse_args()
     
@@ -7796,13 +8896,48 @@ def main():
             print(f"Predicting match between {args.team1} and {args.team2} with standard model...")
             prediction = predict_match_with_optimized_model(args.team1, args.team2)
         
+        team_data_collection = None
+        if args.enhanced_betting or args.betting:
+            print("Collecting team data for betting analysis...")
+            team_data_collection = collect_all_team_data(include_player_stats=True, include_economy=True)
+        
+        # Build betting odds dictionary if provided
+        betting_odds = None
+        if (args.betting or args.enhanced_betting) and args.team1_ml and args.team2_ml:
+                betting_odds = {
+                    'team1_ml': args.team1_ml,
+                    'team2_ml': args.team2_ml,
+                    'team1_plus_1_5': args.team1_plus_1_5 if args.team1_plus_1_5 else -200,  # Default values
+                    'team1_minus_1_5': args.team1_minus_1_5 if args.team1_minus_1_5 else +350,
+                    'team2_plus_1_5': args.team2_plus_1_5 if args.team2_plus_1_5 else -180,
+                    'team2_minus_1_5': args.team2_minus_1_5 if args.team2_minus_1_5 else +160,
+                    'over_2_5': args.over_2_5 if args.over_2_5 else -110,
+                    'under_2_5': args.under_2_5 if args.under_2_5 else -110,
+                }
+        
+        # Choose the appropriate prediction method
+        if args.enhanced_betting and betting_odds and team_data_collection:
+            # Use enhanced betting analysis
+            print(f"Predicting match between {args.team1} and {args.team2} with enhanced betting analysis...")
+            prediction = predict_match_with_enhanced_betting(
+                args.team1, args.team2, 
+                betting_odds, 
+                team_data_collection
+            )
+        elif args.betting and betting_odds:
+            # Use basic betting analysis
+            print(f"Predicting match between {args.team1} and {args.team2} with basic betting analysis...")
+            prediction = predict_match_with_betting_analysis(args.team1, args.team2, betting_odds)
+        else:
+            # Regular prediction without betting analysis
+            print(f"Predicting match between {args.team1} and {args.team2}...")
+            prediction = predict_match_with_optimized_model(args.team1, args.team2)
+        
         if prediction:
-            if include_maps:
-                visualize_prediction_with_economy_and_maps(prediction)
-            else:
-                visualize_prediction_with_economy(prediction)
+            visualize_prediction_with_economy(prediction)
         else:
             print(f"Could not generate prediction for {args.team1} vs {args.team2}")
+
     
     elif args.optimize and not args.train:
         # Run optimization on existing model data
@@ -7920,6 +9055,8 @@ def main():
                     print(f"  {map_name}: {acc:.4f}")
         else:
             print("Backtesting failed or returned no results.")
+    
+
     
     else:
         print("Please specify an action: --train, --optimize, --learning-curves, --predict, --analyze, or --backtest")

@@ -203,115 +203,108 @@ def extract_map_statistics(team_stats_data):
     Returns:
         dict: Processed map statistics with various metrics
     """
+    def safe_percentage(value):
+        try:
+            return float(value.strip('%')) / 100
+        except (ValueError, AttributeError, TypeError):
+            return 0
+
+    def safe_int(value):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return 0
+
     if not team_stats_data or 'data' not in team_stats_data:
         return {}
-    
+
     maps_data = team_stats_data['data']
     map_statistics = {}
-    
+
     for map_entry in maps_data:
-        map_name = map_entry.get('map', '').split(' ')[0]  # Extract just the map name without count
+        map_name = map_entry.get('map', '').split(' ')[0]
         if not map_name:
             continue
-            
-        # Get the main stats for this map
+
         stats = map_entry.get('stats', [])
-        if not stats or len(stats) == 0:
+        if not stats:
             continue
-            
-        main_stats = stats[0]  # First entry contains the summary stats
-        
-        # Extract basic win/loss statistics
-        win_percentage = main_stats.get('WIN%', '0%').strip('%')
-        win_percentage = float(win_percentage) / 100 if win_percentage else 0
-        
-        wins = int(main_stats.get('W', '0'))
-        losses = int(main_stats.get('L', '0'))
-        
-        # Extract side preferences and win rates
-        atk_first = int(main_stats.get('ATK 1st', '0'))
-        def_first = int(main_stats.get('DEF 1st', '0'))
-        
-        atk_win_rate = main_stats.get('ATK RWin%', '0%').strip('%')
-        atk_win_rate = float(atk_win_rate) / 100 if atk_win_rate else 0
-        
-        def_win_rate = main_stats.get('DEF RWin%', '0%').strip('%')
-        def_win_rate = float(def_win_rate) / 100 if def_win_rate else 0
-        
-        # Calculate round statistics
-        atk_rounds_won = int(main_stats.get('RW', '0')) 
-        atk_rounds_lost = int(main_stats.get('RL', '0'))
-        
-        # Process agent compositions
+
+        main_stats = stats[0]
+
+        win_percentage = safe_percentage(main_stats.get('WIN%', '0%'))
+
+        wins = safe_int(main_stats.get('W', '0'))
+        losses = safe_int(main_stats.get('L', '0'))
+
+        atk_first = safe_int(main_stats.get('ATK 1st', '0'))
+        def_first = safe_int(main_stats.get('DEF 1st', '0'))
+
+        atk_win_rate = safe_percentage(main_stats.get('ATK RWin%', '0%'))
+        def_win_rate = safe_percentage(main_stats.get('DEF RWin%', '0%'))
+
+        atk_rounds_won = safe_int(main_stats.get('RW', '0'))
+        atk_rounds_lost = safe_int(main_stats.get('RL', '0'))
+
         agent_compositions = main_stats.get('Agent Compositions', [])
-        
-        # Group agents into actual team compositions (5 agents per comp)
+
+        # Group agents into teams of 5
         team_compositions = []
         current_comp = []
-        
+
         for agent in agent_compositions:
             current_comp.append(agent)
             if len(current_comp) == 5:
                 team_compositions.append(current_comp)
                 current_comp = []
-        
-        # Calculate agent usage frequency
+
         agent_usage = {}
         for comp in team_compositions:
             for agent in comp:
                 agent_usage[agent] = agent_usage.get(agent, 0) + 1
-        
-        # Sort agents by usage
+
         sorted_agents = sorted(agent_usage.items(), key=lambda x: x[1], reverse=True)
-        
-        # Process match history with detailed results
+
         match_history = []
         for i in range(1, len(stats)):
             match_stat = stats[i]
             match_details = match_stat.get('Expand', '')
-            
             if not match_details:
                 continue
-                
-            # Parse match details: date, opponent, score, side scores, event type
+
             parts = match_details.split()
-            
             try:
-                date = parts[0] if len(parts) > 0 else ''
-                opponent = ' '.join(parts[1:parts.index(parts[next(i for i, p in enumerate(parts) if '/' in p and i > 0)])]) if len(parts) > 1 else ''
-                
-                # Find score parts using pattern matching
-                score_index = next((i for i, p in enumerate(parts) if '/' in p and i > 0), -1)
+                date = parts[0] if parts else ''
+                score_index = next((i for i, p in enumerate(parts) if '/' in p), -1)
+
+                opponent = ' '.join(parts[1:score_index]) if score_index != -1 else ''
+
+                team_score, opponent_score = 0, 0
                 if score_index != -1:
                     score_parts = parts[score_index].split('/')
-                    team_score = int(score_parts[0])
-                    opponent_score = int(score_parts[1])
-                else:
-                    team_score = 0
-                    opponent_score = 0
-                
-                # Parse side scores and overtime
+                    team_score = safe_int(score_parts[0])
+                    opponent_score = safe_int(score_parts[1])
+
                 side_scores = {}
-                sides = ['atk', 'def', 'OT']
-                for side in sides:
-                    side_index = next((i for i, p in enumerate(parts) if p.lower() == side), -1)
-                    if side_index != -1 and side_index + 1 < len(parts):
-                        side_score_part = parts[side_index + 1]
-                        if '/' in side_score_part:
-                            side_score_parts = side_score_part.split('/')
-                            side_scores[side] = {
-                                'won': int(side_score_parts[0]),
-                                'lost': int(side_score_parts[1])
-                            }
-                
-                # Extract event type
-                event_type = ' '.join(parts[parts.index(sides[-1]) + 2:]) if sides[-1] in parts else ''
-                if not event_type and sides[1] in parts:
-                    event_type = ' '.join(parts[parts.index(sides[1]) + 2:])
-                
-                # Check if match went to overtime
+                for side in ['atk', 'def', 'OT']:
+                    try:
+                        idx = parts.index(side)
+                        score_part = parts[idx + 1]
+                        if '/' in score_part:
+                            won, lost = map(safe_int, score_part.split('/'))
+                            side_scores[side] = {'won': won, 'lost': lost}
+                    except:
+                        continue
+
                 went_to_ot = 'OT' in parts
-                
+                event_type = ''
+                for side in ['OT', 'def', 'atk']:
+                    if side in parts:
+                        idx = parts.index(side)
+                        if idx + 2 < len(parts):
+                            event_type = ' '.join(parts[idx + 2:])
+                            break
+
                 match_result = {
                     'date': date,
                     'opponent': opponent,
@@ -322,23 +315,20 @@ def extract_map_statistics(team_stats_data):
                     'went_to_ot': went_to_ot,
                     'event_type': event_type
                 }
-                
+
                 match_history.append(match_result)
             except Exception as e:
                 print(f"Error parsing match details '{match_details}': {e}")
-        
-        # Calculate additional metrics
-        overtime_matches = sum(1 for m in match_history if m.get('went_to_ot', False))
-        overtime_wins = sum(1 for m in match_history if m.get('went_to_ot', False) and m.get('won', False))
-        
+
+        overtime_matches = sum(1 for m in match_history if m.get('went_to_ot'))
+        overtime_wins = sum(1 for m in match_history if m.get('went_to_ot') and m.get('won'))
+
         playoff_matches = sum(1 for m in match_history if 'Playoff' in m.get('event_type', ''))
-        playoff_wins = sum(1 for m in match_history if 'Playoff' in m.get('event_type', '') and m.get('won', False))
-        
-        # Calculate recent form (last 3 matches)
-        recent_matches = match_history[:3] if len(match_history) >= 3 else match_history
-        recent_win_rate = sum(1 for m in recent_matches if m.get('won', False)) / len(recent_matches) if recent_matches else 0
-        
-        # Store all processed data
+        playoff_wins = sum(1 for m in match_history if 'Playoff' in m.get('event_type', '') and m.get('won'))
+
+        recent_matches = match_history[:3]
+        recent_win_rate = sum(1 for m in recent_matches if m.get('won')) / len(recent_matches) if recent_matches else 0
+
         map_statistics[map_name] = {
             'win_percentage': win_percentage,
             'wins': wins,
@@ -368,9 +358,9 @@ def extract_map_statistics(team_stats_data):
             'recent_form': recent_win_rate,
             'composition_variety': len(team_compositions),
             'most_played_composition': team_compositions[0] if team_compositions else [],
-            'most_played_agents': [agent for agent, count in sorted_agents[:5]] if sorted_agents else []
+            'most_played_agents': [agent for agent, _ in sorted_agents[:5]] if sorted_agents else []
         }
-    
+
     return map_statistics
 
 def fetch_team_map_statistics(team_id):
@@ -814,17 +804,17 @@ def fetch_match_economy_details(match_id):
         return None
     
     economy_details = response.json()
-
+    
     # Be nice to the API
      
     return economy_details
 
-def calculate_team_stats_with_economy(matches, player_stats=None):
+def calculate_team_stats_with_economy(team_matches, player_stats=None):
     """Calculate comprehensive statistics for a team from its matches, including economy data."""
     # First use the original function to get base stats
-    base_stats = calculate_team_stats_original(matches, player_stats)
+    base_stats = calculate_team_stats_original(team_matches, player_stats)
     
-    if not matches:
+    if not team_matches:
         return base_stats
     
     # Initialize economy stats
@@ -843,10 +833,10 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
     team_name = None
     team_id = None
     
-    if matches:
-        team_tag = matches[0].get('team_tag')
-        team_name = matches[0].get('team_name')
-        team_id = matches[0].get('team_id')
+    if team_matches:
+        team_tag = team_matches[0].get('team_tag')
+        team_name = team_matches[0].get('team_name')
+        team_id = team_matches[0].get('team_id')
     
     print(f"Processing economy data for team: {team_name} (Tag: {team_tag}, ID: {team_id})")
     
@@ -865,7 +855,7 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
     economy_matches_count = 0
     
     # Process each match to extract economy data
-    for match in matches:
+    for match in team_matches:
         match_id = match.get('match_id')
         if not match_id:
             continue
@@ -893,10 +883,11 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
             print(f"No 'teams' field in economy data for match ID: {match_id}")
             continue
             
-        # Try to use team_tag first if available
-        team_identifier = match_team_tag if match_team_tag else match_team_name
+        # Try to use team_tag first if available, otherwise fall back to team_name
+        team_identifier = match_team_tag
+        fallback_name = match_team_name
         
-        if not team_identifier:
+        if not team_identifier and not fallback_name:
             print(f"Warning: No team identifier (tag or name) available for match ID: {match_id}")
             continue
             
@@ -905,11 +896,11 @@ def calculate_team_stats_with_economy(matches, player_stats=None):
         print(f"Teams in economy data: {teams_in_data}")
             
         # Extract team-specific economy data using the identifier with more debug info
-        print(f"Looking for team with identifier: {team_identifier}")
-        our_team_metrics = extract_economy_metrics(economy_data, team_identifier)
+        print(f"Looking for team with identifier: {team_identifier} (Fallback: {fallback_name})")
+        our_team_metrics = extract_economy_metrics(economy_data, team_identifier, fallback_name)
         
         if not our_team_metrics:
-            print(f"Warning: No economy metrics extracted for team: {team_identifier}")
+            print(f"Warning: No economy metrics extracted for team: {team_identifier or fallback_name}")
             continue
         
         print(f"Successfully extracted economy metrics for match ID: {match_id}")
@@ -3735,12 +3726,13 @@ def fetch_match_economy_details(match_id):
     
     return economy_details
 
-def extract_economy_metrics(match_economy_data, team_identifier=None):
+def extract_economy_metrics(match_economy_data, team_identifier=None, fallback_name=None):
     """Extract relevant economic performance metrics from match economy data for a specific team.
     
     Args:
         match_economy_data (dict): The economy data from the match
-        team_identifier (str): The team tag or team name to identify the team
+        team_identifier (str): The team tag to identify the team
+        fallback_name (str): The team name to use as fallback if tag matching fails
         
     Returns:
         dict: Economy metrics for the team, or empty dict if not found
@@ -3758,18 +3750,35 @@ def extract_economy_metrics(match_economy_data, team_identifier=None):
     
     # Find the team with matching tag or name
     target_team_data = None
-    for team in teams_data:
-        # Try to match by name (lowercase for case-insensitive comparison)
-        if team.get('name', '').lower() == team_identifier.lower():
-            target_team_data = team
-            print(f"Found team by name: {team.get('name', '')}")
-            break
+    
+    # First try to match by tag if available
+    if team_identifier:
+        for team in teams_data:
+            # Try to match by tag (lowercase for case-insensitive comparison)
+            team_tag = team.get('tag', '').lower()
+            if team_tag and team_tag == team_identifier.lower():
+                target_team_data = team
+                print(f"Found team by tag: {team.get('tag', '')}")
+                break
+    
+    # If no match by tag and fallback_name is provided, try matching by name
+    if not target_team_data and fallback_name:
+        print(f"No match found by tag, trying fallback name: {fallback_name}")
+        for team in teams_data:
+            # Try to match by name (lowercase for case-insensitive comparison)
+            team_name = team.get('name', '').lower()
+            if team_name and (team_name == fallback_name.lower() or 
+                              fallback_name.lower() in team_name or 
+                              team_name in fallback_name.lower()):
+                target_team_data = team
+                print(f"Found team by name: {team.get('name', '')}")
+                break
     
     if not target_team_data:
-        print(f"\nNo team found with identifier: {team_identifier}")
+        print(f"\nNo team found with identifier: {team_identifier} or fallback name: {fallback_name}")
         return {}
     
-    print(f"\nFound team data for {team_identifier}")
+    print(f"\nFound team data for {team_identifier or fallback_name}")
     
     # Extract metrics for the target team only
     metrics = {
@@ -3793,11 +3802,11 @@ def extract_economy_metrics(match_economy_data, team_identifier=None):
     
     # Calculate additional derived metrics
     metrics['total_rounds'] = (metrics['eco_total'] + metrics['semi_eco_total'] + 
-                               metrics['semi_buy_total'] + metrics['full_buy_total'])
+                              metrics['semi_buy_total'] + metrics['full_buy_total'])
     
     metrics['overall_economy_win_rate'] = ((metrics['eco_won'] + metrics['semi_eco_won'] + 
-                                           metrics['semi_buy_won'] + metrics['full_buy_won']) / 
-                                           metrics['total_rounds']) if metrics['total_rounds'] > 0 else 0
+                                          metrics['semi_buy_won'] + metrics['full_buy_won']) / 
+                                          metrics['total_rounds']) if metrics['total_rounds'] > 0 else 0
     
     # Calculate economy efficiency (weighted win rate based on investment)
     if metrics['total_rounds'] > 0:
@@ -3808,20 +3817,20 @@ def extract_economy_metrics(match_economy_data, team_identifier=None):
         full_buy_weight = 1.0  # Baseline expectation is to win full buys
         
         weighted_wins = (metrics['eco_won'] * eco_weight +
-                        metrics['semi_eco_won'] * semi_eco_weight +
-                        metrics['semi_buy_won'] * semi_buy_weight +
-                        metrics['full_buy_won'] * full_buy_weight)
+                       metrics['semi_eco_won'] * semi_eco_weight +
+                       metrics['semi_buy_won'] * semi_buy_weight +
+                       metrics['full_buy_won'] * full_buy_weight)
         
         weighted_total = (metrics['eco_total'] * eco_weight +
-                         metrics['semi_eco_total'] * semi_eco_weight +
-                         metrics['semi_buy_total'] * semi_buy_weight +
-                         metrics['full_buy_total'] * full_buy_weight)
+                        metrics['semi_eco_total'] * semi_eco_weight +
+                        metrics['semi_buy_total'] * semi_buy_weight +
+                        metrics['full_buy_total'] * full_buy_weight)
         
         metrics['economy_efficiency'] = weighted_wins / weighted_total if weighted_total > 0 else 0
     else:
         metrics['economy_efficiency'] = 0
     
-    print(f"\nExtracted metrics for {team_identifier}:")
+    print(f"\nExtracted metrics for {team_identifier or fallback_name}:")
     print(json.dumps(metrics, indent=2))
     
     return metrics
@@ -5803,7 +5812,7 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     # Fetch team details to get team tags
     team1_details, team1_tag = fetch_team_details(team1_id)
     team2_details, team2_tag = fetch_team_details(team2_id)    
-    print(f"Team tags: {team1_name} = {team1_tag}, {team2_name} = {team2_tag}")
+    print(f"Team tags: {team1_name} = {team1_tag or 'None (will use name as fallback)'}, {team2_name} = {team2_tag or 'None (will use name as fallback)'}")
     
     # Fetch match histories
     team1_history = fetch_team_match_history(team1_id)
@@ -5821,10 +5830,12 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     for match in team1_matches:
         match['team_tag'] = team1_tag
         match['team_id'] = team1_id
+        match['team_name'] = team1_name  # Ensure team_name is explicitly set for fallback
     
     for match in team2_matches:
         match['team_tag'] = team2_tag
         match['team_id'] = team2_id
+        match['team_name'] = team2_name  # Ensure team_name is explicitly set for fallback
     
     # Fetch player stats for both teams
     team1_player_stats = fetch_team_player_stats(team1_id)
@@ -5910,6 +5921,8 @@ def predict_match_with_optimized_model(team1_name, team2_name, model=None, scale
     
     # Make prediction
     prediction = model.predict(X)[0][0]
+    
+    # Rest of the function remains unchanged...
     
     # Determine if prediction should be adjusted based on statistical norms
     team1_advantage_count = 0
@@ -6531,6 +6544,7 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
     print(f"Including player stats: {include_player_stats}")
     print(f"Including economy data: {include_economy}")
     print(f"Including map data: {include_maps}")
+    print(f"Using team name fallbacks for missing team tags: enabled")
     
     # Fetch all teams
     teams_response = requests.get(f"{API_URL}/teams?limit=500")
@@ -6564,6 +6578,8 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
     economy_data_count = 0
     player_stats_count = 0
     map_stats_count = 0
+    teams_with_tag = 0
+    teams_using_fallback = 0
     
     for team in tqdm(top_teams, desc="Collecting team data"):
         team_id = team['id']
@@ -6576,9 +6592,12 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
         # Fetch team details to get team tag for economy matching
         team_details, team_tag = fetch_team_details(team_id)
         if team_tag:
-            print(f"Team tag found: {team_tag}")
+            teams_with_tag += 1
+            if verbose:
+                print(f"Team tag found: {team_tag}")
         else:
-            print(f"No team tag found for {team_name}")
+            teams_using_fallback += 1
+            print(f"No team tag found for {team_name}. Will use team name as fallback.")
         
         team_history = fetch_team_match_history(team_id)
         if not team_history:
@@ -6592,17 +6611,19 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
             print(f"No parsed match data found for {team_name}")
             continue
             
-        # Add team tag to all matches for economy data extraction
+        # Add team tag and team name to all matches for economy data extraction
         for match in team_matches:
             match['team_tag'] = team_tag
             match['team_id'] = team_id
+            match['team_name'] = team_name  # Always set team_name for fallback purposes
         
         # Fetch player stats if requested
         team_player_stats = None
         if include_player_stats:
-            print(f"\n{'*'*30}")
-            print(f"Fetching player stats for team: {team_name}")
-            print(f"{'*'*30}")
+            if verbose:
+                print(f"\n{'*'*30}")
+                print(f"Fetching player stats for team: {team_name}")
+                print(f"{'*'*30}")
             
             team_player_stats = fetch_team_player_stats(team_id)
             
@@ -6619,6 +6640,7 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
         # Calculate team stats with the right method based on flags
         if include_economy:
             print(f"\nUsing enhanced economy stats calculation for {team_name}")
+            print(f"Team identifier: {team_tag or team_name} (using {'tag' if team_tag else 'name as fallback'})")
             team_stats = calculate_team_stats_with_economy(team_matches, team_player_stats)
             
             # Check if we actually got economy data
@@ -6628,15 +6650,21 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
                 print(f"  - Pistol win rate: {team_stats['pistol_win_rate']:.2f}")
                 print(f"  - Eco win rate: {team_stats['eco_win_rate']:.2f}")
                 print(f"  - Full buy win rate: {team_stats['full_buy_win_rate']:.2f}")
+                
+                # Log whether we used tag or fallback name
+                if not team_tag:
+                    print(f"  - Successfully used team name fallback for economy data")
             else:
                 print(f"No valid economy data found for {team_name}")
         else:
             print(f"\nUsing standard team stats calculation for {team_name}")
             team_stats = calculate_team_stats(team_matches, team_player_stats)
         
-        # Store team tag in the stats
+        # Store team tag and name in the stats
         team_stats['team_tag'] = team_tag
+        team_stats['team_name'] = team_name
         team_stats['team_id'] = team_id
+        team_stats['used_name_fallback'] = not bool(team_tag)  # Track if we used fallback
 
         # Fetch and process map statistics if requested
         if include_maps:
@@ -6689,6 +6717,18 @@ def collect_all_team_data(include_player_stats=True, include_economy=True, inclu
     print(f"  - Teams with player stats: {player_stats_count}")
     print(f"  - Teams with map stats: {map_stats_count}")
     print(f"  - Teams with both economy and player stats: {min(economy_data_count, player_stats_count)}")
+    print(f"\nTeam identification summary:")
+    print(f"  - Teams with tags: {teams_with_tag}")
+    print(f"  - Teams using name fallback: {teams_using_fallback}")
+    
+    # Calculate how many teams with no tag still got economy data
+    fallback_success_count = sum(1 for name, data in team_data_collection.items() 
+                                if data.get('used_name_fallback', False) and 
+                                   'pistol_win_rate' in data and data['pistol_win_rate'] > 0)
+    
+    if teams_using_fallback > 0:
+        fallback_success_rate = fallback_success_count / teams_using_fallback * 100
+        print(f"  - Teams successfully using name fallback: {fallback_success_count}/{teams_using_fallback} ({fallback_success_rate:.1f}%)")
     
     return team_data_collection
 
