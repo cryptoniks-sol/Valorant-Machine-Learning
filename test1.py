@@ -8655,7 +8655,7 @@ def main():
             # If no teams with rankings were found, just take the first 50 teams
             if not top_teams:
                 print("No teams with rankings found. Using the first 20 teams instead.")
-                top_teams = teams_data['data'][:50]
+                top_teams = teams_data['data'][:100]
         
         print(f"Selected {len(top_teams)} teams for training data.")
         
