@@ -1999,6 +1999,28 @@ def predict_match(team1_name, team2_name, model=None, scaler=None, feature_names
         print("Could not find one or both teams. Please check team names.")
         return None
 
+    # First check if ensemble models exist - but only check once to avoid recursion
+    ensemble_exists = any(os.path.exists(f'valorant_model_fold_{i+1}.h5') for i in range(5))
+    
+    # Only call ensemble prediction if models exist AND we haven't been provided a specific model
+    # This prevents recursive calls between predict_match and predict_with_ensemble
+    if ensemble_exists and model is None:
+        # Use ensemble prediction if ensemble models exist
+        return predict_with_ensemble(team1_name, team2_name)
+    
+    # Otherwise continue with standard model approach
+    try:
+        # If model was provided, use it. Otherwise load from file.
+        if model is None:
+            model = load_model('valorant_model.h5')
+            with open('scaler.pkl', 'rb') as f:
+                scaler = pickle.load(f)
+            with open('feature_names.pkl', 'rb') as f:
+                feature_names = pickle.load(f)
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        return None
+
     # Fetch team details to get team tags
     team1_details, team1_tag = fetch_team_details(team1_id)
     team2_details, team2_tag = fetch_team_details(team2_id)    
@@ -2060,20 +2082,6 @@ def predict_match(team1_name, team2_name, model=None, scaler=None, feature_names
         print("Could not prepare features for prediction.")
         return None
     
-    # Load model if not provided
-    if model is None:
-        try:
-            model = load_model('valorant_model.h5')
-            
-            with open('feature_scaler.pkl', 'rb') as f:
-                scaler = pickle.load(f)
-            
-            with open('feature_names.pkl', 'rb') as f:
-                feature_names = pickle.load(f)
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            return None
-    
     # Convert features to DataFrame
     features_df = pd.DataFrame([features])
     
@@ -2127,6 +2135,7 @@ def predict_match(team1_name, team2_name, model=None, scaler=None, feature_names
         'team1_win_probability': float(prediction),
         'team2_win_probability': float(1 - prediction),
         'predicted_winner': team1_name if prediction > 0.5 else team2_name,
+        'win_probability': float(max(prediction, 1 - prediction)),
         'confidence': float(confidence),
         'team1_stats_summary': {
             'matches_played': team1_stats['matches'] if isinstance(team1_stats['matches'], int) else len(team1_stats['matches']),
@@ -2164,96 +2173,185 @@ def predict_match(team1_name, team2_name, model=None, scaler=None, feature_names
 
 def predict_with_ensemble(team1_name, team2_name):
     """Make predictions using an ensemble of models for improved stability."""
+    print(f"Starting ensemble prediction for {team1_name} vs {team2_name}")
+    
     # Load ensemble models
     ensemble_models = []
-    for i in range(5):  # Assuming 5-fold CV by default
-        try:
-            model = load_model(f'valorant_model_fold_{i+1}.h5')
-            ensemble_models.append(model)
-        except:
-            print(f"Could not load model for fold {i+1}")
+    
+    # Load all available ensemble models
+    for i in range(5):
+        model_path = f'valorant_model_fold_{i+1}.h5'
+        if os.path.exists(model_path):
+            try:
+                model = load_model(model_path)
+                # Get expected feature count from model's first layer
+                input_shape = model.layers[0].input_shape[1] if hasattr(model.layers[0], 'input_shape') else None
+                if input_shape is None:
+                    # Try getting it from model's input shape
+                    input_shape = model.input_shape[1] if hasattr(model, 'input_shape') else None
+                
+                if input_shape:
+                    print(f"Model {i+1} expects {input_shape} features")
+                    ensemble_models.append((model, input_shape, i+1))
+                else:
+                    print(f"Could not determine input shape for model {i+1}, skipping")
+            except Exception as e:
+                print(f"Error loading ensemble model {i+1}: {e}")
     
     if not ensemble_models:
-        print("No ensemble models found. Please train an ensemble first.")
+        print("No ensemble models could be loaded")
         return None
     
-    # Load stable features
-    try:
-        with open('stable_features.pkl', 'rb') as f:
-            stable_features = pickle.load(f)
-    except:
-        print("Could not load stable features. Using all features.")
-        stable_features = None
+    # Get team data directly
+    team1_id = get_team_id(team1_name)
+    team2_id = get_team_id(team2_name)
     
-    # Load scaler
-    try:
-        with open('ensemble_scaler.pkl', 'rb') as f:
-            scaler = pickle.load(f)
-    except:
-        print("Could not load scaler. Please train an ensemble first.")
+    if not team1_id or not team2_id:
+        print("Could not find team IDs. Aborting prediction.")
         return None
     
-    # Get prediction with first model to get feature data
-    prediction = predict_match(team1_name, team2_name, 
-                               model=ensemble_models[0], 
-                               scaler=scaler,
-                               feature_names=stable_features)
+    # Gather all necessary data
+    team1_details, team1_tag = fetch_team_details(team1_id)
+    team2_details, team2_tag = fetch_team_details(team2_id)
     
-    if not prediction:
-        return None
+    team1_history = fetch_team_match_history(team1_id)
+    team2_history = fetch_team_match_history(team2_id)
     
-    # Make predictions with each model in the ensemble
-    all_predictions = []
+    team1_matches = parse_match_data(team1_history, team1_name)
+    team2_matches = parse_match_data(team2_history, team2_name)
+
+    for match in team1_matches:
+        match['team_tag'] = team1_tag
+        match['team_id'] = team1_id
     
-    # First get data needed for prediction
-    team1_stats = prediction['team1_stats']
-    team2_stats = prediction['team2_stats']
+    for match in team2_matches:
+        match['team_tag'] = team2_tag
+        match['team_id'] = team2_id
     
-    # Prepare data
+    team1_player_stats = fetch_team_player_stats(team1_id)
+    team2_player_stats = fetch_team_player_stats(team2_id)
+    
+    team1_stats = calculate_team_stats(team1_matches, team1_player_stats, include_economy=True)
+    team2_stats = calculate_team_stats(team2_matches, team2_player_stats, include_economy=True)
+    
+    team1_stats['team_tag'] = team1_tag
+    team1_stats['team_name'] = team1_name
+    team1_stats['team_id'] = team1_id
+    
+    team2_stats['team_tag'] = team2_tag
+    team2_stats['team_name'] = team2_name
+    team2_stats['team_id'] = team2_id
+    
+    team1_map_stats = fetch_team_map_statistics(team1_id)
+    team2_map_stats = fetch_team_map_statistics(team2_id)
+    
+    if team1_map_stats:
+        team1_stats['map_statistics'] = team1_map_stats
+    
+    if team2_map_stats:
+        team2_stats['map_statistics'] = team2_map_stats
+    
+    # Generate features
     features = prepare_data_for_model(team1_stats, team2_stats)
+    
+    if not features:
+        print("Could not prepare features for prediction.")
+        return None
+    
+    # Generate the full feature list
     features_df = pd.DataFrame([features])
+    all_features = list(features_df.columns)
     
-    # Select only stable features if available
-    if stable_features:
-        # Add missing features with default values
-        for feature in stable_features:
-            if feature not in features_df.columns:
-                features_df[feature] = 0
-        
-        # Keep only the stable features
-        features_df = features_df[stable_features]
+    print(f"Generated {len(all_features)} features for prediction")
     
-    # Scale features
-    X = scaler.transform(features_df.values)
+    # Make individual predictions with each model
+    successful_predictions = []
     
-    # Make predictions with each model
-    for model in ensemble_models:
-        pred = model.predict(X)[0][0]
-        all_predictions.append(pred)
+    for model, required_features, model_idx in ensemble_models:
+        try:
+            # Make sure we have enough features
+            if len(all_features) < required_features:
+                print(f"Not enough features for model {model_idx} (needs {required_features}, have {len(all_features)})")
+                continue
+            
+            # Create a subset with the exact number of features needed
+            # Always use the first N features for consistency
+            selected_features = all_features[:required_features]
+            prediction_df = features_df[selected_features]
+            
+            # Make prediction
+            prediction = float(model.predict(prediction_df.values)[0][0])
+            print(f"Model {model_idx} prediction: {prediction:.4f}")
+            
+            successful_predictions.append(prediction)
+        except Exception as e:
+            print(f"Error with model {model_idx}: {e}")
     
-    # Calculate ensemble prediction (mean of all models)
-    ensemble_prediction = np.mean(all_predictions)
+    # Check if we got any successful predictions
+    if not successful_predictions:
+        print("No successful predictions. Cannot generate ensemble prediction.")
+        return None
     
-    # Calculate prediction variance (for confidence assessment)
-    prediction_variance = np.var(all_predictions)
+    # Calculate ensemble prediction
+    ensemble_prediction = np.mean(successful_predictions)
+    prediction_variance = np.var(successful_predictions) if len(successful_predictions) > 1 else 0.05
     
-    # Calculate confidence interval (95%)
-    confidence_interval = 1.96 * np.sqrt(prediction_variance / len(ensemble_models))
+    # Calculate confidence
+    confidence_interval = 1.96 * np.sqrt(prediction_variance / len(successful_predictions))
     confidence = 1.0 - confidence_interval
     
-    # Update prediction with ensemble results
-    prediction['team1_win_probability'] = float(ensemble_prediction)
-    prediction['team2_win_probability'] = float(1 - ensemble_prediction)
-    prediction['predicted_winner'] = prediction['team1'] if ensemble_prediction > 0.5 else prediction['team2']
-    prediction['confidence'] = float(confidence)
-    prediction['ensemble_info'] = {
-        'individual_predictions': all_predictions,
-        'prediction_variance': float(prediction_variance),
-        'confidence_interval': float(confidence_interval),
-        'n_models': len(ensemble_models)
+    # Determine winner
+    team1_win_prob = ensemble_prediction
+    team2_win_prob = 1 - ensemble_prediction
+    predicted_winner = team1_name if team1_win_prob > team2_win_prob else team2_name
+    win_probability = max(team1_win_prob, team2_win_prob)
+    
+    print(f"Final ensemble prediction: {team1_name} {team1_win_prob:.4f} vs {team2_name} {team2_win_prob:.4f}")
+    print(f"Predicted winner: {predicted_winner} with {win_probability:.2%} probability")
+    
+    # Return result
+    result = {
+        'team1': team1_name,
+        'team2': team2_name,
+        'team1_win_probability': float(team1_win_prob),
+        'team2_win_probability': float(team2_win_prob),
+        'predicted_winner': predicted_winner,
+        'win_probability': float(win_probability),
+        'confidence': float(confidence),
+        'ensemble_info': {
+            'individual_predictions': successful_predictions,
+            'prediction_variance': float(prediction_variance),
+            'confidence_interval': float(confidence_interval),
+            'n_models': len(successful_predictions)
+        },
+        'team1_stats': team1_stats,
+        'team2_stats': team2_stats,
+        'team1_stats_summary': {
+            'matches_played': team1_stats['matches'] if isinstance(team1_stats['matches'], int) else len(team1_stats['matches']),
+            'win_rate': team1_stats['win_rate'],
+            'recent_form': team1_stats['recent_form'],
+            'avg_player_rating': team1_stats.get('avg_player_rating', 0),
+            'star_player': team1_stats.get('player_stats', {}).get('star_player_name', ''),
+            'star_player_rating': team1_stats.get('star_player_rating', 0),
+            'pistol_win_rate': team1_stats.get('pistol_win_rate', 0),
+            'eco_win_rate': team1_stats.get('eco_win_rate', 0),
+            'full_buy_win_rate': team1_stats.get('full_buy_win_rate', 0)
+        },
+        'team2_stats_summary': {
+            'matches_played': team2_stats['matches'] if isinstance(team2_stats['matches'], int) else len(team2_stats['matches']),
+            'win_rate': team2_stats['win_rate'],
+            'recent_form': team2_stats['recent_form'],
+            'avg_player_rating': team2_stats.get('avg_player_rating', 0),
+            'star_player': team2_stats.get('player_stats', {}).get('star_player_name', ''),
+            'star_player_rating': team2_stats.get('star_player_rating', 0),
+            'pistol_win_rate': team2_stats.get('pistol_win_rate', 0),
+            'eco_win_rate': team2_stats.get('eco_win_rate', 0),
+            'full_buy_win_rate': team2_stats.get('full_buy_win_rate', 0)
+        }
     }
     
-    return prediction
+    print("Ensemble prediction completed successfully")
+    return result
 
 def analyze_upcoming_matches():
     """Fetch and analyze all upcoming matches."""
@@ -2772,10 +2870,16 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
         prediction = predict_match(team1_name, team2_name, model, scaler, feature_names)
         
         if prediction:
-            team1_win_prob = prediction['team1_win_probability']
-            model_confidence = prediction['confidence']
+            # Get the win probability for the predicted winner
             predicted_winner = prediction['predicted_winner']
+            team1_win_prob = prediction['team1_win_probability']
+            team2_win_prob = prediction['team2_win_probability']
+            winner_probability = team1_win_prob if predicted_winner == team1_name else team2_win_prob
+            model_confidence = prediction['confidence']
             actual_winner = team1_name if match.get('team_won', True) else team2_name
+            
+            # Calculate implied odds based on model probability (1/probability)
+            implied_odds = 1.0 / winner_probability if winner_probability > 0 else 1.0
             
             # Record all predictions
             match_result = {
@@ -2785,11 +2889,12 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
                 'predicted_winner': predicted_winner,
                 'actual_winner': actual_winner,
                 'confidence': model_confidence,
+                'implied_odds': implied_odds,
                 'correct': predicted_winner == actual_winner
             }
             results_data.append(match_result)
             
-            # Only bet if confidence is high enough
+            # Only bet if confidence is high enough (>= threshold)
             if model_confidence >= confidence_threshold:
                 total_bets += 1
                 total_high_conf += 1
@@ -2797,8 +2902,12 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
                 if predicted_winner == actual_winner:
                     correct_predictions += 1
                     correct_high_conf += 1
-                    total_profit += bet_amount
+                    # Win amount is bet_amount * (implied_odds - 1)
+                    # If we bet $100 at odds of 1.4, we'd win $40 on top of our $100 stake
+                    win_amount = bet_amount * (implied_odds - 1.0)
+                    total_profit += win_amount
                 else:
+                    # Loss is just the bet amount
                     total_profit -= bet_amount
             
     # Calculate metrics
@@ -2813,6 +2922,9 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
         df.to_csv('backtesting_results.csv', index=False)
         print(f"Detailed results saved to 'backtesting_results.csv'")
     
+    # Calculate additional metrics with the realistic odds
+    avg_odds = sum(r['implied_odds'] for r in results_data if r['confidence'] >= confidence_threshold) / total_bets if total_bets > 0 else 0
+    
     results = {
         'overall_accuracy': overall_accuracy,
         'high_conf_accuracy': high_conf_accuracy,
@@ -2823,7 +2935,8 @@ def backtest_model(cutoff_date, bet_amount=100, confidence_threshold=0.6):
         'total_bets': total_bets,
         'bet_amount': bet_amount,
         'confidence_threshold': confidence_threshold,
-        'cutoff_date': cutoff_date
+        'cutoff_date': cutoff_date,
+        'average_odds': avg_odds
     }
     
     return results
@@ -2857,8 +2970,8 @@ def collect_team_data(team_limit=100, include_player_stats=True, include_economy
     
     # If no teams with rankings were found, just take the first N teams
     if not top_teams:
-        print(f"No teams with rankings found. Using the first {min(20, team_limit)} teams instead.")
-        top_teams = teams_data['data'][:min(20, team_limit)]
+        print(f"No teams with rankings found. Using the first {min(100, team_limit)} teams instead.")
+        top_teams = teams_data['data'][:min(100, team_limit)]
     
     print(f"Selected {len(top_teams)} teams for data collection.")
     
@@ -2938,6 +3051,242 @@ def collect_team_data(team_limit=100, include_player_stats=True, include_economy
     
     return team_data_collection
 
+
+def analyze_match_betting(team1, team2, odds_data, bankroll=1000, min_ev=5.0, kelly_fraction=0.5):
+    """Analyze betting opportunities for a Valorant match with manually input odds."""
+    print(f"Starting betting analysis for {team1} vs {team2}")
+    
+    try:
+        # Get prediction
+        ensemble_exists = any(os.path.exists(f'valorant_model_fold_{i+1}.h5') for i in range(5))
+        
+        prediction = None
+        if ensemble_exists:
+            prediction = predict_with_ensemble(team1, team2)
+        else:
+            prediction = predict_match(team1, team2, include_maps=True)
+        
+        if not prediction:
+            print(f"Could not generate prediction for {team1} vs {team2}")
+            return None
+        
+        print(f"Successfully obtained prediction: {prediction['predicted_winner']} with {prediction.get('win_probability', 0):.2%} probability")
+        
+        # Extract probabilities
+        team1_win_prob = prediction['team1_win_probability']
+        team2_win_prob = prediction['team2_win_probability']
+        
+        # Use simpler estimates for map probabilities (assuming individual map win rates follow overall win rates)
+        # For +1.5 maps (team wins at least 1 map in a Bo3)
+        team1_plus_1_5_prob = 1 - (team2_win_prob * team2_win_prob)  
+        team2_plus_1_5_prob = 1 - (team1_win_prob * team1_win_prob)  
+        
+        # For -1.5 maps (team wins 2-0)
+        team1_minus_1_5_prob = team1_win_prob * team1_win_prob
+        team2_minus_1_5_prob = team2_win_prob * team2_win_prob
+        
+        # For over/under 2.5 maps
+        over_2_5_maps_prob = 1 - (team1_minus_1_5_prob + team2_minus_1_5_prob)
+        under_2_5_maps_prob = 1 - over_2_5_maps_prob
+        
+        # Analyze each bet type
+        value_bets = {}
+        
+        # Process moneyline bets
+        if 'ml_odds_team1' in odds_data:
+            ml_odds_team1 = float(odds_data['ml_odds_team1'])
+            ev_team1_ml = ((team1_win_prob * ml_odds_team1) - 1) * 100
+            implied_prob = (1 / ml_odds_team1) * 100
+            
+            if ev_team1_ml >= min_ev:
+                value_bets['moneyline_team1'] = {
+                    'bet': f"{team1} to win",
+                    'odds': ml_odds_team1,
+                    'our_probability': f"{team1_win_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev_team1_ml:.2f}%"
+                }
+        
+        if 'ml_odds_team2' in odds_data:
+            ml_odds_team2 = float(odds_data['ml_odds_team2'])
+            ev_team2_ml = ((team2_win_prob * ml_odds_team2) - 1) * 100
+            implied_prob = (1 / ml_odds_team2) * 100
+            
+            if ev_team2_ml >= min_ev:
+                value_bets['moneyline_team2'] = {
+                    'bet': f"{team2} to win",
+                    'odds': ml_odds_team2,
+                    'our_probability': f"{team2_win_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev_team2_ml:.2f}%"
+                }
+        
+        # Process other bet types
+        # ... rest of your betting analysis code ...
+        
+        # +1.5 Map handicap bets
+        if 'team1_plus_1_5_odds' in odds_data:
+            odds = float(odds_data['team1_plus_1_5_odds'])
+            ev = ((team1_plus_1_5_prob * odds) - 1) * 100
+            implied_prob = (1 / odds) * 100
+            
+            if ev >= min_ev:
+                value_bets['team1_plus_1_5'] = {
+                    'bet': f"{team1} +1.5 maps",
+                    'odds': odds,
+                    'our_probability': f"{team1_plus_1_5_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev:.2f}%"
+                }
+        
+        if 'team2_plus_1_5_odds' in odds_data:
+            odds = float(odds_data['team2_plus_1_5_odds'])
+            ev = ((team2_plus_1_5_prob * odds) - 1) * 100
+            implied_prob = (1 / odds) * 100
+            
+            if ev >= min_ev:
+                value_bets['team2_plus_1_5'] = {
+                    'bet': f"{team2} +1.5 maps",
+                    'odds': odds,
+                    'our_probability': f"{team2_plus_1_5_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev:.2f}%"
+                }
+        
+        # -1.5 Map handicap bets (2-0 victory)
+        if 'team1_minus_1_5_odds' in odds_data:
+            odds = float(odds_data['team1_minus_1_5_odds'])
+            ev = ((team1_minus_1_5_prob * odds) - 1) * 100
+            implied_prob = (1 / odds) * 100
+            
+            if ev >= min_ev:
+                value_bets['team1_minus_1_5'] = {
+                    'bet': f"{team1} -1.5 maps (2-0 win)",
+                    'odds': odds,
+                    'our_probability': f"{team1_minus_1_5_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev:.2f}%"
+                }
+        
+        if 'team2_minus_1_5_odds' in odds_data:
+            odds = float(odds_data['team2_minus_1_5_odds'])
+            ev = ((team2_minus_1_5_prob * odds) - 1) * 100
+            implied_prob = (1 / odds) * 100
+            
+            if ev >= min_ev:
+                value_bets['team2_minus_1_5'] = {
+                    'bet': f"{team2} -1.5 maps (2-0 win)",
+                    'odds': odds,
+                    'our_probability': f"{team2_minus_1_5_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev:.2f}%"
+                }
+        
+        # Over/Under 2.5 maps
+        if 'over_2_5_odds' in odds_data:
+            odds = float(odds_data['over_2_5_odds'])
+            ev = ((over_2_5_maps_prob * odds) - 1) * 100
+            implied_prob = (1 / odds) * 100
+            
+            if ev >= min_ev:
+                value_bets['over_2_5_maps'] = {
+                    'bet': "Over 2.5 maps",
+                    'odds': odds,
+                    'our_probability': f"{over_2_5_maps_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev:.2f}%"
+                }
+        
+        if 'under_2_5_odds' in odds_data:
+            odds = float(odds_data['under_2_5_odds'])
+            ev = ((under_2_5_maps_prob * odds) - 1) * 100
+            implied_prob = (1 / odds) * 100
+            
+            if ev >= min_ev:
+                value_bets['under_2_5_maps'] = {
+                    'bet': "Under 2.5 maps",
+                    'odds': odds,
+                    'our_probability': f"{under_2_5_maps_prob:.2%}",
+                    'implied_probability': f"{implied_prob:.2f}%",
+                    'expected_value': f"{ev:.2f}%"
+                }
+        
+        # Calculate Kelly criterion bet sizes
+        kelly_recommendations = {}
+        for bet_key, bet_data in value_bets.items():
+            odds = float(bet_data['odds'])
+            our_prob = float(bet_data['our_probability'].strip('%')) / 100
+            
+            b = odds - 1  # Potential profit
+            q = 1 - our_prob  # Probability of losing
+            
+            kelly = (b * our_prob - q) / b
+            kelly = max(0, min(0.25, kelly))  # Cap at 25% of bankroll max
+            kelly_adjusted = kelly * kelly_fraction
+            
+            bet_amount = bankroll * kelly_adjusted
+            
+            kelly_recommendations[bet_key] = {
+                'bet': bet_data['bet'],
+                'kelly_percentage': f"{kelly_adjusted:.2%}",
+                'recommended_bet': f"${bet_amount:.2f}",
+                'expected_profit': f"${bet_amount * b * our_prob:.2f}",
+                'expected_value': bet_data['expected_value']
+            }
+        
+        # Prepare results
+        results = {
+            'match': f"{team1} vs {team2}",
+            'model_prediction': {
+                'winner': prediction['predicted_winner'],
+                'win_probability': f"{prediction['win_probability']:.2%}",
+                'model_confidence': prediction['confidence']
+            },
+            'value_bets': value_bets,
+            'kelly_recommendations': kelly_recommendations,
+            'bankroll': f"${bankroll:.2f}",
+            'total_recommended_bets': len(kelly_recommendations)
+        }
+        
+        print(f"Betting analysis complete: found {len(value_bets)} value bets")
+        return results
+        
+    except Exception as e:
+        print(f"ERROR in betting analysis: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def display_betting_analysis(analysis):
+    """Display the betting analysis in a user-friendly format."""
+    if not analysis:
+        return
+    
+    print("\n" + "=" * 50)
+    print(f"BETTING ANALYSIS: {analysis['match']}")
+    print("=" * 50)
+    
+    print("\nMODEL PREDICTION:")
+    print(f"Predicted Winner: {analysis['model_prediction']['winner']}")
+    print(f"Win Probability: {analysis['model_prediction']['win_probability']}")
+    print(f"Model Confidence: {analysis['model_prediction']['model_confidence']}")
+    
+    print("\nVALUE BETTING OPPORTUNITIES:")
+    if not analysis['value_bets']:
+        print("No value bets found for this match.")
+    else:
+        print(f"Found {len(analysis['value_bets'])} value betting opportunities:")
+        
+        for bet_key, recommendation in analysis['kelly_recommendations'].items():
+            print("\n" + "-" * 40)
+            print(f"BET: {recommendation['bet']}")
+            print(f"Expected Value: {recommendation['expected_value']}")
+            print(f"Kelly Percentage: {recommendation['kelly_percentage']}")
+            print(f"Recommended Bet: {recommendation['recommended_bet']} of {analysis['bankroll']} bankroll")
+            print(f"Expected Profit: {recommendation['expected_profit']}")
+    
+    print("\n" + "=" * 50)    
+
 #-------------------------------------------------------------------------
 # MAIN FUNCTION AND CLI INTERFACE
 #-------------------------------------------------------------------------
@@ -2963,6 +3312,13 @@ def main():
     parser.add_argument("--team-limit", type=int, default=100, help="Limit number of teams to process")
     parser.add_argument("--cross-validate", action="store_true", help="Train with cross-validation")
     parser.add_argument("--folds", type=int, default=5, help="Number of folds for cross-validation")
+
+    # Add new betting-specific arguments
+    parser.add_argument("--betting", action="store_true", help="Perform betting analysis")
+    parser.add_argument("--bankroll", type=float, default=1000, help="Total bankroll for betting recommendations")
+    parser.add_argument("--min-ev", type=float, default=5.0, help="Minimum expected value percentage for bet recommendations")
+    parser.add_argument("--kelly", type=float, default=0.5, help="Kelly criterion fraction (conservative multiplier)")
+    parser.add_argument("--manual-odds", action="store_true", help="Manually input all odds")
 
     args = parser.parse_args()
     
@@ -3061,14 +3417,60 @@ def main():
             print(f"Average profit per bet: ${avg_profit:.2f}")
         else:
             print("Backtesting failed or returned no results.")
+
+    # New betting analysis functionality with manual odds input
+    elif args.betting and args.team1 and args.team2 and args.manual_odds:
+        print(f"Performing betting analysis for {args.team1} vs {args.team2}...")
+        print(f"Using bankroll: ${args.bankroll}, Minimum EV: {args.min_ev}%, Kelly fraction: {args.kelly}")
+        print("\nPlease enter the betting odds (decimal format, e.g. 1.85):")
+        
+        # Manual odds input
+        odds_data = {}
+        
+        try:
+            odds_data['ml_odds_team1'] = float(input(f"Moneyline odds for {args.team1} to win: "))
+            odds_data['ml_odds_team2'] = float(input(f"Moneyline odds for {args.team2} to win: "))
+            
+            odds_data['team1_plus_1_5_odds'] = float(input(f"{args.team1} +1.5 maps odds: "))
+            odds_data['team2_plus_1_5_odds'] = float(input(f"{args.team2} +1.5 maps odds: "))
+            
+            odds_data['team1_minus_1_5_odds'] = float(input(f"{args.team1} -1.5 maps odds: "))
+            odds_data['team2_minus_1_5_odds'] = float(input(f"{args.team2} -1.5 maps odds: "))
+            
+            odds_data['over_2_5_odds'] = float(input("Over 2.5 maps odds: "))
+            odds_data['under_2_5_odds'] = float(input("Under 2.5 maps odds: "))
+            
+            # Add circuit breaker to prevent infinite loops
+            # Dictionary to track function calls
+            call_count = {}
+            
+            # Run the analysis with debugging
+            print("Starting analysis...")
+            analysis = analyze_match_betting(
+                args.team1,
+                args.team2,
+                odds_data,
+                bankroll=args.bankroll,
+                min_ev=args.min_ev,
+                kelly_fraction=args.kelly
+            )
+            
+            if analysis:
+                display_betting_analysis(analysis)
+            else:
+                print("Analysis failed to produce results.")
+        except ValueError as e:
+            print(f"Error: Invalid odds input. Please enter valid decimal odds (e.g., 1.85).")
+            print(f"Exception: {e}")
+            return
+    
     
     else:
-        print("Please specify an action: --train, --predict, --analyze, or --backtest")
-        print("For predictions, specify --team1 and --team2")
+        print("Please specify an action: --train, --predict, --analyze, --backtest, or --betting")
+        print("For predictions and betting analysis, specify --team1 and --team2")
+        print("For betting analysis, use --betting --manual-odds, and consider using --bankroll, --min-ev, and --kelly")
         print("For backtesting, specify --cutoff-date YYYY/MM/DD")
-        print("To include player statistics, add --players")
-        print("To include economy data, add --economy")
-        print("To include map statistics, add --maps")
+
 
 if __name__ == "__main__":
     main()         

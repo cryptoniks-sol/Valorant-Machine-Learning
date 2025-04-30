@@ -197,7 +197,7 @@ python test1.py --train --players --economy --maps --cross-validate --folds 10 -
 
 Match Prediction
 bash# Predict a specific match (will automatically use the best available model)
-python test1.py --predict --team1 "Team Liquid" --team2 "Karmine Corp"
+python ml.py --predict --team1 "Nightblood Gaming" --team2 "Funhavers"
 
 Analysis and Evaluation
 bash# Analyze all upcoming matches
@@ -225,7 +225,7 @@ This creates an ensemble of models which should be more robust than a single mod
 Include relevant data sources based on your needs:
 
 For most accurate but potentially slowest training: include all data
-python your_script.py --train --players --economy --maps
+python ml.py --train --cross-validate --folds 5 --players --economy --maps
 
 For balanced approach: use player stats and economy (this appears to be the default)
 python your_script.py --train --players --economy
@@ -236,7 +236,7 @@ python your_script.py --train --players
 
 
 Optimize your model by testing different confidence thresholds:
-python your_script.py --backtest --cutoff-date 2023/06/01 --confidence 0.7
+python ml.py --backtest --cutoff-date 2023/06/01 --confidence 0.7
 Try different confidence values (0.6, 0.7, 0.8) to find the optimal balance between accuracy and number of bets.
 Find the right dataset size by adjusting team limits:
 python your_script.py --train --team-limit 50
