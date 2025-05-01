@@ -197,7 +197,7 @@ python test1.py --train --players --economy --maps --cross-validate --folds 10 -
 
 Match Prediction
 bash# Predict a specific match (will automatically use the best available model)
-python ml.py --predict --team1 "Nightblood Gaming" --team2 "Funhavers"
+python test.py --predict --team1 "Akave Esports GC" --team2 "MYVRA GC"
 
 Analysis and Evaluation
 bash# Analyze all upcoming matches
