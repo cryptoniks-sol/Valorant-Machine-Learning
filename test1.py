@@ -247,7 +247,7 @@ def fetch_upcoming_matches():
 def fetch_events():
     """Fetch all events from the API."""
     print("Fetching events...")
-    events_data = fetch_api_data("events", {"limit": 100})
+    events_data = fetch_api_data("events", {"limit": 300})
     
     if not events_data:
         return []
@@ -255,7 +255,9 @@ def fetch_events():
     return events_data.get('data', [])
 
 def parse_match_data(match_history, team_name):
-    """Parse match history data for a team with correct team tag assignment."""
+    """
+    Parse match history data for a team with improved map score extraction.
+    """
     if not match_history or 'data' not in match_history:
         return []
     
@@ -286,7 +288,7 @@ def parse_match_data(match_history, team_name):
                 'event': match.get('event', '') if isinstance(match.get('event', ''), str) else match.get('event', {}).get('name', ''),
                 'tournament': match.get('tournament', ''),
                 'map': match.get('map', ''),
-                'map_score': match.get('map_score', '')
+                'map_score': ''  # Initialize map score as empty
             }
             
             # Extract teams and determine which is our team
@@ -297,6 +299,9 @@ def parse_match_data(match_history, team_name):
                 # Convert scores to integers for comparison
                 team1_score = int(team1.get('score', 0))
                 team2_score = int(team2.get('score', 0))
+                
+                # Set map score directly from the scores - this is critical for dataset building
+                match_info['map_score'] = f"{team1_score}:{team2_score}"
                 
                 # Determine winners based on scores
                 team1_won = team1_score > team2_score
@@ -345,6 +350,7 @@ def parse_match_data(match_history, team_name):
                 match_info['opponent_won'] = not team_won  # Opponent's result is opposite of our team
                 match_info['opponent_country'] = opponent_team.get('country', '')
                 match_info['opponent_tag'] = opponent_team.get('tag', '')
+                match_info['opponent_id'] = opponent_team.get('id', '')  # Save opponent ID for future reference
                 
                 # Add the result field
                 match_info['result'] = 'win' if team_won else 'loss'               
@@ -971,7 +977,7 @@ def extract_tournament_performance(team_matches):
     
     return tournament_performance
 
-def collect_team_data(team_limit=100, include_player_stats=True, include_economy=True, include_maps=True):
+def collect_team_data(team_limit=300, include_player_stats=True, include_economy=True, include_maps=True):
     """Collect data for all teams to use in training and evaluation."""
     print("\n========================================================")
     print("COLLECTING TEAM DATA")
@@ -1000,8 +1006,8 @@ def collect_team_data(team_limit=100, include_player_stats=True, include_economy
     
     # If no teams with rankings were found, just take the first N teams
     if not top_teams:
-        print(f"No teams with rankings found. Using the first {min(25, team_limit)} teams instead.")
-        top_teams = teams_data['data'][:min(25, team_limit)]
+        print(f"No teams with rankings found. Using the first {min(150, team_limit)} teams instead.")
+        top_teams = teams_data['data'][:min(150, team_limit)]
     
     print(f"Selected {len(top_teams)} teams for data collection.")
     
@@ -2146,43 +2152,49 @@ def load_ensemble_models(model_paths, scaler_path, features_path):
 
 def prepare_match_features(team1_stats, team2_stats, stable_features, scaler):
     """
-    Prepare features for a single match for prediction.
-    
-    Args:
-        team1_stats (dict): Statistics for team 1
-        team2_stats (dict): Statistics for team 2
-        stable_features (list): List of feature names to use
-        scaler (object): Trained feature scaler
-        
-    Returns:
-        numpy.ndarray: Scaled feature vector ready for model prediction
+    Prepare features for a single match for prediction using only the features
+    that were selected during training to avoid overfitting.
     """
-    # Use the existing prepare_data_for_model function to get base features
+    # Get full feature set
     features = prepare_data_for_model(team1_stats, team2_stats)
     
     if not features:
         print("Failed to prepare match features.")
         return None
     
-    # Convert to DataFrame for easier manipulation
+    # Convert to DataFrame for easier feature selection
     features_df = pd.DataFrame([features])
+    print(f"Original feature count: {len(features_df.columns)}")
     
-    # Select only stable features that were identified during cross-validation
-    available_features = [f for f in stable_features if f in features_df.columns]
-    
-    if len(available_features) < len(stable_features):
-        missing = len(stable_features) - len(available_features)
-        print(f"Warning: {missing} stable features are missing from the input data.")
-    
-    # Select and order features to match the training data
-    X = features_df[available_features].values
-    
-    # Scale features
-    if scaler:
-        X_scaled = scaler.transform(X)
-        return X_scaled
+    # If stable_features exists, use only those features
+    if stable_features and len(stable_features) > 0:
+        # Check which features are available
+        available_features = [f for f in stable_features if f in features_df.columns]
+        
+        print(f"Using {len(available_features)} out of {len(stable_features)} stable features")
+        
+        # Select only the available stable features in the correct order
+        if available_features:
+            features_df = features_df[available_features]
+        else:
+            print("ERROR: None of the stable features are available in current data!")
+            return None
     else:
-        print("Warning: No scaler provided. Using unscaled features.")
+        print("WARNING: No stable features provided. Model may not work correctly.")
+    
+    # Convert to numpy array for scaling
+    X = features_df.values
+    print(f"Feature array shape after selection: {X.shape}")
+    
+    # Scale features if scaler is available
+    if scaler:
+        try:
+            X_scaled = scaler.transform(X)
+            return X_scaled
+        except Exception as e:
+            print(f"Error scaling features: {e}")
+            return X  # Return unscaled features as fallback
+    else:
         return X
 
 #-------------------------------------------------------------------------
@@ -3504,9 +3516,11 @@ def apply_betting_strategy(team1_name, team2_name, api_options=None, bookmaker_o
             'error': f'An error occurred: {str(e)}'
         }
 
-def build_historical_dataset(team_data_collection, odds_data=None):
+
+
+def build_historical_dataset_debug(team_data_collection, odds_data=None):
     """
-    Build a dataset for backtesting from team data and historical odds.
+    Build a dataset for backtesting from team data and historical odds with fallback options.
     
     Args:
         team_data_collection (dict): Team statistics collection
@@ -3517,49 +3531,128 @@ def build_historical_dataset(team_data_collection, odds_data=None):
     """
     historical_data = []
     
-    for team_name, team_data in team_data_collection.items():
+    # Initialize counters for diagnostics
+    total_teams = len(team_data_collection)
+    total_matches_examined = 0
+    total_matches_with_opponent = 0
+    total_matches_with_valid_score = 0
+    total_matches_with_synthetic_score = 0
+    
+    skip_reasons = {
+        'opponent_not_in_collection': 0,
+        'missing_match_id': 0,
+        'missing_date': 0,
+        'invalid_map_score': 0,
+        'invalid_features': 0,
+        'other_error': 0
+    }
+    
+    print(f"\n=== Building Historical Dataset with {total_teams} teams ===")
+    
+    # Process each team
+    for team_idx, (team_name, team_data) in enumerate(team_data_collection.items()):
         matches = team_data.get('matches', [])
         
-        for match in matches:
-            opponent_name = match.get('opponent_name')
+        print(f"\nProcessing Team {team_idx+1}/{total_teams}: {team_name} ({len(matches)} matches)")
+        
+        # Skip if no matches
+        if not matches:
+            print(f"  No matches found for {team_name}")
+            continue
+        
+        # Show a sample match to help debug
+        if matches:
+            print(f"  Sample match data structure:")
+            sample = matches[0]
+            print(f"  - match_id: {sample.get('match_id', 'N/A')}")
+            print(f"  - opponent: {sample.get('opponent_name', 'N/A')}")
+            print(f"  - map_score: {sample.get('map_score', 'N/A')}")
+            print(f"  - team_score: {sample.get('team_score', 'N/A')}")
+            print(f"  - opponent_score: {sample.get('opponent_score', 'N/A')}")
+            print(f"  - result: {sample.get('result', 'N/A')}")
+        
+        # Process each match
+        matches_processed_for_team = 0
+        for match_idx, match in enumerate(matches):
+            total_matches_examined += 1
             
-            # Skip if we don't have data for the opponent
-            if opponent_name not in team_data_collection:
-                continue
-            
-            # Get match ID
-            match_id = match.get('match_id')
-            if not match_id:
-                continue
-            
-            # Get match date
-            match_date = match.get('date')
-            if not match_date:
-                continue
-            
-            # Get match result (from team1's perspective)
-            team1_won = match.get('team_won', False)
-            
-            # Get team stats
-            team1_stats = team_data
-            team2_stats = team_data_collection[opponent_name]
-            
-            # Prepare features for this match
-            features = prepare_data_for_model(team1_stats, team2_stats)
-            
-            if not features:
-                continue
+            try:
+                opponent_name = match.get('opponent_name')
                 
-            # Convert features to a numpy array
-            X = np.array(list(features.values())).reshape(1, -1)
-            
-            # Get map count if available
-            map_score = match.get('map_score', '')
-            if map_score and ':' in map_score:
+                # Skip if we don't have data for the opponent
+                if opponent_name not in team_data_collection:
+                    skip_reasons['opponent_not_in_collection'] += 1
+                    continue
+                
+                total_matches_with_opponent += 1
+                
+                # Get match ID
+                match_id = match.get('match_id')
+                if not match_id:
+                    skip_reasons['missing_match_id'] += 1
+                    continue
+                
+                # Get match date
+                match_date = match.get('date')
+                if not match_date:
+                    skip_reasons['missing_date'] += 1
+                    continue
+                
+                # Get match result (from team1's perspective)
+                team1_won = match.get('team_won', False)
+                
+                # Get team stats
+                team1_stats = team_data
+                team2_stats = team_data_collection[opponent_name]
+                
+                # Prepare features for this match
+                features = prepare_data_for_model(team1_stats, team2_stats)
+                
+                if not features:
+                    skip_reasons['invalid_features'] += 1
+                    continue
+                
+                # Convert features to a numpy array
+                X = np.array(list(features.values())).reshape(1, -1)
+                
+                # Get map score
+                map_score = match.get('map_score', '')
+                team1_score = match.get('team_score', 0)
+                team2_score = match.get('opponent_score', 0)
+                
+                # FALLBACK OPTION 1: Create map score from team scores if missing
+                if not map_score and team1_score is not None and team2_score is not None:
+                    map_score = f"{team1_score}:{team2_score}"
+                    total_matches_with_synthetic_score += 1
+                
+                # FALLBACK OPTION 2: If still no map score, generate one based on match result
+                if not map_score and 'result' in match:
+                    if match['result'] == 'win':
+                        # Assume standard bo3 for wins (2-0 or 2-1)
+                        map_score = "2:0"  # Simplified assumption
+                    else:
+                        # Assume standard bo3 for losses (0-2)
+                        map_score = "0:2"  # Simplified assumption
+                    
+                    total_matches_with_synthetic_score += 1
+                    print(f"  Generated synthetic map score {map_score} for match {match_id}")
+                
+                # Skip if no valid map score
+                if not map_score or ':' not in map_score:
+                    skip_reasons['invalid_map_score'] += 1
+                    continue
+                
                 try:
-                    team1_maps, team2_maps = map_score.split(':')
-                    team1_maps = int(team1_maps)
-                    team2_maps = int(team2_maps)
+                    # Parse the map score
+                    score_parts = map_score.split(':')
+                    if len(score_parts) != 2:
+                        skip_reasons['invalid_map_score'] += 1
+                        continue
+                        
+                    team1_maps = int(score_parts[0])
+                    team2_maps = int(score_parts[1])
+                    
+                    total_matches_with_valid_score += 1
                     
                     # Determine format (bo1, bo3, bo5) from map count
                     if team1_maps + team2_maps == 1:
@@ -3568,7 +3661,7 @@ def build_historical_dataset(team_data_collection, odds_data=None):
                         match_format = 'bo3'
                     else:
                         match_format = 'bo5'
-                        
+                    
                     # Calculate result types
                     if match_format == 'bo1':
                         team1_win_match = team1_maps > team2_maps
@@ -3664,7 +3757,8 @@ def build_historical_dataset(team_data_collection, odds_data=None):
                         'team2_name': opponent_name,
                         'features': X[0],  # Save the features as a numpy array
                         'outcome': 1 if team1_won else 0,  # 1 if team1 won, 0 if team2 won
-                        'format': match_format
+                        'format': match_format,
+                        'map_score': map_score
                     }
                     
                     # Add results for each bet type
@@ -3683,18 +3777,55 @@ def build_historical_dataset(team_data_collection, odds_data=None):
                                     match_entry[f'{bet_type}_odds'] = match_odds[bet_type]
                     
                     historical_data.append(match_entry)
+                    matches_processed_for_team += 1
                     
                 except (ValueError, TypeError) as e:
                     # Skip this match if there's an error parsing the map score
-                    print(f"Error parsing map score for match {match_id}: {e}")
+                    skip_reasons['invalid_map_score'] += 1
+                    print(f"  Error parsing map score for match {match_id}: {e}")
                     continue
+                
+            except Exception as e:
+                skip_reasons['other_error'] += 1
+                print(f"  Unexpected error processing match: {str(e)}")
+                continue
+                
+        print(f"  Processed {matches_processed_for_team} valid matches for {team_name}")
+    
+    # Print detailed diagnostic information
+    print(f"\n=== Historical Dataset Building Results ===")
+    print(f"Total matches examined: {total_matches_examined}")
+    print(f"Total matches with opponent in collection: {total_matches_with_opponent}")
+    print(f"Total matches with valid score: {total_matches_with_valid_score}")
+    print(f"Total matches with synthetic score: {total_matches_with_synthetic_score}")
+    print(f"Total valid matches added to dataset: {len(historical_data)}")
+    
+    print(f"\nMatches skipped due to:")
+    for reason, count in skip_reasons.items():
+        if count > 0:
+            print(f"  - {reason}: {count}")
     
     # Convert to DataFrame
     if historical_data:
+        print(f"\nSuccessfully created historical dataset with {len(historical_data)} matches")
         historical_df = pd.DataFrame(historical_data)
+        
+        # Print a preview of the dataset structure
+        print("\nDataset Structure:")
+        print(f"Columns: {historical_df.columns.tolist()}")
+        print(f"Match formats: {historical_df['format'].value_counts().to_dict()}")
+        print(f"Team distribution: {len(historical_df['team1_name'].unique())} teams")
+        
         return historical_df
     else:
+        print("\nFailed to create historical dataset: No valid matches found")
         return pd.DataFrame()
+
+# Update the main function to use the debug version for backtest
+# In your main function, replace:
+# historical_data = build_historical_dataset(team_data_collection)
+# with:
+# historical_data = build_historical_dataset_debug(team_data_collection)
 
 def prepare_new_matches_for_prediction(upcoming_matches, team_data_collection, models, scaler, stable_features, calibration_func=None):
     """
@@ -4454,7 +4585,7 @@ def betting_cli():
         print("Running betting strategy backtest...")
         
         # Build historical dataset
-        historical_data = build_historical_dataset(team_data_collection)
+        historical_data = build_historical_dataset_debug(team_data_collection)
         
         if historical_data.empty:
             print("No historical data available for backtest.")
@@ -4598,31 +4729,44 @@ def betting_cli():
 # ENTRY POINT
 #-------------------------------------------------------------------------
 
-if __name__ == "__main__":
-    betting_cli()
-
 #-------------------------------------------------------------------------
 # MAIN FUNCTION AND CLI INTERFACE
 #-------------------------------------------------------------------------
 
 def main():
     """Main function to handle command line arguments and run the program."""
-    parser = argparse.ArgumentParser(description="Valorant Match Predictor")
+    parser = argparse.ArgumentParser(description="Valorant Match Predictor and Betting System")
     
-    # Add command line arguments
-    parser.add_argument("--train", action="store_true", help="Train a new model")
-    parser.add_argument("--optimize", action="store_true", help="Run model optimization")
-    parser.add_argument("--predict", action="store_true", help="Predict a specific match")
+    # Add main command groups
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--train", action="store_true", help="Train a new model")
+    group.add_argument("--optimize", action="store_true", help="Run model optimization")
+    group.add_argument("--backtest", action="store_true", help="Run betting strategy backtest")
+    group.add_argument("--predict", action="store_true", help="Predict a match for betting")
+    group.add_argument("--simulation", action="store_true", help="Run Monte Carlo simulation")
+    group.add_argument("--analyze-future", action="store_true", help="Analyze upcoming matches")
+    
+    # Add team information arguments
     parser.add_argument("--team1", type=str, help="First team name")
     parser.add_argument("--team2", type=str, help="Second team name")
-    parser.add_argument("--analyze", action="store_true", help="Analyze all upcoming matches")
+    parser.add_argument("--format", type=str, default="bo3", choices=["bo1", "bo3", "bo5"], 
+                       help="Match format (bo1, bo3, bo5)")
+    
+    # Add betting parameters
+    parser.add_argument("--odds", type=str, help="Bookmaker odds in format 'bet_type:odds,bet_type:odds,...'")
+    parser.add_argument("--bankroll", type=float, default=1000.0, help="Current bankroll")
+    parser.add_argument("--kelly", type=float, default=0.25, help="Kelly fraction (0.0-1.0)")
+    parser.add_argument("--edge", type=float, default=0.05, help="Minimum edge required for bet")
+    parser.add_argument("--num-sims", type=int, default=10000, help="Number of simulations to run")
+    parser.add_argument("--calibrate", action="store_true", help="Calibrate probabilities in backtest")
+    
+    # Add data collection options
+    parser.add_argument("--team-limit", type=int, default=300, help="Limit number of teams to process")
     parser.add_argument("--players", action="store_true", help="Include player stats in analysis")
     parser.add_argument("--economy", action="store_true", help="Include economy data in analysis")
     parser.add_argument("--maps", action="store_true", help="Include map statistics")
-    parser.add_argument("--team-limit", type=int, default=100, help="Limit number of teams to process")
     parser.add_argument("--cross-validate", action="store_true", help="Train with cross-validation")
     parser.add_argument("--folds", type=int, default=5, help="Number of folds for cross-validation")
-
 
     args = parser.parse_args()
     
@@ -4635,7 +4779,7 @@ def main():
     if not args.players and not args.economy and not args.maps:
         include_player_stats = True
         include_economy = True
-        include_maps = False  # Maps off by default as it's most expensive
+        include_maps = True  # Set to True to include map data
     
     if args.train:
         print("Training a new model...")
@@ -4675,105 +4819,265 @@ def main():
             model, scaler, feature_names = train_model(X, y)
             print("Model training complete.")
     
-    elif args.predict and args.team1 and args.team2:
-        # Check if ensemble models exist
-        ensemble_exists = any(os.path.exists(f'valorant_model_fold_{i+1}.h5') for i in range(5))
-        
-        if ensemble_exists:
-            print(f"Predicting match between {args.team1} and {args.team2} using ensemble model...")
-            prediction = predict_with_ensemble(args.team1, args.team2, analyze_features=args.analyze_features)
-        else:
-            print(f"Predicting match between {args.team1} and {args.team2} with standard model...")
-            prediction = predict_match(args.team1, args.team2, include_maps=include_maps)
-        
-        if prediction:
-            display_prediction_results(prediction)
-            visualize_prediction(prediction)
-        else:
-            print(f"Could not generate prediction for {args.team1} vs {args.team2}")
-            
-    elif args.analyze:
-        print("Analyzing upcoming matches...")
-        analyze_upcoming_matches()
-            
     elif args.backtest:
-        if not args.cutoff_date:
-            print("Please specify a cutoff date with --cutoff-date YYYY/MM/DD")
+        print("Running betting strategy backtest...")
+        
+        # Load betting models
+        betting_models = load_betting_models()
+        
+        if betting_models is None:
+            print("Failed to load betting models. Exiting.")
             return
         
-        print(f"Performing backtesting with cutoff date: {args.cutoff_date}")
-        print(f"Bet amount: ${args.bet_amount}, Confidence threshold: {args.confidence}")
+        models = betting_models['models']
+        scaler = betting_models['scaler']
+        stable_features = betting_models['stable_features']
         
-        results = backtest_model(
-            args.cutoff_date, 
-            bet_amount=args.bet_amount, 
-            confidence_threshold=args.confidence
+        # Load team data
+        print("Loading team data...")
+        team_data_collection = collect_team_data(
+            team_limit=40,  # Increased from 5 to 20 teams
+            include_player_stats=True,
+            include_economy=True,
+            include_maps=True
         )
         
-        if results:
-            print("\nBacktesting Results:")
-            print(f"Overall Accuracy: {results['overall_accuracy']:.4f}")
-            print(f"High Confidence Accuracy: {results['high_conf_accuracy']:.4f}")
-            print(f"ROI: {results['roi']:.4f}")
-            print(f"Total profit: ${results['total_profit']:.2f}")
-            print(f"Total bets: {results['total_bets']}")
-            avg_profit = results['total_profit']/results['total_bets'] if results['total_bets'] > 0 else 0
-            print(f"Average profit per bet: ${avg_profit:.2f}")
-        else:
-            print("Backtesting failed or returned no results.")
-
-    # New betting analysis functionality with manual odds input
-    elif args.betting and args.team1 and args.team2 and args.manual_odds:
-        print(f"Performing betting analysis for {args.team1} vs {args.team2}...")
-        print(f"Using bankroll: ${args.bankroll}, Minimum EV: {args.min_ev}%, Kelly fraction: {args.kelly}")
-        print("\nPlease enter the betting odds (decimal format, e.g. 1.85):")
-        
-        # Manual odds input
-        odds_data = {}
-        
-        try:
-            odds_data['ml_odds_team1'] = float(input(f"Moneyline odds for {args.team1} to win: "))
-            odds_data['ml_odds_team2'] = float(input(f"Moneyline odds for {args.team2} to win: "))
-            
-            odds_data['team1_plus_1_5_odds'] = float(input(f"{args.team1} +1.5 maps odds: "))
-            odds_data['team2_plus_1_5_odds'] = float(input(f"{args.team2} +1.5 maps odds: "))
-            
-            odds_data['team1_minus_1_5_odds'] = float(input(f"{args.team1} -1.5 maps odds: "))
-            odds_data['team2_minus_1_5_odds'] = float(input(f"{args.team2} -1.5 maps odds: "))
-            
-            odds_data['over_2_5_odds'] = float(input("Over 2.5 maps odds: "))
-            odds_data['under_2_5_odds'] = float(input("Under 2.5 maps odds: "))
-            
-            # Add circuit breaker to prevent infinite loops
-            # Dictionary to track function calls
-            call_count = {}
-            
-            # Run the analysis with debugging
-            print("Starting analysis...")
-            analysis = analyze_match_betting(
-                args.team1,
-                args.team2,
-                odds_data,
-                bankroll=args.bankroll,
-                min_ev=args.min_ev,
-                kelly_fraction=args.kelly
-            )
-            
-            if analysis:
-                display_betting_analysis(analysis)
-            else:
-                print("Analysis failed to produce results.")
-        except ValueError as e:
-            print(f"Error: Invalid odds input. Please enter valid decimal odds (e.g., 1.85).")
-            print(f"Exception: {e}")
+        if not team_data_collection:
+            print("Failed to collect team data. Exiting.")
             return
+        
+        # Build historical dataset
+        historical_data = build_historical_dataset_debug(team_data_collection)
+        
+        if historical_data.empty:
+            print("No historical data available for backtest.")
+            return
+        
+        # Run backtest
+        backtest_results = backtest_betting_strategy(
+            models,
+            historical_data,
+            None,  # No odds data available, will use model-derived odds
+            scaler=scaler,
+            stable_features=stable_features,
+            initial_bankroll=args.bankroll,
+            kelly_fraction=args.kelly,
+            min_edge=args.edge,
+            use_calibration=args.calibrate
+        )
+        
+        # Print results
+        if 'error' in backtest_results:
+            print(f"Backtest error: {backtest_results['error']}")
+        else:
+            print("\n--- BACKTEST RESULTS ---")
+            print(f"Initial bankroll: ${backtest_results['summary']['initial_bankroll']:.2f}")
+            print(f"Final bankroll: ${backtest_results['summary']['final_bankroll']:.2f}")
+            print(f"Total profit: ${backtest_results['summary']['total_profit']:.2f}")
+            print(f"ROI: {backtest_results['summary']['overall_roi']:.2%}")
+            print(f"Win rate: {backtest_results['summary']['win_rate']:.2%}")
+            print(f"Total bets: {backtest_results['summary']['total_bets']}")
+            
+            if 'bet_type_metrics' in backtest_results:
+                print("\n--- BET TYPE PERFORMANCE ---")
+                for bet_type, metrics in backtest_results['bet_type_metrics'].items():
+                    if isinstance(metrics, dict) and ('roi' in metrics):
+                        print(f"{bet_type}:")
+                        print(f"  ROI: {metrics['roi']:.2%}")
+                        print(f"  Bets: {metrics[('result', 'count')]}")
+                        print(f"  Win rate: {metrics[('result', 'mean')]:.2%}")
+            
+            print("\nBacktest visualization saved as 'backtest_results.png'")
     
+    elif args.predict and args.team1 and args.team2:
+        print(f"Predicting match: {args.team1} vs {args.team2} ({args.format})")
+        
+        # Load betting models
+        betting_models = load_betting_models()
+        
+        if betting_models is None:
+            print("Failed to load betting models. Exiting.")
+            return
+        
+        models = betting_models['models']
+        scaler = betting_models['scaler']
+        stable_features = betting_models['stable_features']
+        
+        # Load team data
+        print("Loading team data...")
+        team_data_collection = collect_team_data(include_player_stats=True, include_economy=True, include_maps=True)
+        
+        if not team_data_collection:
+            print("Failed to collect team data. Exiting.")
+            return
+        
+        # Parse odds if provided
+        bookmaker_odds = None
+        if args.odds:
+            bookmaker_odds = parse_odds_input(args.odds)
+        
+        # Apply betting strategy
+        result = apply_betting_strategy(
+            args.team1, 
+            args.team2, 
+            format_type=args.format, 
+            bankroll=args.bankroll,
+            kelly_fraction=args.kelly,
+            min_edge=args.edge,
+            bookmaker_odds=bookmaker_odds,
+            models=models,
+            scaler=scaler,
+            stable_features=stable_features
+        )
+        
+        # Print results
+        if 'error' in result:
+            print(f"Error: {result['error']}")
+        else:
+            print("\n--- MATCH PREDICTION ---")
+            print(f"Teams: {result['match']['team1']} vs {result['match']['team2']}")
+            print(f"Format: {result['match']['format']}")
+            print(f"Prediction: {result['match']['team1']} win probability: {result['prediction']['team1_win_probability']:.2%}")
+            
+            print("\n--- SERIES PROBABILITIES ---")
+            for outcome, prob in result['series_probabilities'].items():
+                print(f"{outcome}: {prob:.2%}")
+            
+            if 'recommended_bets' in result and result['recommended_bets']:
+                print("\n--- RECOMMENDED BETS ---")
+                for bet_type, bet_info in result['recommended_bets'].items():
+                    print(f"{bet_type}:")
+                    print(f"  Odds: {bet_info['odds']:.2f}")
+                    print(f"  Our probability: {bet_info['our_probability']:.2%}")
+                    print(f"  Implied probability: {bet_info['implied_probability']:.2%}")
+                    print(f"  Edge: {bet_info['edge']:.2%}")
+                    print(f"  Recommended stake: ${bet_info['recommended_stake']:.2f}")
+    
+    elif args.simulation and args.team1 and args.team2:
+        print(f"Running Monte Carlo simulation for: {args.team1} vs {args.team2} ({args.format})")
+        
+        # Load betting models
+        betting_models = load_betting_models()
+        
+        if betting_models is None:
+            print("Failed to load betting models. Exiting.")
+            return
+        
+        models = betting_models['models']
+        scaler = betting_models['scaler']
+        stable_features = betting_models['stable_features']
+        
+        # Load team data
+        print("Loading team data...")
+        team_data_collection = collect_team_data(include_player_stats=True, include_economy=True, include_maps=True)
+        
+        if not team_data_collection:
+            print("Failed to collect team data. Exiting.")
+            return
+        
+        # Find teams in data collection
+        if args.team1 not in team_data_collection:
+            print(f"Team '{args.team1}' not found in data collection.")
+            return
+            
+        if args.team2 not in team_data_collection:
+            print(f"Team '{args.team2}' not found in data collection.")
+            return
+            
+        team1_stats = team_data_collection[args.team1]
+        team2_stats = team_data_collection[args.team2]
+        
+        # Run simulation
+        simulation_results = run_monte_carlo_simulation(
+            team1_stats,
+            team2_stats,
+            format_type=args.format,
+            num_simulations=args.num_sims,
+            models=models,
+            scaler=scaler,
+            stable_features=stable_features
+        )
+        
+        # Print results
+        if 'error' in simulation_results:
+            print(f"Simulation error: {simulation_results['error']}")
+        else:
+            print("\n--- MONTE CARLO SIMULATION RESULTS ---")
+            print(f"Base win probability for {args.team1}: {simulation_results['base_probability']:.2%}")
+            print(f"Number of simulations: {simulation_results['num_simulations']}")
+            
+            print("\nOutcome probabilities:")
+            for outcome, prob in simulation_results['simulation_results'].items():
+                ci = simulation_results['confidence_intervals'][outcome]
+                print(f"{outcome}: {prob:.2%} (95% CI: {ci['lower']:.2%} - {ci['upper']:.2%})")
+    
+    elif args.analyze_future:
+        print("Analyzing upcoming matches...")
+        
+        # Load betting models
+        betting_models = load_betting_models()
+        
+        if betting_models is None:
+            print("Failed to load betting models. Exiting.")
+            return
+        
+        models = betting_models['models']
+        scaler = betting_models['scaler']
+        stable_features = betting_models['stable_features']
+        
+        # Load team data
+        print("Loading team data...")
+        team_data_collection = collect_team_data(include_player_stats=True, include_economy=True, include_maps=True)
+        
+        if not team_data_collection:
+            print("Failed to collect team data. Exiting.")
+            return
+        
+        # Fetch upcoming matches
+        upcoming_matches = fetch_upcoming_matches()
+        
+        if not upcoming_matches:
+            print("No upcoming matches found.")
+            return
+            
+        # Prepare matches for prediction
+        prepared_matches = prepare_new_matches_for_prediction(
+            upcoming_matches,
+            team_data_collection,
+            models,
+            scaler,
+            stable_features
+        )
+        
+        if not prepared_matches:
+            print("Failed to prepare any matches for prediction.")
+            return
+            
+        print(f"\nAnalyzed {len(prepared_matches)} upcoming matches:")
+        
+        # List matches by date
+        sorted_matches = sorted(prepared_matches, key=lambda x: x.get('date', ''))
+        
+        for match in sorted_matches:
+            team1 = match['team1']
+            team2 = match['team2']
+            format_type = match['format']
+            
+            team1_prob = match['prediction']['team1_win_probability']
+            
+            print(f"\n{match.get('date', 'TBD')} - {team1} vs {team2} ({format_type})")
+            print(f"Prediction: {team1} {team1_prob:.2%} vs {team2} {1-team1_prob:.2%}")
+            
+            # Show key series probabilities
+            series_probs = match['series_probabilities']
+            
+            if format_type == 'bo3':
+                print(f"Maps over 2.5: {series_probs.get('maps_over_2.5', 0):.2%}")
+                print(f"{team1} win 2-0: {series_probs.get('team1_win_2_0', 0):.2%}")
+                print(f"{team2} win 2-0: {series_probs.get('team2_win_2_0', 0):.2%}")
     
     else:
-        print("Please specify an action: --train, --predict, --analyze, --backtest, or --betting")
-        print("For predictions and betting analysis, specify --team1 and --team2")
-        print("For betting analysis, use --betting --manual-odds, and consider using --bankroll, --min-ev, and --kelly")
-        print("For backtesting, specify --cutoff-date YYYY/MM/DD")
+        print("Please specify an action: --train, --backtest, --predict, --simulation, or --analyze-future")
 
 
 if __name__ == "__main__":
