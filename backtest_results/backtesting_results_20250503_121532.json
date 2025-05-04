@@ -1,0 +1,11 @@
+{
+    "strategy": "fixed_percentage",
+    "initial_bankroll": 2000.0,
+    "final_bankroll": 2049.8449266470266,
+    "profit": 49.84492664702657,
+    "roi": 0.024922463323513284,
+    "bets_placed": 21,
+    "bets_won": 14,
+    "win_rate": 0.6666666666666666,
+    "max_drawdown": 0.10461485196599997
+}
