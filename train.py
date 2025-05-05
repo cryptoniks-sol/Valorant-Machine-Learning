@@ -18,7 +18,7 @@ import seaborn as sns
 # Deep learning imports
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model, load_model
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Input, Concatenate
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Input, Concatenate, Lambda
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.regularizers import l2
@@ -28,6 +28,9 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 
 # API URL
 API_URL = "http://localhost:5000/api/v1"
@@ -1984,6 +1987,264 @@ def build_training_dataset(team_data_collection):
 # MODEL TRAINING AND EVALUATION
 #-------------------------------------------------------------------------
 
+def create_improved_model(input_dim, regularization_strength=0.01, dropout_rate=0.5):
+    """
+    Create a deep learning model with stronger regularization to prevent extreme predictions.
+    
+    Args:
+        input_dim (int): Input dimension
+        regularization_strength (float): L2 regularization parameter
+        dropout_rate (float): Dropout rate for regularization
+        
+    Returns:
+        Model: Tensorflow/Keras model
+    """
+    # Define inputs
+    inputs = Input(shape=(input_dim,))
+    
+    # First layer - shared feature processing with higher regularization
+    x = Dense(128, activation='relu', 
+              kernel_regularizer=l2(regularization_strength),
+              kernel_initializer='glorot_normal')(inputs)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate)(x)
+    
+    # Second layer - deeper processing
+    x = Dense(64, activation='relu', 
+              kernel_regularizer=l2(regularization_strength),
+              kernel_initializer='glorot_normal')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate * 0.8)(x)
+    
+    # Third layer - deeper processing
+    x = Dense(32, activation='relu', 
+              kernel_regularizer=l2(regularization_strength),
+              kernel_initializer='glorot_normal')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout_rate * 0.6)(x)
+    
+    # Output layer with sigmoid squeeze to avoid extreme values
+    raw_output = Dense(1, activation='sigmoid',
+                     kernel_regularizer=l2(regularization_strength))(x)
+    
+    # Apply a squeezing function to avoid extreme values (0 or 1)
+    # This restricts predictions to the range [0.05, 0.95]
+    squeezed_output = Lambda(lambda x: 0.05 + 0.9 * x)(raw_output)
+    
+    # Create model
+    model = Model(inputs=inputs, outputs=squeezed_output)
+    
+    # Compile model with lower learning rate
+    model.compile(loss='binary_crossentropy', 
+                 optimizer=Adam(learning_rate=0.0001),
+                 metrics=['accuracy'])
+    
+    return model
+
+def calibrate_prediction(raw_predictions):
+    """
+    Calibrate ensemble predictions for better reliability.
+    
+    Args:
+        raw_predictions (list): List of prediction values from ensemble models
+        
+    Returns:
+        tuple: (calibrated_prediction, model_agreement_score)
+    """
+    # Calculate basic statistics
+    mean_pred = np.mean(raw_predictions)
+    std_pred = np.std(raw_predictions)
+    model_agreement = 1 - min(1, std_pred * 2)  # Higher means more agreement
+    
+    # Handle extreme cases
+    if model_agreement < 0.3:
+        # Very low agreement - regress heavily toward 0.5
+        calibrated = 0.5 + (mean_pred - 0.5) * 0.5
+    elif model_agreement < 0.6:
+        # Moderate agreement - regress somewhat toward 0.5
+        calibrated = 0.5 + (mean_pred - 0.5) * 0.75
+    else:
+        # Good agreement - minimal regression
+        calibrated = mean_pred
+    
+    return calibrated, model_agreement
+
+def create_diverse_ensemble(X_train, y_train, feature_mask, random_state=42):
+    """
+    Create a diverse ensemble of models using different algorithms.
+    
+    Args:
+        X_train (array): Training features
+        y_train (array): Training labels
+        feature_mask (array): Boolean mask for selected features
+        random_state (int): Random seed
+        
+    Returns:
+        list: List of trained models
+    """
+    # Select features
+    X_train_selected = X_train[:, feature_mask]
+    
+    # Scale features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train_selected)
+    
+    # Initialize models list
+    models = []
+    
+    # 1. Neural Network models (less prone to extreme values)
+    input_dim = X_train_scaled.shape[1]
+    for i in range(5):
+        # Vary regularization and dropout for diversity
+        reg_strength = 0.01 * (i + 1)
+        dropout = 0.4 + 0.1 * (i % 2)
+        nn_model = create_improved_model(input_dim, reg_strength, dropout)
+        
+        # Train with early stopping
+        nn_model.fit(
+            X_train_scaled, y_train,
+            epochs=100,
+            batch_size=32,
+            validation_split=0.2,
+            callbacks=[EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)],
+            verbose=0
+        )
+        models.append(('nn', nn_model, scaler))
+    
+    # 2. Gradient Boosting model
+    gb_model = GradientBoostingClassifier(
+        n_estimators=100,
+        learning_rate=0.05,
+        max_depth=3,
+        random_state=random_state
+    )
+    gb_model.fit(X_train_selected, y_train)
+    models.append(('gb', gb_model, None))
+    
+    # 3. Random Forest model
+    rf_model = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=10,
+        random_state=random_state
+    )
+    rf_model.fit(X_train_selected, y_train)
+    models.append(('rf', rf_model, None))
+    
+    # 4. Logistic Regression model
+    lr_model = LogisticRegression(
+        C=0.1,
+        random_state=random_state,
+        max_iter=1000
+    )
+    lr_model.fit(X_train_scaled, y_train)
+    models.append(('lr', lr_model, scaler))
+    
+    # 5. Support Vector Machine
+    svm_model = SVC(
+        C=1.0,
+        kernel='rbf',
+        probability=True,
+        random_state=random_state
+    )
+    svm_model.fit(X_train_scaled, y_train)
+    models.append(('svm', svm_model, scaler))
+    
+    return models, scaler    
+
+def predict_with_diverse_ensemble(models, X):
+    """
+    Make predictions using a diverse ensemble of models.
+    
+    Args:
+        models (list): List of (model_type, model, scaler) tuples
+        X (array): Input features
+        
+    Returns:
+        tuple: (predictions, calibrated_prediction, model_agreement)
+    """
+    predictions = []
+    
+    for model_type, model, scaler in models:
+        try:
+            # Apply scaling if needed
+            X_pred = X.copy()
+            if scaler is not None:
+                X_pred = scaler.transform(X_pred)
+            
+            # Make prediction based on model type
+            if model_type == 'nn':
+                pred = model.predict(X_pred, verbose=0)[0][0]
+            else:
+                pred = model.predict_proba(X_pred)[0][1]
+                
+            predictions.append(pred)
+            print(f"{model_type.upper()} model prediction: {pred:.4f}")
+        except Exception as e:
+            print(f"Error with {model_type} model: {e}")
+    
+    # Calibrate predictions
+    if predictions:
+        # Calculate basic statistics
+        mean_pred = np.mean(predictions)
+        std_pred = np.std(predictions)
+        model_agreement = 1 - min(1, std_pred * 2)  # Higher means more agreement
+        
+        # Handle extreme cases with better calibration
+        if model_agreement < 0.3:
+            # Very low agreement - regress heavily toward 0.5
+            calibrated = 0.5 + (mean_pred - 0.5) * 0.5
+        elif model_agreement < 0.6:
+            # Moderate agreement - regress somewhat toward 0.5
+            calibrated = 0.5 + (mean_pred - 0.5) * 0.75
+        else:
+            # Good agreement - minimal regression
+            calibrated = mean_pred
+            
+        return predictions, calibrated, model_agreement
+    else:
+        return [], 0.5, 0.0
+
+def prepare_ensemble_features(team1_stats, team2_stats, selected_features):
+    """
+    Prepare features for the diverse ensemble prediction.
+    
+    Args:
+        team1_stats (dict): Statistics for team 1
+        team2_stats (dict): Statistics for team 2
+        selected_features (list): List of feature names
+        
+    Returns:
+        array: Feature array for prediction
+    """
+    # Get full feature dictionary
+    features = prepare_data_for_model(team1_stats, team2_stats)
+    
+    if not features:
+        print("ERROR: Failed to create feature dictionary")
+        return None
+    
+    # Create DataFrame with a single row
+    features_df = pd.DataFrame([features])
+    
+    # Create a complete feature set with zeros for missing features
+    complete_features = pd.DataFrame(0, index=[0], columns=selected_features)
+    
+    # Fill in values for features we have
+    available_features = [f for f in selected_features if f in features_df.columns]
+    print(f"Found {len(available_features)} out of {len(selected_features)} expected features")
+    
+    if not available_features:
+        print("ERROR: No matching features found!")
+        return None
+    
+    # Update values for available features
+    for feature in available_features:
+        complete_features[feature] = features_df[feature].values
+    
+    # Convert to numpy array
+    X = complete_features.values
+    return X
+
 def ensure_consistent_features(features_df, required_features, fill_value=0):
     """
     Ensure the features dataframe has all required features in the correct order.
@@ -2499,22 +2760,24 @@ def prepare_prediction_features(team1_stats, team2_stats, selected_features, sca
     
     return X
 
-def predict_match(team1_name, team2_name):
+def predict_match(team1_name, team2_name, bankroll=1000):
     """
-    Predict match outcome between two specific teams without fetching all team data.
+    Predict match outcome with the diverse ensemble.
     """
     print(f"\n{'='*80}")
     print(f"MATCH PREDICTION: {team1_name} vs {team2_name}")
     print(f"{'='*80}")
     
-    # Load prediction artifacts
-    models, scaler, selected_features = load_prediction_artifacts()
+    # Load models and artifacts
+    ensemble_models, _, selected_features = load_prediction_artifacts()
     
-    if not models:
+    if not ensemble_models:
         print("Failed to load prediction models. Please train models first.")
         return None
     
-    # We can continue even if scaler or selected_features have issues
+    if not selected_features:
+        print("Failed to load feature list. Please retrain models.")
+        return None
     
     # Get team IDs
     team1_id = get_team_id(team1_name)
@@ -2553,46 +2816,29 @@ def predict_match(team1_name, team2_name):
     team2_stats['team_name'] = team2_name
     team2_stats['team_id'] = team2_id
     
-    # Use robust feature preparation
-    X = prepare_prediction_features(team1_stats, team2_stats, selected_features, scaler)
+    # Use improved feature preparation
+    X = prepare_ensemble_features(team1_stats, team2_stats, selected_features)
     
     if X is None:
         print("ERROR: Failed to prepare features for prediction")
         return None
     
-    # Make predictions with each model in the ensemble
-    # Make predictions with each model in the ensemble
-    print("Running prediction models...")
-    predictions = []
-    for i, model in enumerate(models):
-        try:
-            pred = model.predict(X, verbose=0)[0][0]
-            predictions.append(pred)
-            print(f"Model {i+1} prediction: {pred:.4f}")
-        except Exception as e:
-            print(f"Error with model {i+1}: {e}")
+    # Make predictions with diverse ensemble
+    print("Running diverse ensemble prediction...")
+    raw_predictions, calibrated_prediction, model_agreement = predict_with_diverse_ensemble(ensemble_models, X)
     
-    if not predictions:
+    if not raw_predictions:
         print("ERROR: All prediction models failed")
         return None
     
-    # Calculate average prediction
-    avg_prediction = np.mean(predictions)
-    std_prediction = np.std(predictions)
-    model_agreement = 1 - (std_prediction * 2)  # Higher means more agreement
-
-    # Add this after calculating avg_prediction
-    if avg_prediction < 0.05:
-        print("WARNING: Extremely low win probability prediction. Adjusting to minimum 5%")
-        avg_prediction = 0.05
-    elif avg_prediction > 0.95:
-        print("WARNING: Extremely high win probability prediction. Adjusting to maximum 95%")
-        avg_prediction = 0.95
+    # Format the results
+    print(f"Raw predictions: {[f'{p:.4f}' for p in raw_predictions]}")
+    print(f"Calibrated prediction: {calibrated_prediction:.4f}")
+    print(f"Model agreement: {model_agreement:.4f}")
     
-      # Add a warning if model agreement is too low
-    if model_agreement < min_agreement:
-        print(f"\nWARNING: Low model agreement ({model_agreement:.2f}). Predictions may be unreliable.")
-        print("Consider skipping this bet or reducing your stake significantly.")
+    # Calculate average prediction
+    avg_prediction = np.mean(raw_predictions)
+    std_prediction = np.std(raw_predictions)
     
     # Add safeguards for extreme predictions
     if avg_prediction < 0.05:
@@ -2601,17 +2847,16 @@ def predict_match(team1_name, team2_name):
     elif avg_prediction > 0.95:
         print("WARNING: Extremely high win probability prediction. Adjusting to maximum 95%")
         avg_prediction = 0.95
+        
+    # Use the calibrated prediction instead of raw average
+    avg_prediction = calibrated_prediction
     
-    # Calibrate prediction based on confidence
-    calibrated_prediction = calibrate_prediction(avg_prediction, model_agreement)
-    if abs(calibrated_prediction - avg_prediction) > 0.05:
-        print(f"Calibrated prediction from {avg_prediction:.4f} to {calibrated_prediction:.4f} based on model agreement")
-        avg_prediction = calibrated_prediction
+    print(f"Average prediction: {avg_prediction:.4f} ± {std_prediction:.4f}")
     
     # Calculate confidence interval (95%)
     conf_interval = (
-        max(0, avg_prediction - 1.96 * std_prediction / np.sqrt(len(predictions))),
-        min(1, avg_prediction + 1.96 * std_prediction / np.sqrt(len(predictions)))
+        max(0, avg_prediction - 1.96 * std_prediction / np.sqrt(len(raw_predictions))),
+        min(1, avg_prediction + 1.96 * std_prediction / np.sqrt(len(raw_predictions)))
     )
     
     # Prompt for odds
@@ -2665,11 +2910,11 @@ def predict_match(team1_name, team2_name):
         'team1_win_prob': avg_prediction,
         'team2_win_prob': 1 - avg_prediction,
         'confidence_interval': conf_interval,
-        'model_agreement': model_agreement
+        'model_agreement': model_agreement,
+        'odds_data': odds_data
     }
     
-    # Calculate probabilities for other bet types
-    # Assuming independence between maps (simplified model)
+    # Calculate probabilities for other bet types using the calibrated prediction
     single_map_prob = avg_prediction
     
     # Adjust based on historical map win rates if available
@@ -2695,44 +2940,17 @@ def predict_match(team1_name, team2_name):
             map_ratio = t1_map_win_rate / (t1_map_win_rate + t2_map_win_rate) if (t1_map_win_rate + t2_map_win_rate) > 0 else 0.5
             single_map_prob = (single_map_prob + map_ratio) / 2  # Blend overall and map-specific probabilities
     
-    # Probability of team1 winning at least 1 map (team1 +1.5)
+    # Probability calculations for different bet types
     results['team1_plus_1_5_prob'] = 1 - (1 - single_map_prob) ** 3
-    
-    # Probability of team2 winning at least 1 map (team2 +1.5)
     results['team2_plus_1_5_prob'] = 1 - single_map_prob ** 3
-    
-    # Probability of team1 winning 2-0 (team1 -1.5)
     results['team1_minus_1_5_prob'] = single_map_prob ** 2
-    
-    # Probability of team2 winning 2-0 (team2 -1.5)
     results['team2_minus_1_5_prob'] = (1 - single_map_prob) ** 2
-    
-    # Probability of match going to 3 maps (over 2.5 maps)
     results['over_2_5_maps_prob'] = 2 * single_map_prob * (1 - single_map_prob)
-    
-    # Probability of match ending in 2 maps (under 2.5 maps)
     results['under_2_5_maps_prob'] = single_map_prob ** 2 + (1 - single_map_prob) ** 2
     
-    # Add betting analysis with safety parameters
+    # Add betting analysis
     if odds_data:
-        results['betting_analysis'] = analyze_betting_opportunities(
-            results, odds_data, bankroll, max_kelly_pct, min_roi, min_agreement
-        )
-    
-    # Analyze similar matchups for context
-    analyze_similar_matchups(team1_stats, team2_stats)
-    
-    # Load feature importance if available
-    try:
-        with open('feature_metadata.pkl', 'rb') as f:
-            feature_metadata = pickle.load(f)
-            if 'feature_importances' in feature_metadata:
-                # Explain prediction factors
-                explain_prediction_factors(team1_stats, team2_stats, 
-                                         selected_features, 
-                                         feature_metadata['feature_importances'])
-    except Exception as e:
-        print(f"Note: Could not load feature importance data: {e}")
+        results['betting_analysis'] = analyze_betting_opportunities(results, odds_data, bankroll)
     
     # Print detailed report
     print_prediction_report(results, team1_stats, team2_stats)
@@ -2822,7 +3040,7 @@ def analyze_betting_opportunities(prediction_results, odds_data, bankroll=1000, 
         dict: Betting recommendations with expected value and confidence
     """
     betting_analysis = {}
-    min_edge = 0.05  # Minimum 5% edge to recommend a bet
+    min_edge = 0.1  # Increased from 0.05 to 0.1 for more conservative recommendations
     min_confidence = 0.6  # Minimum 60% confidence to recommend a bet
     
     # Check overall model agreement before recommending any bets
@@ -2870,245 +3088,47 @@ def analyze_betting_opportunities(prediction_results, odds_data, bankroll=1000, 
         else:
             return "Unknown reason"
     
-    # Analyze moneyline bet for team1
-    if 'team1_ml_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['team1_ml_odds'])
-        our_prob = prediction_results['team1_win_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['team1_ml_odds'])
-        
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['team1_ml_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['team1_ml'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
+    # Add extra sanity check for highly divergent predictions
+    raw_predictions = prediction_results.get('raw_predictions', [])
+    if raw_predictions and np.std(raw_predictions) > 0.25:  # If standard deviation is very high
+        print("WARNING: Predictions are highly divergent. Using more conservative thresholds.")
+        min_edge = 0.15  # Increase minimum edge requirement
+        max_kelly_pct = 0.03  # Reduce maximum Kelly percentage
     
-    # Analyze moneyline bet for team2
-    if 'team2_ml_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['team2_ml_odds'])
-        our_prob = prediction_results['team2_win_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['team2_ml_odds'])
+    # Process each bet type
+    for bet_key, odds in odds_data.items():
+        # Identify bet type and corresponding probability
+        bet_type = bet_key.replace('_odds', '')
+        prob_key = bet_type + '_prob'
         
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['team2_ml_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['team2_ml'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
-    
-    # Analyze team1 +1.5 maps
-    if 'team1_plus_1_5_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['team1_plus_1_5_odds'])
-        our_prob = prediction_results['team1_plus_1_5_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['team1_plus_1_5_odds'])
-        
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['team1_plus_1_5_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['team1_plus_1_5'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
-    
-    # Analyze team2 +1.5 maps
-    if 'team2_plus_1_5_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['team2_plus_1_5_odds'])
-        our_prob = prediction_results['team2_plus_1_5_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['team2_plus_1_5_odds'])
-        
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['team2_plus_1_5_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['team2_plus_1_5'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
-    
-    # Analyze team1 -1.5 maps
-    if 'team1_minus_1_5_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['team1_minus_1_5_odds'])
-        our_prob = prediction_results['team1_minus_1_5_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['team1_minus_1_5_odds'])
-        
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['team1_minus_1_5_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['team1_minus_1_5'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
-    
-    # Analyze team2 -1.5 maps
-    if 'team2_minus_1_5_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['team2_minus_1_5_odds'])
-        our_prob = prediction_results['team2_minus_1_5_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['team2_minus_1_5_odds'])
-        
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['team2_minus_1_5_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['team2_minus_1_5'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
-    
-    # Analyze over 2.5 maps
-    if 'over_2_5_maps_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['over_2_5_maps_odds'])
-        our_prob = prediction_results['over_2_5_maps_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['over_2_5_maps_odds'])
-        
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['over_2_5_maps_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['over_2_5_maps'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
-    
-    # Analyze under 2.5 maps
-    if 'under_2_5_maps_odds' in odds_data:
-        implied_prob = decimal_to_prob(odds_data['under_2_5_maps_odds'])
-        our_prob = prediction_results['under_2_5_maps_prob']
-        ev = our_prob - implied_prob
-        roi = calculate_roi(our_prob, odds_data['under_2_5_maps_odds'])
-        
-        # Calculate Kelly bet size
-        kelly_fraction = kelly_bet(our_prob, odds_data['under_2_5_maps_odds'])
-        bet_amount = round(bankroll * kelly_fraction, 2)
-        
-        # Only recommend if meets all criteria
-        is_recommended = (ev > min_edge and 
-                         our_prob > min_confidence and 
-                         roi > min_roi and
-                         bet_amount > 0)
-        
-        betting_analysis['under_2_5_maps'] = {
-            'our_probability': our_prob,
-            'implied_probability': implied_prob,
-            'expected_value': ev,
-            'roi': roi,
-            'kelly_fraction': kelly_fraction,
-            'recommended_bet': bet_amount if is_recommended else 0,
-            'recommended': is_recommended,
-            'confidence': prediction_results['model_agreement'],
-            'ev_percentage': ev * 100,
-            'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
-        }
+        if prob_key in prediction_results:
+            our_prob = prediction_results[prob_key]
+            implied_prob = decimal_to_prob(odds)
+            ev = our_prob - implied_prob
+            roi = calculate_roi(our_prob, odds)
+            
+            # Calculate Kelly bet size
+            kelly_fraction = kelly_bet(our_prob, odds)
+            bet_amount = round(bankroll * kelly_fraction, 2)
+            
+            # Only recommend if meets all criteria
+            is_recommended = (ev > min_edge and 
+                            our_prob > min_confidence and 
+                            roi > min_roi and
+                            bet_amount > 0)
+            
+            betting_analysis[bet_type] = {
+                'our_probability': our_prob,
+                'implied_probability': implied_prob,
+                'expected_value': ev,
+                'roi': roi,
+                'kelly_fraction': kelly_fraction,
+                'recommended_bet': bet_amount if is_recommended else 0,
+                'recommended': is_recommended,
+                'confidence': prediction_results['model_agreement'],
+                'ev_percentage': ev * 100,
+                'reason': '' if is_recommended else get_rejection_reason(ev, min_edge, our_prob, min_confidence, roi, min_roi)
+            }
     
     return betting_analysis
 
@@ -3485,61 +3505,63 @@ def input_odds_data():
     
     return team1, team2, odds_data
 
-def load_prediction_artifacts(model_path_prefix='valorant_model_fold_', num_models=10):
+def load_prediction_artifacts():
     """
-    Load all trained models and artifacts needed for prediction.
-    
-    Args:
-        model_path_prefix (str): Prefix for model file paths
-        num_models (int): Number of models to load
-        
-    Returns:
-        tuple: (models, scaler, selected_features)
+    Load the diverse ensemble and artifacts needed for prediction.
     """
     print("Loading prediction models and artifacts...")
     
-    # Load models
-    models = []
-    for i in range(1, num_models + 1):
-        model_path = f"{model_path_prefix}{i}.h5"
-        try:
-            model = load_model(model_path)
-            models.append(model)
-            print(f"Loaded model {i}/{num_models}")
-        except Exception as e:
-            print(f"Error loading model {i}: {e}")
-    
-    if not models:
-        print("Failed to load any models. Please check model paths.")
-        return None, None, None
-    
-    # Load feature scaler
+    # Try to load the diverse ensemble
     try:
-        with open('feature_scaler.pkl', 'rb') as f:
-            scaler = pickle.load(f)
-        print("Loaded feature scaler")
+        with open('diverse_ensemble.pkl', 'rb') as f:
+            ensemble_models = pickle.load(f)
+        print(f"Loaded diverse ensemble with {len(ensemble_models)} models")
     except Exception as e:
-        print(f"Error loading feature scaler: {e}")
-        return models, None, None
+        print(f"Error loading diverse ensemble: {e}")
+        # Fall back to individual models if available
+        try:
+            ensemble_models = []
+            for i in range(1, 11):
+                try:
+                    model_path = f'valorant_model_fold_{i}.h5'
+                    model = load_model(model_path)
+                    ensemble_models.append(('nn', model, None))
+                    print(f"Loaded fallback model {i}/10")
+                except:
+                    # Skip if model doesn't exist
+                    continue
+            if not ensemble_models:
+                print("Failed to load any models")
+                return None, None, None
+        except Exception as e:
+            print(f"Error loading fallback models: {e}")
+            return None, None, None
     
-    # Load selected features
+    # Load feature metadata
     try:
         with open('feature_metadata.pkl', 'rb') as f:
             feature_metadata = pickle.load(f)
-            selected_features = feature_metadata.get('selected_features', [])
+        selected_features = feature_metadata.get('selected_features', [])
         print(f"Loaded {len(selected_features)} selected features")
     except Exception as e:
-        print(f"Error loading selected features: {e}")
+        print(f"Error loading feature metadata: {e}")
         try:
-            # Fallback to stable features if available
-            with open('stable_features.pkl', 'rb') as f:
+            with open('selected_feature_names.pkl', 'rb') as f:
                 selected_features = pickle.load(f)
-            print(f"Loaded {len(selected_features)} stable features as fallback")
-        except Exception as e2:
-            print(f"Error loading stable features: {e2}")
-            return models, scaler, None
+            print(f"Loaded {len(selected_features)} features from backup file")
+        except Exception as e:
+            print(f"Error loading feature names: {e}")
+            # Last resort: try stable_features.pkl
+            try:
+                with open('stable_features.pkl', 'rb') as f:
+                    selected_features = pickle.load(f)
+                print(f"Loaded {len(selected_features)} features from stable_features.pkl")
+            except Exception as e:
+                print(f"Error loading any feature lists: {e}")
+                return ensemble_models, None, None
     
-    return models, scaler, selected_features
+    # Return ensemble_models, None for scaler (handled in ensemble), and selected_features
+    return ensemble_models, None, selected_features
 
 def track_betting_performance(prediction, bet_placed, bet_amount, outcome, odds):
     """
@@ -3732,7 +3754,7 @@ def view_betting_performance():
 def train_with_consistent_features(X, y, n_splits=10, random_state=42):
     """
     Train model using k-fold cross-validation with a consistent feature set across all folds.
-    Applies scaling AFTER feature selection for better consistency.
+    Uses a diverse ensemble of model types for robust predictions.
     
     Args:
         X (list or DataFrame): Feature data
@@ -3743,7 +3765,7 @@ def train_with_consistent_features(X, y, n_splits=10, random_state=42):
     Returns:
         tuple: (trained_models, feature_scaler, selected_features, avg_metrics)
     """
-    print(f"\nTraining with {n_splits}-fold cross-validation using consistent features")
+    print(f"\nTraining with {n_splits}-fold cross-validation using consistent features and diverse ensemble")
     
     # Prepare and clean data
     df = clean_feature_data(X)
@@ -3828,111 +3850,71 @@ def train_with_consistent_features(X, y, n_splits=10, random_state=42):
     importance_df.to_csv('feature_importance.csv', index=False)
     print(f"Saved feature importance data to feature_importance.csv")
     
-    # Second pass: Train models with consistent feature set
-    print("\nPhase 2: Training models with consistent feature set...")
-    fold_models = []
+    # Second pass: Train diverse ensemble with consistent feature set
+    print("\nPhase 2: Training diverse ensemble with consistent feature set...")
     
-    for fold, (train_idx, val_idx) in enumerate(skf.split(X_arr, y_arr)):
-        print(f"\n----- Training Fold {fold+1}/{n_splits} -----")
+    # Split data for ensemble training
+    train_idx, val_idx = next(skf.split(X_arr, y_arr))
+    X_train, X_val = X_arr[train_idx], X_arr[val_idx]
+    y_train, y_val = y_arr[train_idx], y_arr[val_idx]
+    
+    # Create the diverse ensemble
+    print("Creating diverse ensemble of models...")
+    ensemble_models, scaler = create_diverse_ensemble(X_train, y_train, feature_mask, random_state)
+    
+    # Evaluate ensemble on validation set
+    X_val_selected = X_val[:, feature_mask]
+    predictions = []
+    
+    for model_type, model, model_scaler in ensemble_models:
+        try:
+            # Apply scaling if needed
+            X_val_pred = X_val_selected.copy()
+            if model_scaler is not None:
+                X_val_pred = model_scaler.transform(X_val_selected)
+            
+            # Make prediction based on model type
+            if model_type == 'nn':
+                preds = model.predict(X_val_pred, verbose=0).flatten()
+            else:
+                preds = model.predict_proba(X_val_pred)[:, 1]
+                
+            # Store predictions
+            predictions.append(preds)
+            
+            # Calculate individual model metrics
+            y_pred_binary = (preds > 0.5).astype(int)
+            acc = accuracy_score(y_val, y_pred_binary)
+            print(f"{model_type.upper()} model - Validation accuracy: {acc:.4f}")
+        except Exception as e:
+            print(f"Error evaluating {model_type} model: {e}")
+    
+    # Calculate ensemble predictions
+    if predictions:
+        # Take the average prediction for each validation sample
+        ensemble_preds = np.mean(predictions, axis=0)
+        ensemble_binary = (ensemble_preds > 0.5).astype(int)
         
-        # Split data
-        X_train, X_val = X_arr[train_idx], X_arr[val_idx]
-        y_train, y_val = y_arr[train_idx], y_arr[val_idx]
+        # Calculate ensemble metrics
+        accuracy = accuracy_score(y_val, ensemble_binary)
+        precision = precision_score(y_val, ensemble_binary)
+        recall = recall_score(y_val, ensemble_binary)
+        f1 = f1_score(y_val, ensemble_binary)
+        auc = roc_auc_score(y_val, ensemble_preds)
         
-        # Apply SMOTE if needed
-        class_counts = np.bincount(y_train)
-        if np.min(class_counts) / np.sum(class_counts) < 0.4:
-            try:
-                if np.min(class_counts) >= 5:
-                    min_samples = np.min(class_counts)
-                    k_neighbors = min(5, min_samples-1)
-                    smote = SMOTE(random_state=random_state, k_neighbors=k_neighbors)
-                    X_train, y_train = smote.fit_resample(X_train, y_train)
-            except Exception as e:
-                print(f"Error applying SMOTE: {e}")
-        
-        # Select consistent features
-        X_train_selected = X_train[:, feature_mask]
-        X_val_selected = X_val[:, feature_mask]
-        
-        # Scale AFTER feature selection - this is the key change
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train_selected)
-        X_val_scaled = scaler.transform(X_val_selected)
-        
-        # Create and train model
-        input_dim = X_train_scaled.shape[1]
-        model = create_model(input_dim)
-        
-        # Set up callbacks
-        early_stopping = EarlyStopping(
-            monitor='val_loss', patience=15, restore_best_weights=True, verbose=1
-        )
-        
-        reduce_lr = ReduceLROnPlateau(
-            monitor='val_loss', factor=0.2, patience=5, min_lr=0.0001, verbose=1
-        )
-        
-        model_checkpoint = ModelCheckpoint(
-            f'valorant_model_fold_{fold+1}.h5', save_best_only=True, monitor='val_accuracy'
-        )
-        
-        # Train model on scaled data
-        history = model.fit(
-            X_train_scaled, y_train,
-            epochs=100,
-            batch_size=32,
-            validation_data=(X_val_scaled, y_val),
-            callbacks=[early_stopping, reduce_lr, model_checkpoint],
-            verbose=1
-        )
-        
-        # Evaluate model
-        y_pred_proba = model.predict(X_val_scaled)
-        y_pred = (y_pred_proba > 0.5).astype(int).flatten()
-        
-        accuracy = accuracy_score(y_val, y_pred)
-        precision = precision_score(y_val, y_pred)
-        recall = recall_score(y_val, y_pred)
-        f1 = f1_score(y_val, y_pred)
-        auc = roc_auc_score(y_val, y_pred_proba)
-        
-        # Store results
-        fold_metrics.append({
-            'accuracy': accuracy,
-            'precision': precision,
-            'recall': recall,
-            'f1': f1,
-            'auc': auc
-        })
-        
-        fold_models.append(model)
-        
-        # Print fold results
-        print(f"Fold {fold+1} Results:")
+        print("\nEnsemble Performance on Validation Set:")
         print(f"  Accuracy: {accuracy:.4f}")
         print(f"  Precision: {precision:.4f}")
         print(f"  Recall: {recall:.4f}")
         print(f"  F1 Score: {f1:.4f}")
         print(f"  AUC: {auc:.4f}")
     
-    # Calculate average metrics
-    avg_metrics = {metric: np.mean([fold[metric] for fold in fold_metrics]) 
-                  for metric in ['accuracy', 'precision', 'recall', 'f1', 'auc']}
-    
-    std_metrics = {metric: np.std([fold[metric] for fold in fold_metrics]) 
-                  for metric in ['accuracy', 'precision', 'recall', 'f1', 'auc']}
-    
-    print(f"\nAverage Metrics Across {n_splits} Folds:")
-    for metric, value in avg_metrics.items():
-        print(f"  {metric.capitalize()}: {value:.4f} ± {std_metrics[metric]:.4f}")
-    
     # Save models and artifacts
     print("\nSaving models and artifacts...")
     
-    # Save the scaler for the last fold (any fold's scaler would work)
-    with open('feature_scaler.pkl', 'wb') as f:
-        pickle.dump(scaler, f)
+    # Save the diverse ensemble
+    with open('diverse_ensemble.pkl', 'wb') as f:
+        pickle.dump(ensemble_models, f)
     
     # Save feature mask
     with open('feature_mask.pkl', 'wb') as f:
@@ -3953,7 +3935,16 @@ def train_with_consistent_features(X, y, n_splits=10, random_state=42):
     
     print("All models and artifacts saved successfully.")
     
-    return fold_models, scaler, selected_features, avg_metrics
+    # Return ensemble, feature information, and metrics
+    ensemble_metrics = {
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1': f1,
+        'auc': auc
+    }
+    
+    return ensemble_models, scaler, selected_features, ensemble_metrics
 
 
 
@@ -3979,14 +3970,11 @@ def main():
     parser.add_argument("--team1", type=str, help="First team name")
     parser.add_argument("--team2", type=str, help="Second team name")
     parser.add_argument("--live", action="store_true", help="Track the bet live (input result after match)")
+    
+    # Add bankroll parameter
     parser.add_argument("--bankroll", type=float, default=1000, help="Your current betting bankroll")
-    parser.add_argument("--min-agreement", type=float, default=0.4, help="Minimum model agreement required (0-1)")
-    parser.add_argument("--max-kelly", type=float, default=0.05, help="Maximum Kelly fraction allowed (0-1)")
-    parser.add_argument("--min-roi", type=float, default=0.1, help="Minimum ROI required for bet recommendation")
-
 
     args = parser.parse_args()
-
     
     # Default to including all data types
     include_player_stats = args.players
@@ -4069,11 +4057,7 @@ def main():
     elif args.predict:
         if args.team1 and args.team2:
             # Use the specific teams provided in arguments
-            prediction = predict_match(args.team1, args.team2, 
-                                      bankroll=args.bankroll,
-                                      min_agreement=args.min_agreement,
-                                      max_kelly_pct=args.max_kelly,
-                                      min_roi=args.min_roi)
+            prediction = predict_match(args.team1, args.team2, args.bankroll)
         else:
             # Prompt for team names
             print("\nEnter the teams to predict:")
@@ -4091,17 +4075,14 @@ def main():
                 bankroll = args.bankroll
             
             if team1 and team2:
-                prediction = predict_match(team1, team2, 
-                                          bankroll=bankroll,
-                                          min_agreement=args.min_agreement,
-                                          max_kelly_pct=args.max_kelly,
-                                          min_roi=args.min_roi)
+                prediction = predict_match(team1, team2, bankroll)
             else:
                 print("Team names are required for prediction.")
                 return
-        
+                
+        # Track the bet if requested
         if args.live and prediction and 'betting_analysis' in prediction:
-            # Track the bet if requested
+            # Track the bet
             print("\nAfter the match, please enter the results:")
             
             recommended_bets = [bet_type for bet_type, analysis in prediction['betting_analysis'].items() 
@@ -4120,7 +4101,16 @@ def main():
                         bet_placed = recommended_bets[bet_choice]
                         bet_amount = float(input("How much did you bet? $"))
                         outcome = input("Did the bet win? (y/n): ").lower().startswith('y')
-                        odds = odds_data.get(bet_placed, 0)
+                        odds = 0
+                        
+                        # FIXED: Get odds_data from the prediction results instead of undefined variable
+                        odds_data = prediction.get('odds_data', {})
+                        
+                        # Get the odds for this bet
+                        for bet_key, odds_value in odds_data.items():
+                            if bet_key.replace('_odds', '') == bet_placed:
+                                odds = odds_value
+                                break
                         
                         if odds > 0:
                             # Track betting performance
