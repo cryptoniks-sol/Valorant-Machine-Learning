@@ -1,0 +1,17 @@
+{
+  "predictions": [],
+  "bets": [],
+  "performance": {
+    "accuracy": 0,
+    "roi": 0,
+    "profit": 0,
+    "bankroll_history": [],
+    "win_rate": 0,
+    "final_bankroll": 1000.0
+  },
+  "metrics": {
+    "accuracy_by_edge": {},
+    "roi_by_edge": {},
+    "bet_types": {}
+  }
+}

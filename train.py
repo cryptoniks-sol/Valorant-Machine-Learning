@@ -1610,8 +1610,7 @@ def clean_feature_data(X):
 
 def prepare_data_for_model(team1_stats, team2_stats):
     """
-    Prepare data for the ML model by creating symmetrical feature vectors.
-    Improved to handle name variations in head-to-head statistics.
+    Prepare data for the ML model with improved handling of missing h2h data.
     
     Args:
         team1_stats (dict): Statistics for team 1
@@ -1688,51 +1687,8 @@ def prepare_data_for_model(team1_stats, team2_stats):
         features['better_player_rating_team1'] = 1 if team1_stats.get('avg_player_rating', 0) > team2_stats.get('avg_player_rating', 0) else 0
         features['avg_player_rating'] = (team1_stats.get('avg_player_rating', 0) + team2_stats.get('avg_player_rating', 0)) / 2
         
-        # Team rating (might be different from avg player rating)
-        if 'team_rating' in team1_stats and 'team_rating' in team2_stats:
-            features['team_rating_diff'] = team1_stats.get('team_rating', 0) - team2_stats.get('team_rating', 0)
-            features['better_team_rating_team1'] = 1 if team1_stats.get('team_rating', 0) > team2_stats.get('team_rating', 0) else 0
-            features['avg_team_rating'] = (team1_stats.get('team_rating', 0) + team2_stats.get('team_rating', 0)) / 2
-        
-        # ACS (Average Combat Score)
-        features['acs_diff'] = team1_stats.get('avg_player_acs', 0) - team2_stats.get('avg_player_acs', 0)
-        features['better_acs_team1'] = 1 if team1_stats.get('avg_player_acs', 0) > team2_stats.get('avg_player_acs', 0) else 0
-        features['avg_acs'] = (team1_stats.get('avg_player_acs', 0) + team2_stats.get('avg_player_acs', 0)) / 2
-        
-        # K/D Ratio
-        features['kd_diff'] = team1_stats.get('avg_player_kd', 0) - team2_stats.get('avg_player_kd', 0)
-        features['better_kd_team1'] = 1 if team1_stats.get('avg_player_kd', 0) > team2_stats.get('avg_player_kd', 0) else 0
-        features['avg_kd'] = (team1_stats.get('avg_player_kd', 0) + team2_stats.get('avg_player_kd', 0)) / 2
-        
-        # KAST (Kill, Assist, Survive, Trade)
-        features['kast_diff'] = team1_stats.get('avg_player_kast', 0) - team2_stats.get('avg_player_kast', 0)
-        features['better_kast_team1'] = 1 if team1_stats.get('avg_player_kast', 0) > team2_stats.get('avg_player_kast', 0) else 0
-        features['avg_kast'] = (team1_stats.get('avg_player_kast', 0) + team2_stats.get('avg_player_kast', 0)) / 2
-        
-        # ADR (Average Damage per Round)
-        features['adr_diff'] = team1_stats.get('avg_player_adr', 0) - team2_stats.get('avg_player_adr', 0)
-        features['better_adr_team1'] = 1 if team1_stats.get('avg_player_adr', 0) > team2_stats.get('avg_player_adr', 0) else 0
-        features['avg_adr'] = (team1_stats.get('avg_player_adr', 0) + team2_stats.get('avg_player_adr', 0)) / 2
-        
-        # Headshot percentage
-        features['headshot_diff'] = team1_stats.get('avg_player_headshot', 0) - team2_stats.get('avg_player_headshot', 0)
-        features['better_headshot_team1'] = 1 if team1_stats.get('avg_player_headshot', 0) > team2_stats.get('avg_player_headshot', 0) else 0
-        features['avg_headshot'] = (team1_stats.get('avg_player_headshot', 0) + team2_stats.get('avg_player_headshot', 0)) / 2
-        
-        # Star player rating
-        features['star_player_diff'] = team1_stats.get('star_player_rating', 0) - team2_stats.get('star_player_rating', 0)
-        features['better_star_player_team1'] = 1 if team1_stats.get('star_player_rating', 0) > team2_stats.get('star_player_rating', 0) else 0
-        features['avg_star_player'] = (team1_stats.get('star_player_rating', 0) + team2_stats.get('star_player_rating', 0)) / 2
-        
-        # Team consistency (star player vs. worst player)
-        features['consistency_diff'] = team1_stats.get('team_consistency', 0) - team2_stats.get('team_consistency', 0)
-        features['better_consistency_team1'] = 1 if team1_stats.get('team_consistency', 0) > team2_stats.get('team_consistency', 0) else 0
-        features['avg_consistency'] = (team1_stats.get('team_consistency', 0) + team2_stats.get('team_consistency', 0)) / 2
-        
-        # First Kill / First Death ratio
-        features['fk_fd_diff'] = team1_stats.get('fk_fd_ratio', 0) - team2_stats.get('fk_fd_ratio', 0)
-        features['better_fk_fd_team1'] = 1 if team1_stats.get('fk_fd_ratio', 0) > team2_stats.get('fk_fd_ratio', 0) else 0
-        features['avg_fk_fd'] = (team1_stats.get('fk_fd_ratio', 0) + team2_stats.get('fk_fd_ratio', 0)) / 2
+        # Additional player stats...
+        # (Keep your existing player stats code)
     
     #----------------------------------------
     # 3. ECONOMY STATS
@@ -1746,59 +1702,18 @@ def prepare_data_for_model(team1_stats, team2_stats):
         features['better_pistol_team1'] = 1 if team1_stats.get('pistol_win_rate', 0) > team2_stats.get('pistol_win_rate', 0) else 0
         features['avg_pistol_win_rate'] = (team1_stats.get('pistol_win_rate', 0) + team2_stats.get('pistol_win_rate', 0)) / 2
         
-        # Eco win rate
-        features['eco_win_rate_diff'] = team1_stats.get('eco_win_rate', 0) - team2_stats.get('eco_win_rate', 0)
-        features['better_eco_team1'] = 1 if team1_stats.get('eco_win_rate', 0) > team2_stats.get('eco_win_rate', 0) else 0
-        features['avg_eco_win_rate'] = (team1_stats.get('eco_win_rate', 0) + team2_stats.get('eco_win_rate', 0)) / 2
-        
-        # Full-buy win rate
-        features['full_buy_win_rate_diff'] = team1_stats.get('full_buy_win_rate', 0) - team2_stats.get('full_buy_win_rate', 0)
-        features['better_full_buy_team1'] = 1 if team1_stats.get('full_buy_win_rate', 0) > team2_stats.get('full_buy_win_rate', 0) else 0
-        features['avg_full_buy_win_rate'] = (team1_stats.get('full_buy_win_rate', 0) + team2_stats.get('full_buy_win_rate', 0)) / 2
-        
-        # Economy efficiency
-        features['economy_efficiency_diff'] = team1_stats.get('economy_efficiency', 0) - team2_stats.get('economy_efficiency', 0)
-        features['better_economy_efficiency_team1'] = 1 if team1_stats.get('economy_efficiency', 0) > team2_stats.get('economy_efficiency', 0) else 0
-        features['avg_economy_efficiency'] = (team1_stats.get('economy_efficiency', 0) + team2_stats.get('economy_efficiency', 0)) / 2
+        # Other economy stats...
+        # (Keep your existing economy stats code)
     
     #----------------------------------------
     # 4. MAP STATS
     #----------------------------------------
-    if ('map_statistics' in team1_stats and 'map_statistics' in team2_stats and
-        team1_stats['map_statistics'] and team2_stats['map_statistics']):
-        
-        # Find common maps
-        team1_maps = set(team1_stats['map_statistics'].keys())
-        team2_maps = set(team2_stats['map_statistics'].keys())
-        common_maps = team1_maps.intersection(team2_maps)
-        
-        # Add general map statistics
-        features['common_maps_count'] = len(common_maps)
-        features['team1_map_pool_size'] = len(team1_maps)
-        features['team2_map_pool_size'] = len(team2_maps)
-        
-        # Prepare map-specific comparisons
-        for map_name in common_maps:
-            t1_map = team1_stats['map_statistics'][map_name]
-            t2_map = team2_stats['map_statistics'][map_name]
-            
-            # Clean map name for feature naming
-            map_key = map_name.replace(' ', '_').lower()
-            
-            # Win percentage comparison
-            features[f'{map_key}_win_rate_diff'] = t1_map['win_percentage'] - t2_map['win_percentage']
-            features[f'better_{map_key}_team1'] = 1 if t1_map['win_percentage'] > t2_map['win_percentage'] else 0
-            
-            # Side performance comparison
-            if 'side_preference' in t1_map and 'side_preference' in t2_map:
-                features[f'{map_key}_side_pref_diff'] = (1 if t1_map['side_preference'] == 'Attack' else -1) - (1 if t2_map['side_preference'] == 'Attack' else -1)
-                features[f'{map_key}_atk_win_rate_diff'] = t1_map['atk_win_rate'] - t2_map['atk_win_rate']
-                features[f'{map_key}_def_win_rate_diff'] = t1_map['def_win_rate'] - t2_map['def_win_rate']
+    # (Keep your existing map stats code)
     
     #----------------------------------------
     # 5. HEAD-TO-HEAD STATS
     #----------------------------------------
-    # Add head-to-head statistics with improved matching
+    # Add head-to-head statistics with improved handling of missing data
     team2_name = team2_stats.get('team_name', '')
     h2h_found = False
     h2h_stats = None
@@ -1855,51 +1770,31 @@ def prepare_data_for_model(team1_stats, team2_stats):
               f"Score diff={features['h2h_score_diff']:.4f}, "
               f"Advantage={'Team1' if features['h2h_advantage_team1'] else 'Team2'}")
     else:
-        # Default values if no H2H data found
-        features['h2h_win_rate'] = 0.5
-        features['h2h_matches'] = 0
-        features['h2h_score_diff'] = 0
-        features['h2h_advantage_team1'] = 0
-        features['h2h_significant'] = 0
+        # IMPROVED: Estimate h2h data based on team strengths instead of defaults
+        team1_win_rate = team1_stats.get('win_rate', 0.5)
+        team2_win_rate = team2_stats.get('win_rate', 0.5)
+        
+        # Estimate h2h win rate based on relative team strengths
+        if team1_win_rate + team2_win_rate > 0:
+            estimated_h2h = team1_win_rate / (team1_win_rate + team2_win_rate)
+        else:
+            estimated_h2h = 0.5
+            
+        # Scale to reduce extremes
+        estimated_h2h = 0.5 + (estimated_h2h - 0.5) * 0.7
+        
+        features['h2h_win_rate'] = estimated_h2h
+        features['h2h_matches'] = 0  # No actual matches
+        features['h2h_score_diff'] = (team1_stats.get('score_differential', 0) - 
+                                    team2_stats.get('score_differential', 0)) * 0.5
+        features['h2h_advantage_team1'] = 1 if estimated_h2h > 0.5 else 0
+        features['h2h_significant'] = 0  # Not significant since estimated
         
         print(f"No head-to-head data found between {team1_stats.get('team_name', 'Team1')} "
               f"and {team2_name} in opponent_stats")
-        
-        # Attempt to manually reconstruct head-to-head from match data
-        if 'matches' in team1_stats and isinstance(team1_stats['matches'], list):
-            h2h_matches = []
-            
-            for match in team1_stats['matches']:
-                opponent_name = match.get('opponent_name', '')
-                
-                if not opponent_name:
-                    continue
-                    
-                # Check all variations
-                for variation in team2_variations:
-                    if (opponent_name.lower() == variation.lower() or
-                        variation.lower() in opponent_name.lower() or
-                        opponent_name.lower() in variation.lower()):
-                        h2h_matches.append(match)
-                        break
-            
-            # If we found matches, calculate head-to-head stats
-            if h2h_matches:
-                wins = sum(1 for match in h2h_matches if match.get('team_won', False))
-                total_score = sum(match.get('team_score', 0) for match in h2h_matches)
-                total_opponent_score = sum(match.get('opponent_score', 0) for match in h2h_matches)
-                avg_score_diff = (total_score - total_opponent_score) / len(h2h_matches)
-                
-                features['h2h_win_rate'] = wins / len(h2h_matches)
-                features['h2h_matches'] = len(h2h_matches)
-                features['h2h_score_diff'] = avg_score_diff
-                features['h2h_advantage_team1'] = 1 if features['h2h_win_rate'] > 0.5 else 0
-                features['h2h_significant'] = 1 if features['h2h_matches'] >= 3 else 0
-                
-                print(f"Manually reconstructed head-to-head data: Matches={features['h2h_matches']}, "
-                      f"Win rate={features['h2h_win_rate']:.4f}, "
-                      f"Score diff={features['h2h_score_diff']:.4f}, "
-                      f"Advantage={'Team1' if features['h2h_advantage_team1'] else 'Team2'}")
+        print(f"Estimated head-to-head data: Win rate={estimated_h2h:.4f}, "
+              f"Score diff={features['h2h_score_diff']:.4f}, "
+              f"Advantage={'Team1' if features['h2h_advantage_team1'] else 'Team2'}")
     
     #----------------------------------------
     # 6. INTERACTION TERMS
@@ -3371,7 +3266,7 @@ def print_prediction_report(results, team1_stats, team2_stats):
             # Sort by edge
             recommended_bets.sort(key=lambda x: x[1], reverse=True)
             print("\nBETS RANKED BY EDGE:")
-            for i, (bet, edge, amount) in enumerate(recommended_bets):
+            for i, (bet, edge, roi, amount) in enumerate(recommended_bets):
                 print(f"  {i+1}. {bet}: {edge:.2%} edge, bet ${amount}")
 
 def explain_bet_recommendation(bet_type, analysis, results, team1_name, team2_name):
@@ -3946,8 +3841,2247 @@ def train_with_consistent_features(X, y, n_splits=10, random_state=42):
     
     return ensemble_models, scaler, selected_features, ensemble_metrics
 
+#-------------------------------------------------------------------------
+# BACKTESTING SYSTEM
+#-------------------------------------------------------------------------
+
+def load_backtesting_models():
+    """
+    Enhanced function to load ensemble models and metadata for backtesting
+    with improved error handling and logging.
+    """
+    print("\n========== LOADING RETRAINED MODELS ==========")
+    
+    # 1. Load the diverse ensemble with better error handling
+    ensemble_models = None
+    try:
+        print("Attempting to load diverse ensemble from diverse_ensemble.pkl...")
+        with open('diverse_ensemble.pkl', 'rb') as f:
+            ensemble_models = pickle.load(f)
+            print(f"SUCCESS: Loaded diverse ensemble with {len(ensemble_models)} models")
+            
+            # Log model types for verification
+            model_types = {}
+            for model_type, _, _ in ensemble_models:
+                if model_type not in model_types:
+                    model_types[model_type] = 0
+                model_types[model_type] += 1
+            
+            print("Model composition:")
+            for model_type, count in model_types.items():
+                print(f"  - {model_type.upper()}: {count} models")
+    except Exception as e:
+        print(f"ERROR: Failed to load diverse ensemble: {e}")
+        print("Attempting to load individual fold models as fallback...")
+        
+        # Try loading individual fold models
+        ensemble_models = []
+        for i in range(1, 11):
+            try:
+                model = load_model(f'valorant_model_fold_{i}.h5')
+                ensemble_models.append(('nn', model, None))
+                print(f"Loaded fold model {i}")
+            except Exception as model_e:
+                print(f"Could not load model fold_{i}: {model_e}")
+        
+        if ensemble_models:
+            print(f"SUCCESS: Loaded {len(ensemble_models)} individual fold models as fallback")
+        else:
+            print("ERROR: Failed to load any models. Backtesting cannot proceed.")
+            return None, None
+    
+    # 2. Load feature metadata with enhanced error handling and priority order
+    selected_features = None
+    feature_metadata = None
+    
+    # Try loading from feature_metadata.pkl first (preferred source)
+    try:
+        print("Attempting to load feature metadata from feature_metadata.pkl...")
+        with open('feature_metadata.pkl', 'rb') as f:
+            feature_metadata = pickle.load(f)
+            selected_features = feature_metadata.get('selected_features')
+            feature_importances = feature_metadata.get('feature_importances', {})
+            
+            print(f"SUCCESS: Loaded {len(selected_features)} features from feature_metadata.pkl")
+            print(f"Top 5 features by importance:")
+            sorted_features = sorted(feature_importances.items(), 
+                                  key=lambda x: x[1], reverse=True)[:5]
+            for feature, importance in sorted_features:
+                print(f"  - {feature}: {importance:.4f}")
+    except Exception as e:
+        print(f"ERROR: Failed to load feature_metadata.pkl: {e}")
+    
+    # If that failed, try loading from selected_feature_names.pkl
+    if not selected_features:
+        try:
+            print("Attempting to load from selected_feature_names.pkl...")
+            with open('selected_feature_names.pkl', 'rb') as f:
+                selected_features = pickle.load(f)
+                print(f"SUCCESS: Loaded {len(selected_features)} features from selected_feature_names.pkl")
+        except Exception as e:
+            print(f"ERROR: Failed to load selected_feature_names.pkl: {e}")
+    
+    # If that failed too, try stable_features.pkl
+    if not selected_features:
+        try:
+            print("Attempting to load from stable_features.pkl...")
+            with open('stable_features.pkl', 'rb') as f:
+                selected_features = pickle.load(f)
+                print(f"SUCCESS: Loaded {len(selected_features)} features from stable_features.pkl")
+        except Exception as e:
+            print(f"ERROR: Failed to load stable_features.pkl: {e}")
+    
+    # Last resort: Load feature mask and extract feature names
+    if not selected_features:
+        try:
+            print("Attempting to reconstruct features from feature_mask.pkl...")
+            with open('feature_mask.pkl', 'rb') as f:
+                feature_mask = pickle.load(f)
+                # This assumes you have access to the original feature names
+                # In a real implementation, you'd need to have them stored somewhere
+                print("WARNING: Using feature mask without feature names is not ideal")
+                # Create placeholder features
+                selected_features = [f'feature_{i}' for i in range(sum(feature_mask))]
+                print(f"Created {len(selected_features)} placeholder features from mask")
+        except Exception as e:
+            print(f"ERROR: Failed to load feature_mask.pkl: {e}")
+    
+    # If we still don't have features, create fallback feature list
+    if not selected_features:
+        print("WARNING: Failed to load any feature list. Creating fallback features.")
+        # Create a list of likely important features based on domain knowledge
+        selected_features = [
+            'win_rate_diff', 'better_win_rate_team1', 'recent_form_diff',
+            'better_recent_form_team1', 'score_diff_differential',
+            'better_score_diff_team1', 'avg_score_diff', 'h2h_win_rate',
+            'h2h_matches', 'h2h_score_diff', 'h2h_advantage_team1',
+            'h2h_significant', 'total_matches', 'match_count_diff',
+            'avg_win_rate', 'avg_recent_form', 'wins_diff', 'losses_diff',
+            'win_loss_ratio_diff', 'player_rating_diff', 'better_player_rating_team1',
+            'avg_player_rating', 'pistol_win_rate_diff', 'better_pistol_team1',
+            'eco_win_rate_diff', 'semi_eco_win_rate_diff', 'full_buy_win_rate_diff',
+            'economy_efficiency_diff', 'rating_x_win_rate', 'pistol_x_eco',
+            'pistol_x_full_buy', 'first_blood_x_win_rate', 'h2h_x_win_rate'
+        ]
+        print(f"Created fallback feature list with {len(selected_features)} features")
+    
+    # If needed, pad the feature list to match expected model input shape
+    if ensemble_models and hasattr(ensemble_models[0][1], 'layers'):
+        try:
+            # Get expected input dimensionality from first model
+            model_type, model, _ = ensemble_models[0]
+            if model_type == 'nn':
+                expected_dim = model.layers[0].input_shape[1]
+                
+                if len(selected_features) < expected_dim:
+                    print(f"WARNING: Selected features ({len(selected_features)}) less than expected model input dimension ({expected_dim})")
+                    padding_count = expected_dim - len(selected_features)
+                    padding_features = [f"padding_feature_{i}" for i in range(padding_count)]
+                    selected_features.extend(padding_features)
+                    print(f"Added {padding_count} padding features to match model input dimension")
+        except Exception as e:
+            print(f"ERROR checking model dimensions: {e}")
+    
+    # Load scalers if available
+    try:
+        print("Attempting to load feature scaler...")
+        with open('ensemble_scaler.pkl', 'rb') as f:
+            scaler = pickle.load(f)
+            print("SUCCESS: Loaded ensemble_scaler.pkl")
+            
+            # Add scaler to ensemble models that need it
+            enhanced_ensemble = []
+            for model_type, model, model_scaler in ensemble_models:
+                if model_type in ['lr', 'svm'] and model_scaler is None:
+                    enhanced_ensemble.append((model_type, model, scaler))
+                    print(f"Added scaler to {model_type} model")
+                else:
+                    enhanced_ensemble.append((model_type, model, model_scaler))
+            
+            ensemble_models = enhanced_ensemble
+    except Exception as e:
+        print(f"WARNING: Failed to load ensemble_scaler.pkl: {e}")
+    
+    print(f"Model loading complete. Ensemble has {len(ensemble_models)} models and {len(selected_features)} features")
+    return ensemble_models, selected_features
+
+def simulate_odds(team1_win_prob, vig=0.05):
+    """Generate realistic betting odds based on predicted probability and vig."""
+    # Apply vig to create juice
+    adj_team1_prob = team1_win_prob * (1 + vig) - vig
+    adj_team2_prob = (1 - team1_win_prob) * (1 + vig) - vig
+    
+    # Convert to decimal odds
+    team1_odds = 1 / adj_team1_prob if adj_team1_prob > 0 else float('inf')
+    team2_odds = 1 / adj_team2_prob if adj_team2_prob > 0 else float('inf')
+    
+    # Create map spread and total odds
+    team1_plus_odds = 1 / min(0.95, team1_win_prob + 0.25)
+    team2_plus_odds = 1 / min(0.95, (1 - team1_win_prob) + 0.25)
+    team1_minus_odds = 1 / max(0.05, team1_win_prob - 0.3)
+    team2_minus_odds = 1 / max(0.05, (1 - team1_win_prob) - 0.3)
+    
+    map_total_over = 1.92
+    map_total_under = 1.92
+    
+    return {
+        'team1_ml_odds': round(team1_odds, 2),
+        'team2_ml_odds': round(team2_odds, 2),
+        'team1_plus_1_5_odds': round(team1_plus_odds, 2),
+        'team2_plus_1_5_odds': round(team2_plus_odds, 2),
+        'team1_minus_1_5_odds': round(team1_minus_odds, 2),
+        'team2_minus_1_5_odds': round(team2_minus_odds, 2),
+        'over_2_5_maps_odds': map_total_over,
+        'under_2_5_maps_odds': map_total_under
+    }
+
+def calculate_single_map_prob_for_backtesting(match_win_prob):
+    """Calculate single map win probability from match win probability."""
+    # Simplified calculation - can be adjusted based on your model
+    single_map_prob = max(0.3, min(0.7, np.sqrt(match_win_prob)))
+    return single_map_prob
+
+def kelly_criterion(win_prob, decimal_odds, fractional=0.15):
+    """Calculate Kelly bet size with more conservative fractional adjustment."""
+    # Kelly formula: f* = (bp - q) / b
+    b = decimal_odds - 1  # Decimal odds to b format
+    p = win_prob
+    q = 1 - p
+    
+    kelly = (b * p - q) / b
+    
+    # Apply fractional Kelly (more conservative)
+    kelly = kelly * fractional
+    
+    # Apply additional cap for safety
+    kelly = min(kelly, 0.05)  # Never bet more than 5% regardless of Kelly formula
+    
+    # Ensure non-negative
+    return max(0, kelly)
+def analyze_specific_match(results, match_id):
+    """
+    Analyze a specific match from backtest results in detail.
+    
+    Args:
+        results (dict): Backtest results
+        match_id (str): ID of the match to analyze
+        
+    Returns:
+        dict: Detailed analysis of the match
+    """
+    # Find match in predictions
+    match_prediction = None
+    for pred in results['predictions']:
+        if pred.get('match_id') == match_id:
+            match_prediction = pred
+            break
+    
+    if not match_prediction:
+        print(f"Match {match_id} not found in results")
+        return None
+    
+    # Find bets placed on this match
+    match_bets = None
+    for bet_record in results['bets']:
+        if bet_record.get('match_id') == match_id:
+            match_bets = bet_record
+            break
+    
+    # Create detailed analysis
+    analysis = {
+        'match_id': match_id,
+        'teams': f"{match_prediction['team1']} vs {match_prediction['team2']}",
+        'prediction': {
+            'predicted_winner': match_prediction['predicted_winner'],
+            'actual_winner': match_prediction['actual_winner'],
+            'team1_prob': match_prediction['team1_prob'],
+            'team2_prob': match_prediction['team2_prob'],
+            'confidence': match_prediction['confidence'],
+            'correct': match_prediction['correct'],
+            'score': match_prediction['score'],
+            'date': match_prediction.get('date', 'Unknown')
+        },
+        'bets': []
+    }
+    
+    # Add betting details if available
+    if match_bets:
+        analysis['bets'] = match_bets['bets']
+        
+        # Calculate aggregate betting performance
+        total_wagered = sum(bet['amount'] for bet in match_bets['bets'])
+        total_returns = sum(bet['returns'] for bet in match_bets['bets'])
+        winning_bets = sum(1 for bet in match_bets['bets'] if bet['won'])
+        
+        analysis['betting_summary'] = {
+            'total_bets': len(match_bets['bets']),
+            'winning_bets': winning_bets,
+            'total_wagered': total_wagered,
+            'total_returns': total_returns,
+            'profit': total_returns - total_wagered,
+            'roi': (total_returns - total_wagered) / total_wagered if total_wagered > 0 else 0
+        }
+    
+    # Print analysis
+    print(f"\n===== MATCH ANALYSIS: {analysis['teams']} =====")
+    print(f"Date: {analysis['prediction']['date']}")
+    print(f"Score: {analysis['prediction']['score']}")
+    print(f"Prediction: {analysis['prediction']['predicted_winner']} to win")
+    print(f"Probability: {analysis['prediction']['team1_prob']:.2%} vs {analysis['prediction']['team2_prob']:.2%}")
+    print(f"Confidence: {analysis['prediction']['confidence']:.2f}")
+    print(f"Result: {'CORRECT' if analysis['prediction']['correct'] else 'INCORRECT'}")
+    
+    if 'betting_summary' in analysis:
+        print("\nBetting Summary:")
+        print(f"Total Bets: {analysis['betting_summary']['total_bets']}")
+        print(f"Winning Bets: {analysis['betting_summary']['winning_bets']}")
+        print(f"Wagered: ${analysis['betting_summary']['total_wagered']:.2f}")
+        print(f"Returns: ${analysis['betting_summary']['total_returns']:.2f}")
+        print(f"Profit: ${analysis['betting_summary']['profit']:.2f}")
+        print(f"ROI: {analysis['betting_summary']['roi']:.2%}")
+        
+        print("\nIndividual Bets:")
+        for i, bet in enumerate(analysis['bets']):
+            print(f"  {i+1}. {bet['bet_type'].replace('_', ' ').upper()}")
+            print(f"     Amount: ${bet['amount']:.2f}")
+            print(f"     Odds: {bet['odds']:.2f}")
+            print(f"     Edge: {bet['edge']:.2%}")
+            print(f"     Result: {'WON' if bet['won'] else 'LOST'}")
+            print(f"     Returns: ${bet['returns']:.2f}")
+            print(f"     Profit: ${bet['profit']:.2f}")
+    
+    return analysis
+
+def identify_key_insights(results):
+    """
+    Identify key insights and recommendations from backtest results.
+    
+    Args:
+        results (dict): Backtest results
+        
+    Returns:
+        dict: Key insights and recommendations
+    """
+    insights = {
+        'overall_performance': {},
+        'bet_types': [],
+        'teams': [],
+        'confidence_insights': {},
+        'edge_insights': {},
+        'recommendations': []
+    }
+    
+    # Extract overall performance metrics
+    insights['overall_performance'] = {
+        'accuracy': results['performance']['accuracy'],
+        'roi': results['performance']['roi'],
+        'profit': results['performance']['profit'],
+        'win_rate': results['performance']['win_rate'],
+        'total_bets': results['performance'].get('total_bets', 0),
+        'total_predictions': len(results['predictions'])
+    }
+    
+    # Analyze bet types
+    if 'metrics' in results and 'bet_types' in results['metrics']:
+        bet_types = []
+        for bet_type, stats in results['metrics']['bet_types'].items():
+            if stats['total'] >= 5:  # Only include bet types with sufficient sample size
+                win_rate = stats['won'] / stats['total'] if stats['total'] > 0 else 0
+                roi = (stats['returns'] - stats['wagered']) / stats['wagered'] if stats['wagered'] > 0 else 0
+                
+                bet_types.append({
+                    'type': bet_type,
+                    'total': stats['total'],
+                    'win_rate': win_rate,
+                    'roi': roi,
+                    'profit': stats['returns'] - stats['wagered'],
+                    'profitable': roi > 0,
+                    'recommendation': 'strong_bet' if roi > 0.1 else ('potential_bet' if roi > 0 else 'avoid')
+                })
+        
+        # Sort by ROI
+        bet_types.sort(key=lambda x: x['roi'], reverse=True)
+        insights['bet_types'] = bet_types
+    
+    # Analyze team performance
+    if 'team_performance' in results:
+        teams = []
+        for team_name, stats in results['team_performance'].items():
+            if stats.get('bets', 0) >= 5:  # Only include teams with sufficient betting history
+                prediction_accuracy = stats.get('correct', 0) / stats.get('predictions', 1) if stats.get('predictions', 0) > 0 else 0
+                win_rate = stats.get('wins', 0) / stats.get('bets', 1) if stats.get('bets', 0) > 0 else 0
+                roi = (stats.get('returns', 0) - stats.get('wagered', 0)) / stats.get('wagered', 1) if stats.get('wagered', 0) > 0 else 0
+                
+                teams.append({
+                    'name': team_name,
+                    'predictions': stats.get('predictions', 0),
+                    'prediction_accuracy': prediction_accuracy,
+                    'bets': stats.get('bets', 0),
+                    'win_rate': win_rate,
+                    'roi': roi,
+                    'profit': stats.get('returns', 0) - stats.get('wagered', 0),
+                    'profitable': roi > 0,
+                    'recommendation': 'focus' if roi > 0.1 else ('potential' if roi > 0 else 'avoid')
+                })
+        
+        # Sort by ROI
+        teams.sort(key=lambda x: x['roi'], reverse=True)
+        insights['teams'] = teams
+    
+    # Analyze confidence levels
+    if 'metrics' in results and 'confidence_bins' in results['metrics']:
+        confidence_data = results['metrics']['confidence_bins']
+        
+        # Calculate accuracy by confidence level
+        confidence_by_accuracy = {}
+        for conf_key, stats in confidence_data.items():
+            if stats['total'] >= 5:  # Only include confidence levels with sufficient sample size
+                confidence_by_accuracy[conf_key] = stats['correct'] / stats['total']
+        
+        # Find most reliable confidence threshold
+        reliable_thresholds = []
+        for conf_key, accuracy in confidence_by_accuracy.items():
+            conf_level = float(conf_key.replace('%', '')) / 100
+            if accuracy > 0.55:  # Only consider confidence levels with decent accuracy
+                reliable_thresholds.append((conf_key, conf_level, accuracy))
+        
+        if reliable_thresholds:
+            # Sort by balance of confidence and accuracy
+            reliable_thresholds.sort(key=lambda x: x[1] * x[2], reverse=True)
+            recommended_threshold = reliable_thresholds[0][0]
+            recommended_accuracy = reliable_thresholds[0][2]
+        else:
+            recommended_threshold = "None"
+            recommended_accuracy = 0
+        
+        insights['confidence_insights'] = {
+            'accuracy_by_confidence': confidence_by_accuracy,
+            'recommended_threshold': recommended_threshold,
+            'expected_accuracy': recommended_accuracy
+        }
+    
+    # Analyze edge levels
+    if 'metrics' in results and 'roi_by_edge' in results['metrics']:
+        edge_data = results['metrics']['roi_by_edge']
+        
+        # Calculate ROI by edge level
+        roi_by_edge = {}
+        for edge_key, stats in edge_data.items():
+            if stats['wagered'] >= 100:  # Only include edge levels with sufficient volume
+                roi_by_edge[edge_key] = (stats['returns'] - stats['wagered']) / stats['wagered']
+        
+        # Find most profitable edge threshold
+        profitable_thresholds = []
+        for edge_key, roi in roi_by_edge.items():
+            if roi > 0:  # Only consider profitable edge levels
+                edge_parts = edge_key.replace('%', '').split('-')
+                min_edge = float(edge_parts[0]) / 100
+                profitable_thresholds.append((edge_key, min_edge, roi))
+        
+        if profitable_thresholds:
+            # Sort by ROI
+            profitable_thresholds.sort(key=lambda x: x[2], reverse=True)
+            recommended_threshold = profitable_thresholds[0][0]
+            expected_roi = profitable_thresholds[0][2]
+        else:
+            recommended_threshold = "None"
+            expected_roi = 0
+        
+        insights['edge_insights'] = {
+            'roi_by_edge': roi_by_edge,
+            'recommended_threshold': recommended_threshold,
+            'expected_roi': expected_roi
+        }
+    
+    # Generate recommendations
+    recommendations = []
+    
+    # Recommendation 1: Overall strategy viability
+    if insights['overall_performance']['roi'] > 0.1:
+        recommendations.append("The overall betting strategy is highly profitable with an ROI of {:.1%}. Continue using the current approach.".format(
+            insights['overall_performance']['roi']))
+    elif insights['overall_performance']['roi'] > 0:
+        recommendations.append("The overall betting strategy is marginally profitable with an ROI of {:.1%}. Consider focusing on the most profitable bet types.".format(
+            insights['overall_performance']['roi']))
+    else:
+        recommendations.append("The overall betting strategy is not profitable with an ROI of {:.1%}. Major adjustments are needed.".format(
+            insights['overall_performance']['roi']))
+    
+    # Recommendation 2: Best bet types
+    profitable_bet_types = [bt for bt in insights['bet_types'] if bt['roi'] > 0.05 and bt['total'] >= 10]
+    if profitable_bet_types:
+        top_bet = profitable_bet_types[0]
+        recommendations.append("Focus on '{}' bets, which showed {:.1%} ROI across {} bets.".format(
+            top_bet['type'].replace('_', ' ').upper(), top_bet['roi'], top_bet['total']))
+    
+    # Recommendation 3: Teams to focus on or avoid
+    profitable_teams = [team for team in insights['teams'] if team['roi'] > 0.1 and team['bets'] >= 5]
+    unprofitable_teams = [team for team in insights['teams'] if team['roi'] < -0.1 and team['bets'] >= 5]
+    
+    if profitable_teams:
+        top_team = profitable_teams[0]
+        recommendations.append("Target matches involving {}, which showed {:.1%} ROI across {} bets.".format(
+            top_team['name'], top_team['roi'], top_team['bets']))
+    
+    if unprofitable_teams:
+        worst_team = unprofitable_teams[-1]
+        recommendations.append("Avoid betting on matches involving {}, which showed {:.1%} ROI across {} bets.".format(
+            worst_team['name'], worst_team['roi'], worst_team['bets']))
+    
+    # Recommendation 4: Confidence threshold
+    if 'confidence_insights' in insights and insights['confidence_insights']['recommended_threshold'] != "None":
+        recommendations.append("Only place bets when model confidence is at least {}. This threshold yielded {:.1%} prediction accuracy.".format(
+            insights['confidence_insights']['recommended_threshold'],
+            insights['confidence_insights']['expected_accuracy']))
+    
+    # Recommendation 5: Edge threshold
+    if 'edge_insights' in insights and insights['edge_insights']['recommended_threshold'] != "None":
+        recommendations.append("Only place bets with a predicted edge of at least {}. This threshold yielded {:.1%} ROI.".format(
+            insights['edge_insights']['recommended_threshold'],
+            insights['edge_insights']['expected_roi']))
+    
+    # Recommendation 6: Bankroll management
+    if insights['overall_performance']['roi'] > 0:
+        win_rate = insights['overall_performance']['win_rate']
+        recommendations.append("Use Kelly criterion with a fraction of {:.1%} to optimize bankroll growth based on {:.1%} win rate.".format(
+            min(0.05, win_rate / 4),  # Conservative Kelly fraction
+            win_rate))
+    
+    insights['recommendations'] = recommendations
+    
+    # Print insights
+    print("\n===== KEY INSIGHTS =====")
+    
+    print("\nOverall Performance:")
+    print(f"Prediction Accuracy: {insights['overall_performance']['accuracy']:.2%}")
+    print(f"Betting Win Rate: {insights['overall_performance']['win_rate']:.2%}")
+    print(f"ROI: {insights['overall_performance']['roi']:.2%}")
+    print(f"Total Profit: ${insights['overall_performance']['profit']:.2f}")
+    
+    print("\nTop Performing Bet Types:")
+    for i, bet_type in enumerate(insights['bet_types'][:3]):
+        if bet_type['profitable']:
+            print(f"{i+1}. {bet_type['type'].replace('_', ' ').upper()}: {bet_type['roi']:.2%} ROI ({bet_type['total']} bets)")
+    
+    print("\nTop Performing Teams:")
+    for i, team in enumerate(insights['teams'][:3]):
+        if team['profitable']:
+            print(f"{i+1}. {team['name']}: {team['roi']:.2%} ROI ({team['bets']} bets)")
+    
+    print("\nRecommendations:")
+    for i, rec in enumerate(insights['recommendations']):
+        print(f"{i+1}. {rec}")
+    
+    return insights
+
+def get_backtest_params():
+    """
+    Interactive function to get parameters for backtesting.
+    
+    Returns:
+        dict: Parameters for backtesting
+    """
+    print("\n===== BACKTEST CONFIGURATION =====")
+    
+    # Default parameters
+    params = {
+        'team_limit': 50,
+        'bankroll': 1000.0,
+        'bet_pct': 0.05,
+        'min_edge': 0.08,
+        'confidence_threshold': 0.4,
+        'start_date': None,
+        'end_date': None
+    }
+    
+    # Interactive parameter entry
+    print("\nEnter parameters (press Enter to use defaults):")
+    
+    try:
+        # Team limit
+        team_input = input(f"Number of teams to analyze [{params['team_limit']}]: ")
+        if team_input.strip():
+            params['team_limit'] = int(team_input)
+        
+        # Bankroll
+        bankroll_input = input(f"Starting bankroll [${params['bankroll']}]: ")
+        if bankroll_input.strip():
+            params['bankroll'] = float(bankroll_input)
+        
+        # Bet percentage
+        bet_pct_input = input(f"Maximum bet size as percentage of bankroll [{params['bet_pct']*100}%]: ")
+        if bet_pct_input.strip():
+            params['bet_pct'] = float(bet_pct_input) / 100
+        
+        # Minimum edge
+        min_edge_input = input(f"Minimum required edge [{params['min_edge']*100}%]: ")
+        if min_edge_input.strip():
+            params['min_edge'] = float(min_edge_input) / 100
+        
+        # Confidence threshold
+        conf_input = input(f"Minimum model confidence [{params['confidence_threshold']*100}%]: ")
+        if conf_input.strip():
+            params['confidence_threshold'] = float(conf_input) / 100
+        
+        # Date range
+        date_range = input("Use specific date range? (y/n): ").lower().startswith('y')
+        if date_range:
+            start_date = input("Start date (YYYY-MM-DD or blank for no limit): ")
+            end_date = input("End date (YYYY-MM-DD or blank for no limit): ")
+            
+            if start_date.strip():
+                params['start_date'] = start_date.strip()
+            if end_date.strip():
+                params['end_date'] = end_date.strip()
+    
+    except ValueError as e:
+        print(f"Invalid input: {e}")
+        print("Using default values for all parameters.")
+    
+    # Print final configuration
+    print("\nBacktest Configuration:")
+    print(f"Teams to analyze: {params['team_limit']}")
+    print(f"Starting bankroll: ${params['bankroll']}")
+    print(f"Maximum bet size: {params['bet_pct']*100}% of bankroll")
+    print(f"Minimum edge: {params['min_edge']*100}%")
+    print(f"Minimum confidence: {params['confidence_threshold']*100}%")
+    
+    if params['start_date'] or params['end_date']:
+        date_range = f"{params['start_date'] or 'Beginning'} to {params['end_date'] or 'Present'}"
+        print(f"Date range: {date_range}")
+    else:
+        print("Date range: All available data")
+    
+    return params
 
 
+def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_data, confidence_score, bankroll=1000.0):
+    """
+    Analyze betting edges with adjusted thresholds and more realistic Kelly sizing
+    based on confidence level.
+    """
+    betting_analysis = {}
+    
+    # IMPROVED: Dynamic threshold adjustment based on confidence
+    # Base minimum edge (absolute minimum edge for a bet)
+    base_min_edge = 0.06  # Reduced from 0.08 to allow more bets
+    
+    # Confidence adjustment - lower confidence requires higher edge
+    confidence_factor = 0.5 + (confidence_score * 0.5)  # Scale from 0.5 to 1.0
+    adjusted_threshold = base_min_edge / confidence_factor
+    
+    print(f"\n----- BETTING ANALYSIS -----")
+    print(f"Confidence score: {confidence_score:.4f}, confidence factor: {confidence_factor:.4f}")
+    print(f"Base edge threshold: {base_min_edge:.2%}, adjusted threshold: {adjusted_threshold:.2%}")
+    
+    # Calculate map probabilities from match probabilities - more realistic
+    # Use confidence-aware scaling
+    map_scale = 0.5 + (confidence_score * 0.2)  # Between 0.5 and 0.7
+    single_map_prob = 0.5 + (team1_win_prob - 0.5) * map_scale
+    
+    # Ensure map probability is reasonable
+    single_map_prob = max(0.35, min(0.65, single_map_prob))
+    print(f"Match probability: {team1_win_prob:.4f}, map probability: {single_map_prob:.4f} (scale: {map_scale:.2f})")
+    
+    # Calculate probabilities for different bet types
+    team1_plus_prob = 1 - (1 - single_map_prob) ** 2  # Need to win at least 1 map
+    team2_plus_prob = 1 - single_map_prob ** 2
+    
+    team1_minus_prob = single_map_prob ** 2  # Need to win 2 maps straight
+    team2_minus_prob = (1 - single_map_prob) ** 2
+    
+    # Map total probabilities (more realistic for Valorant)
+    over_prob = 2 * single_map_prob * (1 - single_map_prob)  # Prob of 1-1 after 2 maps
+    under_prob = 1 - over_prob
+    
+    # Calculate edges for all bet types
+    bet_types = [
+        ('team1_ml', team1_win_prob, odds_data['team1_ml_odds']),
+        ('team2_ml', team2_win_prob, odds_data['team2_ml_odds']),
+        ('team1_plus_1_5', team1_plus_prob, odds_data['team1_plus_1_5_odds']),
+        ('team2_plus_1_5', team2_plus_prob, odds_data['team2_plus_1_5_odds']),
+        ('team1_minus_1_5', team1_minus_prob, odds_data['team1_minus_1_5_odds']),
+        ('team2_minus_1_5', team2_minus_prob, odds_data['team2_minus_1_5_odds']),
+        ('over_2_5_maps', over_prob, odds_data['over_2_5_maps_odds']),
+        ('under_2_5_maps', under_prob, odds_data['under_2_5_maps_odds'])
+    ]
+    
+    # IMPROVED: Analyze each bet type with more realistic bet sizing
+    for bet_type, prob, odds in bet_types:
+        # Calculate implied probability and edge
+        implied_prob = 1 / odds
+        edge = prob - implied_prob
+        
+        # IMPROVED: Kelly calculation with confidence-based fractional adjustment
+        # Base fractional Kelly (higher confidence = higher fraction)
+        base_fraction = 0.1 + (confidence_score * 0.1)  # Between 0.1 and 0.2
+        
+        # Calculate Kelly stake
+        b = odds - 1  # Decimal odds to b format
+        p = prob
+        q = 1 - p
+        
+        # Handle extreme cases and zero division
+        if b <= 0:
+            kelly = 0
+        else:
+            kelly = (b * p - q) / b
+            
+            # Apply fractional Kelly based on confidence
+            kelly = kelly * base_fraction
+            
+            # Additional cap based on edge size (higher edge = less reduction)
+            if edge > 0:
+                # Scale from 0.5 to 1.0 based on edge size
+                edge_factor = 0.5 + min(0.5, edge * 5)
+                kelly = kelly * edge_factor
+            
+            # Apply absolute cap for safety
+            kelly = min(kelly, 0.05)  # Never bet more than 5% regardless of Kelly formula
+        
+        # Calculate bet amount
+        bet_amount = round(bankroll * kelly, 2)
+        
+        # IMPROVED: More realistic bet qualification logic
+        # Custom thresholds by bet type
+        type_thresholds = {
+            'team1_ml': adjusted_threshold,
+            'team2_ml': adjusted_threshold,
+            'team1_plus_1_5': adjusted_threshold * 0.9,  # Slightly lower for +1.5 bets
+            'team2_plus_1_5': adjusted_threshold * 0.9,
+            'team1_minus_1_5': adjusted_threshold * 1.3,  # Higher for riskier -1.5 bets
+            'team2_minus_1_5': adjusted_threshold * 1.3,
+            'over_2_5_maps': adjusted_threshold * 1.1,  # Slightly higher for totals
+            'under_2_5_maps': adjusted_threshold * 1.1
+        }
+        
+        # Get specific threshold for this bet type
+        bet_threshold = type_thresholds.get(bet_type, adjusted_threshold)
+        
+        # Additional filters based on bet type and confidence
+        extra_filter = True
+        
+        # Higher confidence requirements for riskier bets
+        if ('minus_1_5' in bet_type) and confidence_score < 0.5:
+            extra_filter = False
+            filter_reason = "Low confidence for -1.5 spread"
+        
+        # For 50/50 probabilities, require higher edge
+        elif 0.45 < prob < 0.55:
+            # Higher edge required when probability is close to 50/50
+            if edge < bet_threshold * 1.2:
+                extra_filter = False
+                filter_reason = "Insufficient edge for 50/50 probability"
+        else:
+            filter_reason = "Passed all filters"
+        
+        # Final edge check against bet-specific threshold
+        meets_edge = edge > bet_threshold
+        
+        # Minimum bet amount check - avoid tiny bets
+        meets_min_amount = bet_amount >= 5
+        
+        # Final recommendation logic
+        recommended = meets_edge and meets_min_amount and extra_filter
+        
+        # Store analysis results
+        betting_analysis[bet_type] = {
+            'probability': prob,
+            'implied_prob': implied_prob,
+            'edge': edge,
+            'edge_threshold': bet_threshold,
+            'meets_edge': meets_edge,
+            'odds': odds,
+            'kelly_fraction': kelly,
+            'bet_amount': bet_amount,
+            'meets_min_amount': meets_min_amount, 
+            'extra_filter': extra_filter,
+            'filter_reason': filter_reason,
+            'recommended': recommended
+        }
+        
+        # Print details for logging
+        print(f"{bet_type}: prob={prob:.4f}, edge={edge:.4f}, threshold={bet_threshold:.4f}, " + 
+              f"amount=${bet_amount:.2f}, recommend={recommended}")
+    
+    # Count recommended bets
+    recommended_count = sum(1 for analysis in betting_analysis.values() if analysis['recommended'])
+    print(f"Found {recommended_count} recommended bets out of {len(bet_types)} analyzed")
+    
+    return betting_analysis
+
+def evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score):
+    """Determine if a bet won based on actual results."""
+    # Moneyline bets
+    if bet_type == 'team1_ml':
+        return team1_score > team2_score
+    elif bet_type == 'team2_ml':
+        return team2_score > team1_score
+    
+    # Map spread bets
+    elif bet_type == 'team1_plus_1_5':
+        return team1_score + 1.5 > team2_score
+    elif bet_type == 'team2_plus_1_5':
+        return team2_score + 1.5 > team1_score
+    elif bet_type == 'team1_minus_1_5':
+        return team1_score - 1.5 > team2_score
+    elif bet_type == 'team2_minus_1_5':
+        return team2_score - 1.5 > team1_score
+    
+    # Map total bets
+    elif bet_type == 'over_2_5_maps':
+        return team1_score + team2_score > 2.5
+    elif bet_type == 'under_2_5_maps':
+        return team1_score + team2_score < 2.5
+    
+    return False
+
+def extract_match_score(match_data):
+    """Extract the actual map score from match data."""
+    if 'map_score' in match_data:
+        # Parse map score in format like "2:0"
+        try:
+            score_parts = match_data['map_score'].split(':')
+            team1_score = int(score_parts[0])
+            team2_score = int(score_parts[1])
+            return team1_score, team2_score
+        except (ValueError, IndexError):
+            pass
+    
+    # Fallback to using team_score and opponent_score
+    team1_score = match_data.get('team_score', 0)
+    team2_score = match_data.get('opponent_score', 0)
+    return team1_score, team2_score
+
+def get_teams_for_backtesting(limit=100):
+    """Get a list of teams for backtesting."""
+    print(f"Fetching teams from API: {API_URL}/teams?limit={limit}")
+    try:
+        teams_response = requests.get(f"{API_URL}/teams?limit={limit}")
+        
+        if teams_response.status_code != 200:
+            print(f"Error fetching teams: {teams_response.status_code}")
+            return []
+        
+        teams_data = teams_response.json()
+        
+        if 'data' not in teams_data:
+            print("No 'data' field found in the response")
+            return []
+        
+        # Select top teams for testing
+        teams_list = []
+        for team in teams_data['data']:
+            if 'ranking' in team and team['ranking'] and team['ranking'] <= 100:
+                teams_list.append(team)
+        
+        # If no teams with rankings were found, just take the first N teams
+        if not teams_list:
+            print(f"No teams with rankings found. Using the first {min(100, limit)} teams instead.")
+            if len(teams_data['data']) > 0:
+                teams_list = teams_data['data'][:min(100, limit)]
+        
+        print(f"Selected {len(teams_list)} teams for backtesting")
+        return teams_list
+    
+    except Exception as e:
+        print(f"Error in get_teams_for_backtesting: {e}")
+        return []
+
+def predict_with_ensemble(ensemble_models, X):
+    """
+    Make predictions using ensemble of models with improved calibration and weighting.
+    
+    Args:
+        ensemble_models (list): List of (model_type, model, scaler) tuples
+        X (numpy.ndarray): Preprocessed features for prediction
+        
+    Returns:
+        tuple: (win_probability, raw_predictions, confidence_score)
+    """
+    if not ensemble_models:
+        raise ValueError("No models provided for prediction")
+    
+    # Ensure X is properly shaped for model input
+    if len(X.shape) == 1:
+        X = X.reshape(1, -1)
+        
+    # Get predictions from each model
+    raw_predictions = []
+    model_weights = []
+    
+    for i, (model_type, model, model_scaler) in enumerate(ensemble_models):
+        try:
+            # Apply scaling if needed
+            X_pred = X.copy()
+            if model_scaler is not None:
+                try:
+                    X_pred = model_scaler.transform(X_pred)
+                except:
+                    print(f"Scaling error in model {i}, using unscaled features")
+            
+            # Make prediction based on model type
+            if model_type == 'nn':
+                pred = model.predict(X_pred, verbose=0)[0][0]
+            else:
+                pred = model.predict_proba(X_pred)[0][1]
+            
+            # Handle NaN or invalid predictions
+            if np.isnan(pred) or not np.isfinite(pred):
+                print(f"Model {i+1} returned invalid prediction, using 0.5")
+                pred = 0.5
+            
+            # Set weight based on model type to reduce neural network dominance
+            if model_type == 'nn':
+                weight = 0.5  # Reduce neural network weight
+            elif model_type == 'gb' or model_type == 'rf':
+                weight = 2.0  # Increase tree-based model weight
+            else:
+                weight = 1.0
+                
+            # Store both prediction and weight
+            raw_predictions.append(pred)
+            model_weights.append(weight)
+            
+            print(f"{model_type.upper()} model prediction: {pred:.4f}")
+        except Exception as e:
+            print(f"Error with model {i+1}: {e}")
+            continue
+    
+    if not raw_predictions:
+        print("All models failed to produce predictions, using default value")
+        return 0.5, [0.5], 0.0
+    
+    # Calculate weighted average
+    if raw_predictions and sum(model_weights) > 0:
+        mean_pred = np.average(raw_predictions, weights=model_weights)
+    else:
+        mean_pred = 0.5
+        
+    # Calculate standard deviation for confidence calculation
+    std_pred = np.std(raw_predictions)
+    confidence_score = 1 - min(1, std_pred * 2)  # Higher means more agreement
+    
+    print(f"Raw ensemble mean: {mean_pred:.4f}, std: {std_pred:.4f}, confidence: {confidence_score:.4f}")
+    
+    # More aggressive calibration to fix overconfidence
+    if std_pred > 0.25:  # Lower threshold for regression
+        # Regress extreme predictions more heavily toward 0.5
+        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.3
+    else:
+        # For normal predictions, still apply moderate calibration
+        # Move predictions closer to 0.5 by 40%
+        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.6
+    
+    # Extra safeguard against extreme predictions
+    calibrated_pred = max(0.3, min(0.7, calibrated_pred))
+    
+    return calibrated_pred, raw_predictions, confidence_score
+
+def prepare_features_for_backtest(team1_stats, team2_stats, selected_features):
+    """
+    Enhanced feature preparation for backtesting with consistent feature engineering,
+    improved feature derivation, and better error handling.
+    """
+    print("\n----- PREPARING FEATURES -----")
+    
+    # Get full feature set
+    features = prepare_data_for_model(team1_stats, team2_stats)
+    
+    if not features:
+        print("ERROR: Failed to create feature dictionary")
+        return None
+    
+    # Convert to DataFrame
+    features_df = pd.DataFrame([features])
+    original_feature_count = len(features_df.columns)
+    print(f"Original feature count: {original_feature_count}")
+    
+    # Create DataFrame with exact required features
+    complete_features = pd.DataFrame(0, index=[0], columns=selected_features)
+    
+    # Track feature coverage
+    missing_features = []
+    derived_features = []
+    
+    # STEP 1: Fill in features that are directly available
+    for feature in selected_features:
+        if feature in features_df.columns:
+            complete_features[feature] = features_df[feature].values
+        else:
+            missing_features.append(feature)
+    
+    # STEP 2: Derive missing features using domain knowledge
+    for feature in missing_features[:]:  # Use a copy to modify the original list
+        # Core differential features
+        if feature == 'win_rate_diff':
+            val = team1_stats.get('win_rate', 0.5) - team2_stats.get('win_rate', 0.5)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'recent_form_diff':
+            val = team1_stats.get('recent_form', 0.5) - team2_stats.get('recent_form', 0.5)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'score_diff_differential':
+            val = team1_stats.get('score_differential', 0) - team2_stats.get('score_differential', 0)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Better team features (binary)
+        elif feature == 'better_win_rate_team1' and 'win_rate_diff' in complete_features.columns:
+            val = 1 if complete_features['win_rate_diff'].values[0] > 0 else 0
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'better_recent_form_team1' and 'recent_form_diff' in complete_features.columns:
+            val = 1 if complete_features['recent_form_diff'].values[0] > 0 else 0
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'better_score_diff_team1' and 'score_diff_differential' in complete_features.columns:
+            val = 1 if complete_features['score_diff_differential'].values[0] > 0 else 0
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Match count features
+        elif feature == 'total_matches':
+            team1_matches = team1_stats.get('matches', 0)
+            team2_matches = team2_stats.get('matches', 0)
+            
+            if isinstance(team1_matches, list):
+                team1_count = len(team1_matches)
+            else:
+                team1_count = team1_matches
+                
+            if isinstance(team2_matches, list):
+                team2_count = len(team2_matches)
+            else:
+                team2_count = team2_matches
+                
+            complete_features[feature] = team1_count + team2_count
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'match_count_diff':
+            if 'total_matches' in complete_features.columns:
+                team1_matches = team1_stats.get('matches', 0)
+                team2_matches = team2_stats.get('matches', 0)
+                
+                if isinstance(team1_matches, list):
+                    team1_count = len(team1_matches)
+                else:
+                    team1_count = team1_matches
+                    
+                if isinstance(team2_matches, list):
+                    team2_count = len(team2_matches)
+                else:
+                    team2_count = team2_matches
+                    
+                complete_features[feature] = team1_count - team2_count
+                missing_features.remove(feature)
+                derived_features.append(feature)
+        
+        # Average metrics
+        elif feature == 'avg_win_rate':
+            val = (team1_stats.get('win_rate', 0.5) + team2_stats.get('win_rate', 0.5)) / 2
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'avg_recent_form':
+            val = (team1_stats.get('recent_form', 0.5) + team2_stats.get('recent_form', 0.5)) / 2
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Head-to-head features
+        elif feature == 'h2h_win_rate':
+            # Try to find opponent stats in team1's stats
+            h2h_win_rate = 0.5  # Default is even match
+            team2_name = team2_stats.get('team_name', '')
+            
+            if 'opponent_stats' in team1_stats and team2_name:
+                opponent_found = False
+                
+                # Check different variations of the name
+                for opponent_name, stats in team1_stats['opponent_stats'].items():
+                    if (opponent_name.lower() == team2_name.lower() or 
+                        team2_name.lower() in opponent_name.lower() or
+                        opponent_name.lower() in team2_name.lower()):
+                        if isinstance(stats, dict) and 'win_rate' in stats:
+                            h2h_win_rate = stats['win_rate']
+                            opponent_found = True
+                            break
+                
+                # If no match, create an estimate based on relative strength
+                if not opponent_found:
+                    team1_win_rate = team1_stats.get('win_rate', 0.5)
+                    team2_win_rate = team2_stats.get('win_rate', 0.5)
+                    
+                    if team1_win_rate + team2_win_rate > 0:
+                        h2h_win_rate = team1_win_rate / (team1_win_rate + team2_win_rate)
+                    
+                    # Scale to reduce extremes
+                    h2h_win_rate = 0.5 + (h2h_win_rate - 0.5) * 0.7
+            
+            complete_features[feature] = h2h_win_rate
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Player stats features
+        elif feature == 'player_rating_diff':
+            val = team1_stats.get('avg_player_rating', 1.0) - team2_stats.get('avg_player_rating', 1.0)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'better_player_rating_team1' and 'player_rating_diff' in complete_features.columns:
+            val = 1 if complete_features['player_rating_diff'].values[0] > 0 else 0
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Economy features
+        elif feature == 'pistol_win_rate_diff':
+            val = team1_stats.get('pistol_win_rate', 0.5) - team2_stats.get('pistol_win_rate', 0.5)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Interaction terms
+        elif feature == 'rating_x_win_rate' and 'player_rating_diff' in complete_features.columns and 'win_rate_diff' in complete_features.columns:
+            val = complete_features['player_rating_diff'].values[0] * complete_features['win_rate_diff'].values[0]
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # If feature name contains "padding_feature", it's ok to leave it at 0
+        elif "padding_feature" in feature:
+            missing_features.remove(feature)
+    
+    # STEP 3: Normalize extreme values to prevent model bias
+    for feature in selected_features:
+        if feature in complete_features.columns:
+            value = complete_features[feature].values[0]
+            # Cap extreme values to prevent unreasonable predictions
+            if feature.endswith('_diff') or feature.endswith('differential'):
+                if value > 0.7:
+                    complete_features[feature] = 0.7
+                    print(f"Normalized high value in {feature}: {value} → 0.7")
+                elif value < -0.7:
+                    complete_features[feature] = -0.7
+                    print(f"Normalized low value in {feature}: {value} → -0.7")
+    
+    # Convert to numpy array
+    X = complete_features.values
+    
+    # Report feature coverage
+    available_count = sum(1 for f in selected_features if f in features_df.columns)
+    derived_count = len(derived_features)
+    still_missing = len(missing_features)
+    padding_count = sum(1 for f in selected_features if "padding_feature" in f)
+    
+    print(f"Feature coverage: {available_count} original + {derived_count} derived features")
+    print(f"Still missing: {still_missing} features")
+    print(f"Padding features: {padding_count}")
+    
+    if still_missing > 0:
+        print(f"Missing features that couldn't be derived: {missing_features[:5]}...")
+    
+    return X
+
+def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0, bet_pct=0.05, min_edge=0.08, confidence_threshold=0.4):
+    """
+    Enhanced backtesting system with improved risk management and analysis capabilities.
+    
+    Args:
+        start_date (str): Start date for backtesting (YYYY-MM-DD)
+        end_date (str): End date for backtesting (YYYY-MM-DD)
+        team_limit (int): Maximum number of teams to analyze
+        bankroll (float): Starting bankroll
+        bet_pct (float): Maximum percentage of bankroll to bet
+        min_edge (float): Minimum edge required for betting
+        confidence_threshold (float): Minimum model confidence required
+        
+    Returns:
+        dict: Detailed backtest results
+    """
+    print("\n========== STARTING ENHANCED BACKTEST ==========")
+    print(f"Parameters: teams={team_limit}, bankroll=${bankroll}, max bet={bet_pct*100}%")
+    print(f"Min edge: {min_edge*100}%, min confidence: {confidence_threshold*100}%")
+    
+    # Load models and metadata
+    ensemble_models, selected_features = load_backtesting_models()
+    if not ensemble_models or not selected_features:
+        print("Failed to load required models and features. Aborting backtest.")
+        return None
+    
+    # Collect team data with progress tracking
+    print("Collecting team data for backtesting...")
+    team_data = {}
+    team_ids = {}
+    team_count = 0
+    
+    # Get list of teams with enhanced error handling
+    try:
+        teams_list = get_teams_for_backtesting(limit=team_limit)
+        if not teams_list:
+            print("Error: No teams retrieved for backtesting. Check API connection.")
+            return None
+    except Exception as e:
+        print(f"Error retrieving teams: {e}")
+        return None
+    
+    # Process teams with better progress tracking
+    for team_idx, team in enumerate(tqdm(teams_list, desc="Loading team data")):
+        team_name = team.get('name')
+        team_id = team.get('id')
+        
+        if not team_name or not team_id:
+            continue
+        
+        # Store team ID
+        team_ids[team_name] = team_id
+        
+        # Get team data with error handling
+        try:
+            team_history = fetch_team_match_history(team_id)
+            if not team_history:
+                print(f"No match history for {team_name}, skipping.")
+                continue
+            
+            team_matches = parse_match_data(team_history, team_name)
+            if not team_matches:
+                print(f"No parsed match data for {team_name}, skipping.")
+                continue
+            
+            # Filter by date range if specified
+            if start_date or end_date:
+                filtered_matches = []
+                for match in team_matches:
+                    match_date = match.get('date', '')
+                    if (not start_date or match_date >= start_date) and \
+                       (not end_date or match_date <= end_date):
+                        filtered_matches.append(match)
+                team_matches = filtered_matches
+                
+                if not team_matches:
+                    print(f"No matches in specified date range for {team_name}, skipping.")
+                    continue
+            
+            # Get player stats with timeout and error handling
+            team_player_stats = None
+            try:
+                team_player_stats = fetch_team_player_stats(team_id)
+            except Exception as e:
+                print(f"Error fetching player stats for {team_name}: {e}")
+            
+            # Calculate team stats
+            team_stats = calculate_team_stats(team_matches, team_player_stats, include_economy=True)
+            
+            # Store data
+            team_data[team_name] = {
+                'team_id': team_id,
+                'stats': team_stats,
+                'matches': team_matches
+            }
+            
+            team_count += 1
+            print(f"Loaded data for {team_name}: {len(team_matches)} matches ({team_idx+1}/{len(teams_list)})")
+            
+            # Break if we reach the team limit
+            if team_count >= team_limit:
+                break
+                
+        except Exception as e:
+            print(f"Error processing team {team_name}: {e}")
+            continue
+    
+    print(f"Successfully loaded data for {len(team_data)} teams")
+    
+    if not team_data:
+        print("Error: No team data collected. Aborting backtest.")
+        return None
+    
+    # Create dataset for backtesting with deduplication
+    backtest_matches = []
+    seen_match_ids = set()
+    
+    # Collect matches with available data for both teams
+    for team_name, team_info in team_data.items():
+        for match in team_info['matches']:
+            match_id = match.get('match_id', '')
+            opponent_name = match.get('opponent_name')
+            
+            # Skip if we don't have data for the opponent
+            if opponent_name not in team_data:
+                continue
+            
+            # Skip if already processed
+            if match_id in seen_match_ids:
+                continue
+                
+            seen_match_ids.add(match_id)
+            
+            # Add match to backtest dataset
+            backtest_matches.append({
+                'team1_name': team_name,
+                'team2_name': opponent_name,
+                'match_data': match,
+                'match_id': match_id
+            })
+    
+    print(f"Found {len(backtest_matches)} unique matches for backtesting")
+    
+    if not backtest_matches:
+        print("Error: No matches available for backtesting. Check match data collection.")
+        return None
+    
+    # Initialize results tracking
+    results = {
+        'predictions': [],
+        'bets': [],
+        'performance': {
+            'accuracy': 0,
+            'roi': 0,
+            'profit': 0,
+            'bankroll_history': [],
+            'win_rate': 0
+        },
+        'metrics': {
+            'accuracy_by_edge': {},
+            'roi_by_edge': {},
+            'bet_types': {},
+            'confidence_bins': {}
+        },
+        'team_performance': {}  # Track performance by team
+    }
+    
+    # Initialize tracking variables
+    current_bankroll = bankroll
+    correct_predictions = 0
+    total_predictions = 0
+    
+    # Track betting metrics
+    total_bets = 0
+    winning_bets = 0
+    total_wagered = 0
+    total_returns = 0
+    
+    # Track performance by confidence level
+    confidence_bins = {}
+    
+    # Run backtest with improved progress tracking
+    for match_idx, match in enumerate(tqdm(backtest_matches, desc="Backtesting matches")):
+        team1_name = match['team1_name']
+        team2_name = match['team2_name']
+        match_data = match['match_data']
+        match_id = match['match_id']
+        
+        # Track metrics by team if not already initialized
+        for team in [team1_name, team2_name]:
+            if team not in results['team_performance']:
+                results['team_performance'][team] = {
+                    'predictions': 0, 
+                    'correct': 0, 
+                    'bets': 0, 
+                    'wins': 0, 
+                    'wagered': 0, 
+                    'returns': 0
+                }
+        
+        try:
+            # Get team stats
+            team1_stats = team_data[team1_name]['stats']
+            team2_stats = team_data[team2_name]['stats']
+            
+            # Prepare features for prediction with better error handling
+            X = prepare_features_for_backtest(team1_stats, team2_stats, selected_features)
+            
+            if X is None:
+                print(f"Failed to prepare features for {team1_name} vs {team2_name}, skipping")
+                continue
+            
+            # Make prediction with improved error handling
+            try:
+                win_probability, raw_predictions, confidence_score = predict_with_ensemble(
+                    ensemble_models, X
+                )
+            except Exception as e:
+                print(f"Error making prediction for {team1_name} vs {team2_name}: {e}")
+                continue
+            
+            # Get actual result with better parsing
+            try:
+                team1_score, team2_score = extract_match_score(match_data)
+                actual_winner = 'team1' if team1_score > team2_score else 'team2'
+            except Exception as e:
+                print(f"Error extracting match score for {match_id}: {e}")
+                continue
+            
+            # Check if prediction was correct
+            predicted_winner = 'team1' if win_probability > 0.5 else 'team2'
+            prediction_correct = predicted_winner == actual_winner
+            
+            # Update accuracy
+            correct_predictions += 1 if prediction_correct else 0
+            total_predictions += 1
+            
+            # Track team-specific performance
+            results['team_performance'][team1_name]['predictions'] += 1
+            if predicted_winner == 'team1' and prediction_correct:
+                results['team_performance'][team1_name]['correct'] += 1
+            
+            results['team_performance'][team2_name]['predictions'] += 1
+            if predicted_winner == 'team2' and prediction_correct:
+                results['team_performance'][team2_name]['correct'] += 1
+            
+            # Track confidence bins
+            confidence_bin = int(confidence_score * 10) * 10  # Round to nearest 10%
+            confidence_key = f"{confidence_bin}%"
+            
+            if confidence_key not in confidence_bins:
+                confidence_bins[confidence_key] = {"total": 0, "correct": 0}
+            
+            confidence_bins[confidence_key]["total"] += 1
+            if prediction_correct:
+                confidence_bins[confidence_key]["correct"] += 1
+            
+            # Generate realistic odds with jitter for realism
+            base_odds = simulate_odds(win_probability)
+            jittered_odds = {}
+            
+            # Add realistic variability to odds (bookmakers aren't perfect)
+            for key, value in base_odds.items():
+                # Add up to ±5% random variation
+                jitter = np.random.uniform(-0.05, 0.05)
+                jittered_value = value * (1 + jitter)
+                jittered_odds[key] = round(jittered_value, 2)
+            
+            odds_data = jittered_odds
+            
+            # Analyze betting edges with enhanced risk management
+            betting_analysis = analyze_betting_edge_for_backtesting(
+                win_probability, 1 - win_probability, odds_data, 
+                confidence_score, current_bankroll
+            )
+            
+            # Apply enhanced filtering criteria
+            filtered_analysis = {}
+            for bet_type, analysis in betting_analysis.items():
+                # Override recommendation based on enhanced criteria
+                is_recommended = (
+                    analysis['edge'] >= min_edge and
+                    analysis['bet_amount'] > 0 and
+                    confidence_score >= confidence_threshold
+                )
+                
+                # Copy analysis and update recommendation
+                filtered_analysis[bet_type] = analysis.copy()
+                filtered_analysis[bet_type]['recommended'] = is_recommended
+            
+            # Simulate bets with better record keeping
+            match_bets = []
+            
+            for bet_type, analysis in filtered_analysis.items():
+                if analysis['recommended']:
+                    # Calculate bet size (respecting max bet percentage and current bankroll)
+                    max_bet = current_bankroll * bet_pct
+                    bet_amount = min(analysis['bet_amount'], max_bet)
+                    
+                    # Ensure minimum bet size for practicality
+                    if bet_amount < 1.0:
+                        continue
+                    
+                    # Determine if bet won
+                    bet_won = evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score)
+                    
+                    # Calculate returns
+                    odds = analysis['odds']
+                    returns = bet_amount * odds if bet_won else 0
+                    profit = returns - bet_amount
+                    
+                    # Update bankroll
+                    current_bankroll += profit
+                    
+                    # Track bet
+                    match_bets.append({
+                        'bet_type': bet_type,
+                        'amount': bet_amount,
+                        'odds': odds,
+                        'won': bet_won,
+                        'returns': returns,
+                        'profit': profit,
+                        'edge': analysis['edge'],
+                        'predicted_prob': analysis['probability'],
+                        'implied_prob': analysis['implied_prob'],
+                        'team1': team1_name,
+                        'team2': team2_name
+                    })
+                    
+                    # Update betting metrics
+                    total_bets += 1
+                    winning_bets += 1 if bet_won else 0
+                    total_wagered += bet_amount
+                    total_returns += returns
+                    
+                    # Track by bet type
+                    if bet_type not in results['metrics']['bet_types']:
+                        results['metrics']['bet_types'][bet_type] = {
+                            'total': 0, 'won': 0, 'wagered': 0, 'returns': 0
+                        }
+                    
+                    results['metrics']['bet_types'][bet_type]['total'] += 1
+                    results['metrics']['bet_types'][bet_type]['won'] += 1 if bet_won else 0
+                    results['metrics']['bet_types'][bet_type]['wagered'] += bet_amount
+                    results['metrics']['bet_types'][bet_type]['returns'] += returns
+                    
+                    # Track by edge
+                    edge_bucket = int(analysis['edge'] * 100) // 5 * 5  # Round to nearest 5%
+                    edge_key = f"{edge_bucket}%-{edge_bucket+5}%"
+                    
+                    if edge_key not in results['metrics']['accuracy_by_edge']:
+                        results['metrics']['accuracy_by_edge'][edge_key] = {'total': 0, 'correct': 0}
+                    if edge_key not in results['metrics']['roi_by_edge']:
+                        results['metrics']['roi_by_edge'][edge_key] = {'wagered': 0, 'returns': 0}
+                    
+                    results['metrics']['accuracy_by_edge'][edge_key]['total'] += 1
+                    results['metrics']['accuracy_by_edge'][edge_key]['correct'] += 1 if bet_won else 0
+                    results['metrics']['roi_by_edge'][edge_key]['wagered'] += bet_amount
+                    results['metrics']['roi_by_edge'][edge_key]['returns'] += returns
+                    
+                    # Track team-specific betting performance
+                    team_tracked = team1_name if 'team1' in bet_type else team2_name
+                    results['team_performance'][team_tracked]['bets'] += 1
+                    results['team_performance'][team_tracked]['wagered'] += bet_amount
+                    results['team_performance'][team_tracked]['returns'] += returns
+                    if bet_won:
+                        results['team_performance'][team_tracked]['wins'] += 1
+            
+            # Track prediction results
+            results['predictions'].append({
+                'match_id': match_id,
+                'team1': team1_name,
+                'team2': team2_name,
+                'predicted_winner': predicted_winner,
+                'actual_winner': actual_winner,
+                'team1_prob': win_probability,
+                'team2_prob': 1 - win_probability,
+                'confidence': confidence_score,
+                'correct': prediction_correct,
+                'score': f"{team1_score}-{team2_score}",
+                'date': match_data.get('date', 'Unknown')
+            })
+            
+            # Track bets
+            if match_bets:
+                results['bets'].append({
+                    'match_id': match_id,
+                    'team1': team1_name,
+                    'team2': team2_name,
+                    'bets': match_bets,
+                    'date': match_data.get('date', 'Unknown')
+                })
+            
+            # Track bankroll history with timestamp
+            results['performance']['bankroll_history'].append({
+                'match_idx': match_idx,
+                'bankroll': current_bankroll,
+                'match_id': match_id,
+                'date': match_data.get('date', 'Unknown')
+            })
+            
+            # Print periodic progress updates
+            if (match_idx + 1) % 50 == 0 or match_idx == len(backtest_matches) - 1:
+                accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
+                roi = (total_returns - total_wagered) / total_wagered if total_wagered > 0 else 0
+                
+                print(f"\nProgress ({match_idx + 1}/{len(backtest_matches)}):")
+                print(f"Prediction Accuracy: {accuracy:.2%} ({correct_predictions}/{total_predictions})")
+                print(f"Betting ROI: {roi:.2%} (${total_returns - total_wagered:.2f})")
+                print(f"Current Bankroll: ${current_bankroll:.2f}")
+                print(f"Win Rate: {winning_bets/total_bets:.2%} ({winning_bets}/{total_bets})" if total_bets > 0 else "No bets placed")
+        
+        except Exception as e:
+            print(f"Error processing match {match_id}: {e}")
+            continue
+    
+    # Store confidence bin metrics
+    results['metrics']['confidence_bins'] = confidence_bins
+    
+    # Calculate final performance metrics
+    final_accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
+    final_roi = (total_returns - total_wagered) / total_wagered if total_wagered > 0 else 0
+    final_profit = total_returns - total_wagered
+    
+    results['performance']['accuracy'] = final_accuracy
+    results['performance']['roi'] = final_roi
+    results['performance']['profit'] = final_profit
+    results['performance']['win_rate'] = winning_bets / total_bets if total_bets > 0 else 0
+    results['performance']['final_bankroll'] = current_bankroll
+    results['performance']['total_bets'] = total_bets
+    results['performance']['winning_bets'] = winning_bets
+    results['performance']['total_wagered'] = total_wagered
+    results['performance']['total_returns'] = total_returns
+    
+    # Calculate team-specific metrics
+    for team, stats in results['team_performance'].items():
+        if stats['predictions'] > 0:
+            stats['accuracy'] = stats['correct'] / stats['predictions']
+        if stats['bets'] > 0:
+            stats['win_rate'] = stats['wins'] / stats['bets']
+        if stats['wagered'] > 0:
+            stats['roi'] = (stats['returns'] - stats['wagered']) / stats['wagered']
+            stats['profit'] = stats['returns'] - stats['wagered']
+    
+    # Print final results
+    print("\n========== BACKTEST RESULTS ==========")
+    print(f"Total Matches: {total_predictions}")
+    print(f"Prediction Accuracy: {final_accuracy:.2%} ({correct_predictions}/{total_predictions})")
+    print(f"Total Bets: {total_bets}")
+    print(f"Winning Bets: {winning_bets} ({winning_bets/total_bets:.2%})" if total_bets > 0 else "No bets placed")
+    print(f"Total Wagered: ${total_wagered:.2f}")
+    print(f"Total Returns: ${total_returns:.2f}")
+    print(f"Profit/Loss: ${final_profit:.2f}")
+    print(f"ROI: {final_roi:.2%}")
+    print(f"Final Bankroll: ${current_bankroll:.2f}")
+    
+    # Print confidence bin analysis
+    print("\nAccuracy by Confidence Level:")
+    for conf_key, stats in sorted(confidence_bins.items()):
+        if stats['total'] > 0:
+            acc = stats['correct'] / stats['total']
+            print(f"  {conf_key}: {acc:.2%} ({stats['correct']}/{stats['total']})")
+    
+    # Print accuracy by edge
+    print("\nAccuracy by Edge:")
+    for edge_key, stats in sorted(results['metrics']['accuracy_by_edge'].items()):
+        accuracy = stats['correct'] / stats['total'] if stats['total'] > 0 else 0
+        print(f"  {edge_key}: {accuracy:.2%} ({stats['correct']}/{stats['total']})")
+    
+    # Print ROI by edge
+    print("\nROI by Edge:")
+    for edge_key, stats in sorted(results['metrics']['roi_by_edge'].items()):
+        roi = (stats['returns'] - stats['wagered']) / stats['wagered'] if stats['wagered'] > 0 else 0
+        print(f"  {edge_key}: {roi:.2%} (${stats['returns'] - stats['wagered']:.2f})")
+    
+    # Print performance by bet type
+    print("\nPerformance by Bet Type:")
+    for bet_type, stats in results['metrics']['bet_types'].items():
+        win_rate = stats['won'] / stats['total'] if stats['total'] > 0 else 0
+        roi = (stats['returns'] - stats['wagered']) / stats['wagered'] if stats['wagered'] > 0 else 0
+        print(f"  {bet_type}: {win_rate:.2%} win rate, {roi:.2%} ROI (${stats['returns'] - stats['wagered']:.2f})")
+    
+    # Print top and bottom performing teams
+    print("\nTop 5 Teams by ROI (min 5 bets):")
+    team_roi = [(team, stats['roi'], stats['profit'], stats['bets']) 
+                for team, stats in results['team_performance'].items() 
+                if stats.get('bets', 0) >= 5 and 'roi' in stats]
+    team_roi.sort(key=lambda x: x[1], reverse=True)
+    
+    for i, (team, roi, profit, bets) in enumerate(team_roi[:5]):
+        print(f"  {i+1}. {team}: {roi:.2%} ROI, ${profit:.2f} profit ({bets} bets)")
+    
+    # Create enhanced visualizations
+    create_enhanced_backtest_visualizations(results)
+    
+    # Save results with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    save_path = f"backtest_results_{timestamp}.json"
+    with open(save_path, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    # Save summary to CSV for easy analysis
+    csv_path = f"backtest_summary_{timestamp}.csv"
+    with open(csv_path, 'w') as f:
+        f.write("Metric,Value\n")
+        f.write(f"Total Matches,{total_predictions}\n")
+        f.write(f"Prediction Accuracy,{final_accuracy:.4f}\n")
+        f.write(f"Total Bets,{total_bets}\n")
+        f.write(f"Winning Bets,{winning_bets}\n")
+        f.write(f"Win Rate,{winning_bets/total_bets if total_bets > 0 else 0:.4f}\n")
+        f.write(f"Total Wagered,{total_wagered:.2f}\n")
+        f.write(f"Total Returns,{total_returns:.2f}\n")
+        f.write(f"Profit/Loss,{final_profit:.2f}\n")
+        f.write(f"ROI,{final_roi:.4f}\n")
+        f.write(f"Initial Bankroll,{bankroll:.2f}\n")
+        f.write(f"Final Bankroll,{current_bankroll:.2f}\n")
+    
+    print(f"\nBacktest results saved to {save_path}")
+    print(f"Summary statistics saved to {csv_path}")
+    
+    return results
+
+def create_enhanced_backtest_visualizations(results):
+    """Create enhanced visualizations for backtest results with additional insights."""
+    # Create directory for visualizations
+    os.makedirs("backtest_plots", exist_ok=True)
+    
+    # 1. Bankroll history with improved formatting
+    plt.figure(figsize=(14, 7))
+    
+    # Extract bankroll data
+    bankroll_history = [entry['bankroll'] for entry in results['performance']['bankroll_history']]
+    match_indices = [entry['match_idx'] for entry in results['performance']['bankroll_history']]
+    
+    # Plot with better formatting
+    plt.plot(match_indices, bankroll_history, 'b-', linewidth=2)
+    plt.axhline(y=bankroll_history[0], color='r', linestyle='--', alpha=0.5, label='Initial Bankroll')
+    
+    # Add annotations for significant points
+    if len(bankroll_history) > 1:
+        max_bankroll = max(bankroll_history)
+        max_idx = bankroll_history.index(max_bankroll)
+        min_bankroll = min(bankroll_history)
+        min_idx = bankroll_history.index(min_bankroll)
+        
+        plt.annotate(f'Max: ${max_bankroll:.2f}', 
+                    xy=(match_indices[max_idx], max_bankroll),
+                    xytext=(match_indices[max_idx], max_bankroll + 50),
+                    arrowprops=dict(facecolor='green', shrink=0.05), 
+                    ha='center')
+        
+        plt.annotate(f'Min: ${min_bankroll:.2f}', 
+                    xy=(match_indices[min_idx], min_bankroll),
+                    xytext=(match_indices[min_idx], min_bankroll - 50),
+                    arrowprops=dict(facecolor='red', shrink=0.05), 
+                    ha='center')
+    
+    plt.title('Bankroll Progression During Backtest', fontsize=16)
+    plt.xlabel('Match Number', fontsize=14)
+    plt.ylabel('Bankroll ($)', fontsize=14)
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    
+    # Add final bankroll annotation
+    if bankroll_history:
+        plt.annotate(f'Final: ${bankroll_history[-1]:.2f}',
+                    xy=(match_indices[-1], bankroll_history[-1]),
+                    xytext=(match_indices[-1]-5, bankroll_history[-1] + 30),
+                    ha='right')
+    
+    plt.tight_layout()
+    plt.savefig('backtest_plots/bankroll_history.png', dpi=300)
+    plt.close()
+    
+    # 2. Enhanced calibration curve
+    plt.figure(figsize=(12, 8))
+    
+    # Create bins for prediction probabilities
+    prob_bins = np.arange(0, 1.1, 0.1)
+    bin_centers = (prob_bins[:-1] + prob_bins[1:]) / 2
+    
+    # Initialize arrays for tracking
+    bin_counts = np.zeros(len(bin_centers))
+    bin_correct = np.zeros(len(bin_centers))
+    
+    # Sort predictions into bins
+    for pred in results['predictions']:
+        # Get the probability for the predicted winner
+        if pred['predicted_winner'] == 'team1':
+            prob = pred['team1_prob']
+        else:
+            prob = pred['team2_prob']
+        
+        # Find the appropriate bin
+        bin_idx = np.digitize(prob, prob_bins) - 1
+        if bin_idx < len(bin_counts):
+            bin_counts[bin_idx] += 1
+            bin_correct[bin_idx] += 1 if pred['correct'] else 0
+    
+    # Calculate actual frequencies
+    actual_freqs = np.zeros(len(bin_centers))
+    for i in range(len(bin_centers)):
+        if bin_counts[i] > 0:
+            actual_freqs[i] = bin_correct[i] / bin_counts[i]
+    
+    # Plot calibration curve with enhanced styling
+    plt.plot([0, 1], [0, 1], 'k--', label='Perfect Calibration', linewidth=2, alpha=0.7)
+    plt.plot(bin_centers, actual_freqs, 'bo-', label='Model Calibration', linewidth=2, markersize=8)
+    
+    # Add sample counts as bar chart on secondary axis
+    ax1 = plt.gca()
+    ax2 = ax1.twinx()
+    ax2.bar(bin_centers, bin_counts, alpha=0.2, width=0.08, color='gray', label='Sample Count')
+    ax2.set_ylabel('Number of Predictions', fontsize=14)
+    
+    # Add labels
+    for i, (center, count, freq) in enumerate(zip(bin_centers, bin_counts, actual_freqs)):
+        if count > 0:
+            ax1.annotate(f"{int(count)}", (center, freq + 0.03),
+                        ha='center', va='bottom', fontsize=9)
+    
+    # Add overall metrics
+    total_correct = sum(bin_correct)
+    total_preds = sum(bin_counts)
+    overall_accuracy = total_correct / total_preds if total_preds > 0 else 0
+    
+    # Calculate calibration metrics
+    bins_with_data = [i for i in range(len(bin_counts)) if bin_counts[i] > 0]
+    calibration_error = np.mean([abs(actual_freqs[i] - bin_centers[i]) for i in bins_with_data]) if bins_with_data else 0
+    
+    plt.figtext(0.15, 0.15, f"Overall Accuracy: {overall_accuracy:.2%}\nCalibration Error: {calibration_error:.3f}",
+               bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.5'))
+    
+    plt.title('Prediction Calibration Analysis', fontsize=16)
+    plt.xlabel('Predicted Probability', fontsize=14)
+    plt.ylabel('Actual Frequency', fontsize=14)
+    
+    # Combine legends from both axes
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+    
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig('backtest_plots/calibration_curve.png', dpi=300)
+    plt.close()
+    
+    # 3. Enhanced ROI by edge analysis
+    edges = []
+    rois = []
+    counts = []
+    profits = []
+    
+    for edge_key, stats in results['metrics']['roi_by_edge'].items():
+        if stats['wagered'] > 0:
+            # Extract edge value from key (e.g., "5%-10%" -> 7.5)
+            edge_parts = edge_key.replace('%', '').split('-')
+            avg_edge = (float(edge_parts[0]) + float(edge_parts[1])) / 2 / 100
+            
+            roi = (stats['returns'] - stats['wagered']) / stats['wagered']
+            profit = stats['returns'] - stats['wagered']
+            edges.append(avg_edge)
+            rois.append(roi)
+            counts.append(stats['wagered'])
+            profits.append(profit)
+    
+    if edges:
+        plt.figure(figsize=(12, 8))
+        
+        # Create scatter plot with size based on amount wagered
+        scatter = plt.scatter(edges, rois, s=[c/20 for c in counts], alpha=0.7, 
+                             c=profits, cmap='RdYlGn', vmin=min(profits), vmax=max(profits))
+        
+        # Add color bar
+        cbar = plt.colorbar(scatter)
+        cbar.set_label('Profit/Loss ($)', fontsize=12)
+        
+        # Add reference line
+        plt.axhline(y=0, color='r', linestyle='--', alpha=0.3)
+        
+        # Add regression line
+        if len(edges) > 1:
+            z = np.polyfit(edges, rois, 1)
+            p = np.poly1d(z)
+            plt.plot(sorted(edges), p(sorted(edges)), "r--", alpha=0.7, 
+                    label=f"Trend: y = {z[0]:.2f}x + {z[1]:.2f}")
+            
+            # Calculate correlation
+            correlation = np.corrcoef(edges, rois)[0, 1]
+            plt.annotate(f"Correlation: {correlation:.2f}", 
+                        xy=(0.05, 0.05), xycoords='axes fraction',
+                        bbox=dict(facecolor='white', alpha=0.7))
+        
+        plt.title('ROI vs. Predicted Edge', fontsize=16)
+        plt.xlabel('Predicted Edge', fontsize=14)
+        plt.ylabel('Realized ROI', fontsize=14)
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        
+        # Format x-axis as percentage
+        plt.gca().xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: '{:.0%}'.format(x)))
+        plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
+        
+        plt.tight_layout()
+        plt.savefig('backtest_plots/roi_by_edge.png', dpi=300)
+        plt.close()
+    
+    # 4. Enhanced bet type performance with win rates and ROI
+    bet_types = list(results['metrics']['bet_types'].keys())
+    
+    if bet_types:
+        win_rates = []
+        rois = []
+        volumes = []
+        
+        for bet_type in bet_types:
+            stats = results['metrics']['bet_types'][bet_type]
+            win_rates.append(stats['won'] / stats['total'] if stats['total'] > 0 else 0)
+            rois.append((stats['returns'] - stats['wagered']) / stats['wagered'] if stats['wagered'] > 0 else 0)
+            volumes.append(stats['wagered'])
+        
+        # Sort by volume for better visualization
+        sorted_indices = np.argsort(volumes)[::-1]
+        sorted_bet_types = [bet_types[i] for i in sorted_indices]
+        sorted_win_rates = [win_rates[i] for i in sorted_indices]
+        sorted_rois = [rois[i] for i in sorted_indices]
+        sorted_volumes = [volumes[i] for i in sorted_indices]
+        
+        plt.figure(figsize=(14, 8))
+        
+        # Create a more informative grouped bar chart
+        x = np.arange(len(sorted_bet_types))
+        width = 0.35
+        
+        ax1 = plt.gca()
+        ax2 = ax1.twinx()
+        
+        # Plot win rates and ROI as bars
+        bars1 = ax1.bar(x - width/2, sorted_win_rates, width, label='Win Rate', color='skyblue')
+        bars2 = ax1.bar(x + width/2, sorted_rois, width, label='ROI', color='lightgreen')
+        
+        # Plot volume as a line on secondary axis
+        ax2.plot(x, sorted_volumes, 'ro-', label='Volume Wagered ($)', linewidth=2)
+        
+        # Add value labels to bars
+        for i, bar in enumerate(bars1):
+            height = bar.get_height()
+            ax1.annotate(f'{height:.1%}',
+                        xy=(bar.get_x() + bar.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom', fontsize=8)
+                        
+        for i, bar in enumerate(bars2):
+            height = bar.get_height()
+            ax1.annotate(f'{height:.1%}',
+                        xy=(bar.get_x() + bar.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom', fontsize=8)
+        
+        # Add a horizontal line at y=0
+        ax1.axhline(y=0, color='r', linestyle='-', alpha=0.2)
+        
+        # Add labels and legend
+        ax1.set_xlabel('Bet Type', fontsize=14)
+        ax1.set_ylabel('Rate (%)', fontsize=14)
+        ax2.set_ylabel('Volume Wagered ($)', fontsize=14)
+        
+        ax1.set_title('Performance by Bet Type', fontsize=16)
+        ax1.set_xticks(x)
+        ax1.set_xticklabels([bt.replace('_', ' ').upper() for bt in sorted_bet_types], rotation=45, ha='right')
+        
+        # Format y-axis as percentage
+        ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
+        
+        # Add combined legend
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
+        
+        plt.tight_layout()
+        plt.savefig('backtest_plots/bet_type_performance.png', dpi=300)
+        plt.close()
+    
+    # 5. New visualization: Team performance analysis
+    if 'team_performance' in results:
+        # Get teams with significant betting activity
+        significant_teams = {team: stats for team, stats in results['team_performance'].items() 
+                           if stats.get('bets', 0) >= 5}
+        
+        if significant_teams:
+            # Sort teams by ROI
+            sorted_teams = sorted(significant_teams.items(), 
+                                 key=lambda x: x[1].get('roi', 0) if 'roi' in x[1] else 0, 
+                                 reverse=True)
+            
+            # Limit to top 15 teams for readability
+            top_teams = sorted_teams[:15]
+            
+            team_names = [t[0] for t in top_teams]
+            team_rois = [t[1].get('roi', 0) if 'roi' in t[1] else 0 for t in top_teams]
+            team_win_rates = [t[1].get('win_rate', 0) if 'win_rate' in t[1] else 0 for t in top_teams]
+            team_bets = [t[1].get('bets', 0) for t in top_teams]
+            
+            plt.figure(figsize=(14, 8))
+            
+            # Create horizontal bar chart for better readability with long team names
+            y_pos = np.arange(len(team_names))
+            
+            # Create bars
+            plt.barh(y_pos, team_rois, align='center', height=0.5, color='lightgreen', 
+                    label='ROI')
+            
+            # Add win rate as text
+            for i, (roi, win_rate, bets) in enumerate(zip(team_rois, team_win_rates, team_bets)):
+                plt.annotate(f"Win: {win_rate:.1%}, Bets: {bets}", 
+                            xy=(roi + 0.02, i), 
+                            verticalalignment='center',
+                            fontsize=9)
+            
+            # Add vertical line at x=0
+            plt.axvline(x=0, color='r', linestyle='-', alpha=0.2)
+            
+            # Add labels
+            plt.xlabel('Return on Investment (ROI)', fontsize=14)
+            plt.title('Team Performance by ROI (Min. 5 Bets)', fontsize=16)
+            plt.yticks(y_pos, team_names)
+            
+            # Format x-axis as percentage
+            plt.gca().xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: '{:.0%}'.format(x)))
+            
+            plt.tight_layout()
+            plt.savefig('backtest_plots/team_performance.png', dpi=300)
+            plt.close()
+    
+    # 6. New visualization: Model confidence vs. accuracy
+    if 'metrics' in results and 'confidence_bins' in results['metrics']:
+        confidence_data = results['metrics']['confidence_bins']
+        
+        if confidence_data:
+            conf_levels = []
+            accuracies = []
+            counts = []
+            
+            for conf_key, stats in confidence_data.items():
+                if stats['total'] > 0:
+                    # Extract confidence level from key (e.g., "70%" -> 0.7)
+                    conf_level = float(conf_key.replace('%', '')) / 100
+                    accuracy = stats['correct'] / stats['total']
+                    
+                    conf_levels.append(conf_level)
+                    accuracies.append(accuracy)
+                    counts.append(stats['total'])
+            
+            if conf_levels:
+                plt.figure(figsize=(12, 8))
+                
+                # Create scatter plot with size based on sample count
+                scatter = plt.scatter(conf_levels, accuracies, s=[c*2 for c in counts], 
+                                     alpha=0.7, c=accuracies, cmap='viridis')
+                
+                # Add perfect calibration line
+                plt.plot([0, 1], [0, 1], 'k--', label='Perfect Calibration')
+                
+                # Add labels
+                for i, (x, y, count) in enumerate(zip(conf_levels, accuracies, counts)):
+                    plt.annotate(f"n={count}", (x, y), 
+                                xytext=(5, 5), textcoords='offset points',
+                                fontsize=9)
+                
+                # Calculate correlation and add trend line
+                if len(conf_levels) > 1:
+                    z = np.polyfit(conf_levels, accuracies, 1)
+                    p = np.poly1d(z)
+                    plt.plot(sorted(conf_levels), p(sorted(conf_levels)), "r--", alpha=0.7,
+                            label=f"Trend: y = {z[0]:.2f}x + {z[1]:.2f}")
+                    
+                    correlation = np.corrcoef(conf_levels, accuracies)[0, 1]
+                    plt.annotate(f"Correlation: {correlation:.2f}", 
+                                xy=(0.05, 0.90), xycoords='axes fraction',
+                                bbox=dict(facecolor='white', alpha=0.7))
+                
+                plt.title('Model Confidence vs. Actual Accuracy', fontsize=16)
+                plt.xlabel('Model Confidence', fontsize=14)
+                plt.ylabel('Actual Accuracy', fontsize=14)
+                plt.grid(True, alpha=0.3)
+                plt.legend()
+                
+                # Format axes as percentage
+                plt.gca().xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: '{:.0%}'.format(x)))
+                plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
+                
+                plt.tight_layout()
+                plt.savefig('backtest_plots/confidence_vs_accuracy.png', dpi=300)
+                plt.close()
+    
+    # 7. New visualization: Daily profit/loss over time
+    if 'bets' in results and results['bets']:
+        # Group bets by date
+        daily_profits = {}
+        daily_bets = {}
+        
+        for bet_record in results['bets']:
+            date = bet_record.get('date', 'Unknown')
+            if date == 'Unknown':
+                continue
+                
+            # Extract just the date part if it's a datetime string
+            date_parts = date.split()
+            if date_parts:
+                date = date_parts[0]
+                
+            if date not in daily_profits:
+                daily_profits[date] = 0
+                daily_bets[date] = 0
+                
+            # Sum profits for all bets on this match
+            for bet in bet_record['bets']:
+                daily_profits[date] += bet.get('profit', 0)
+                daily_bets[date] += 1
+        
+        if daily_profits:
+            # Convert to lists for plotting
+            dates = sorted(daily_profits.keys())
+            profits = [daily_profits[d] for d in dates]
+            bets_count = [daily_bets[d] for d in dates]
+            
+            # Calculate cumulative profit
+            cum_profit = np.cumsum(profits)
+            
+            plt.figure(figsize=(14, 10))
+            
+            # Create subplots
+            gs = plt.GridSpec(2, 1, height_ratios=[2, 1])
+            
+            # Top plot: Daily and cumulative profit
+            ax1 = plt.subplot(gs[0])
+            
+            # Plot daily profit/loss as bars
+            bars = ax1.bar(dates, profits, alpha=0.7, label='Daily P/L')
+            
+            # Color bars based on profit/loss
+            for i, p in enumerate(profits):
+                bars[i].set_color('green' if p >= 0 else 'red')
+            
+            # Plot cumulative profit as line on same axis
+            ax1_b = ax1.twinx()
+            ax1_b.plot(dates, cum_profit, 'b-', label='Cumulative P/L', linewidth=2)
+            
+            # Add labels
+            ax1.set_title('Daily Profit/Loss Over Time', fontsize=16)
+            ax1.set_xlabel('Date', fontsize=12)
+            ax1.set_ylabel('Daily Profit/Loss ($)', fontsize=12)
+            ax1_b.set_ylabel('Cumulative Profit/Loss ($)', fontsize=12)
+            
+            # Add combined legend
+            lines1, labels1 = ax1.get_legend_handles_labels()
+            lines2, labels2 = ax1_b.get_legend_handles_labels()
+            ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+            
+            # Format x-axis for readability
+            if len(dates) > 10:
+                ax1.set_xticks(ax1.get_xticks()[::len(dates)//10])
+                
+            plt.setp(ax1.get_xticklabels(), rotation=45, ha='right')
+            
+            # Bottom plot: Number of bets per day
+            ax2 = plt.subplot(gs[1], sharex=ax1)
+            ax2.bar(dates, bets_count, alpha=0.7, color='skyblue', label='Number of Bets')
+            ax2.set_ylabel('Number of Bets', fontsize=12)
+            ax2.legend()
+            
+            plt.tight_layout()
+            plt.savefig('backtest_plots/daily_profit_loss.png', dpi=300)
+            plt.close()
+    
+    # Create an index HTML file for easy viewing of all plots
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Backtest Results Visualization</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                background-color: #f5f5f5;
+            }
+            h1, h2 {
+                color: #333;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            .plot-container {
+                background-color: white;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            .plot-image {
+                max-width: 100%;
+                height: auto;
+                display: block;
+                margin: 0 auto;
+            }
+            .description {
+                margin-top: 10px;
+                color: #666;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Valorant Match Prediction Backtest Results</h1>
+            <p>Generated on: """ + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + """</p>
+            
+            <div class="plot-container">
+                <h2>Bankroll History</h2>
+                <img class="plot-image" src="bankroll_history.png" alt="Bankroll History">
+                <div class="description">
+                    Shows how the bankroll changed over the course of the backtest. Annotations indicate maximum and minimum points.
+                </div>
+            </div>
+            
+            <div class="plot-container">
+                <h2>Prediction Calibration</h2>
+                <img class="plot-image" src="calibration_curve.png" alt="Calibration Curve">
+                <div class="description">
+                    Compares predicted probabilities vs. actual outcomes. A well-calibrated model should follow the diagonal line.
+                </div>
+            </div>
+            
+            <div class="plot-container">
+                <h2>ROI vs. Predicted Edge</h2>
+                <img class="plot-image" src="roi_by_edge.png" alt="ROI by Edge">
+                <div class="description">
+                    Shows the relationship between predicted edge and actual ROI. Points are sized by amount wagered.
+                </div>
+            </div>
+            
+            <div class="plot-container">
+                <h2>Performance by Bet Type</h2>
+                <img class="plot-image" src="bet_type_performance.png" alt="Bet Type Performance">
+                <div class="description">
+                    Compares win rates and ROI across different bet types, with volume information.
+                </div>
+            </div>
+            
+            <div class="plot-container">
+                <h2>Team Performance</h2>
+                <img class="plot-image" src="team_performance.png" alt="Team Performance">
+                <div class="description">
+                    Shows ROI and win rates for teams with at least 5 bets placed, sorted by ROI.
+                </div>
+            </div>
+            
+            <div class="plot-container">
+                <h2>Model Confidence vs. Accuracy</h2>
+                <img class="plot-image" src="confidence_vs_accuracy.png" alt="Confidence vs Accuracy">
+                <div class="description">
+                    Analyzes how model confidence correlates with actual prediction accuracy.
+                </div>
+            </div>
+            
+            <div class="plot-container">
+                <h2>Daily Profit/Loss</h2>
+                <img class="plot-image" src="daily_profit_loss.png" alt="Daily Profit/Loss">
+                <div class="description">
+                    Shows daily profit/loss and cumulative profit over time, along with number of bets placed each day.
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    with open('backtest_plots/index.html', 'w') as f:
+        f.write(html_content)
+    
+    print(f"Created visualization dashboard at backtest_plots/index.html")
 
 def main():
     """Main function to handle command line arguments and run the program."""
@@ -3973,6 +6107,18 @@ def main():
     
     # Add bankroll parameter
     parser.add_argument("--bankroll", type=float, default=1000, help="Your current betting bankroll")
+
+    # Add backtest command and options
+    parser.add_argument("--backtest", action="store_true", help="Run backtesting on historical matches")
+    parser.add_argument("--teams", type=int, default=50, help="Number of teams to include in backtesting")
+    parser.add_argument("--start-date", type=str, help="Start date for backtesting (YYYY-MM-DD)")
+    parser.add_argument("--end-date", type=str, help="End date for backtesting (YYYY-MM-DD)")
+    parser.add_argument("--test-bankroll", type=float, default=1000, help="Starting bankroll for backtesting")
+    parser.add_argument("--max-bet", type=float, default=0.05, help="Maximum bet size as fraction of bankroll")
+    parser.add_argument("--min-edge", type=float, default=0.08, help="Minimum edge required for betting")
+    parser.add_argument("--min-confidence", type=float, default=0.4, help="Minimum model confidence required")
+    parser.add_argument("--interactive", action="store_true", help="Use interactive parameter entry for backtesting")
+    parser.add_argument("--analyze-results", type=str, help="Analyze previous backtest results file")
 
     args = parser.parse_args()
     
@@ -4117,13 +6263,205 @@ def main():
                             track_betting_performance(prediction, bet_placed, bet_amount, outcome, odds)
                 except (ValueError, IndexError):
                     print("Invalid input, not tracking this bet.")
+
+    elif args.backtest:
+        print("\nRunning enhanced backtesting to verify prediction accuracy and betting strategy...")
+        
+        # Use interactive parameter entry if requested
+        if args.interactive:
+            params = get_backtest_params()
+            results = run_backtest(
+                start_date=params['start_date'],
+                end_date=params['end_date'],
+                team_limit=params['team_limit'],
+                bankroll=params['bankroll'],
+                bet_pct=params['bet_pct'],
+                min_edge=params['min_edge'],
+                confidence_threshold=params['confidence_threshold']
+            )
+        else:
+            # Use command-line parameters
+            results = run_backtest(
+                start_date=args.start_date,
+                end_date=args.end_date,
+                team_limit=args.teams,
+                bankroll=args.test_bankroll,
+                bet_pct=args.max_bet,
+                min_edge=args.min_edge,
+                confidence_threshold=args.min_confidence
+            )
+        
+        if results:
+            # Analyze key insights
+            insights = identify_key_insights(results)
+            
+            # Ask user if they want to analyze specific matches
+            analyze_matches = input("\nWould you like to analyze specific matches from the backtest? (y/n): ").lower().startswith('y')
+            if analyze_matches:
+                while True:
+                    print("\nOptions:")
+                    print("1. Analyze a match by index")
+                    print("2. Analyze a specific team's matches")
+                    print("3. Exit analysis")
+                    
+                    choice = input("\nEnter your choice (1-3): ")
+                    
+                    if choice == '1':
+                        try:
+                            match_idx = int(input("Enter match index (0-{}): ".format(len(results['predictions'])-1)))
+                            if 0 <= match_idx < len(results['predictions']):
+                                match_id = results['predictions'][match_idx]['match_id']
+                                analyze_specific_match(results, match_id)
+                            else:
+                                print("Invalid match index")
+                        except ValueError:
+                            print("Invalid input")
+                    elif choice == '2':
+                        team_name = input("Enter team name: ")
+                        team_matches = []
+                        
+                        for pred in results['predictions']:
+                            if pred['team1'].lower() == team_name.lower() or pred['team2'].lower() == team_name.lower():
+                                team_matches.append(pred)
+                        
+                        if not team_matches:
+                            print(f"No matches found for {team_name}")
+                        else:
+                            print(f"\nFound {len(team_matches)} matches for {team_name}:")
+                            for i, match in enumerate(team_matches):
+                                print(f"{i}. {match['team1']} vs {match['team2']} ({match['score']})")
+                            
+                            try:
+                                match_idx = int(input("Enter match index to analyze: "))
+                                if 0 <= match_idx < len(team_matches):
+                                    match_id = team_matches[match_idx]['match_id']
+                                    analyze_specific_match(results, match_id)
+                                else:
+                                    print("Invalid match index")
+                            except ValueError:
+                                print("Invalid input")
+                    elif choice == '3':
+                        break
+                    else:
+                        print("Invalid choice")
     
+    elif args.analyze_results:
+        try:
+            print(f"Analyzing backtest results from {args.analyze_results}...")
+            with open(args.analyze_results, 'r') as f:
+                results = json.load(f)
+            
+            # Identify key insights
+            insights = identify_key_insights(results)
+            
+            # Ask user if they want to analyze specific matches
+            analyze_matches = input("\nWould you like to analyze specific matches from the backtest? (y/n): ").lower().startswith('y')
+            if analyze_matches:
+                while True:
+                    print("\nOptions:")
+                    print("1. Analyze a match by index")
+                    print("2. Analyze a specific team's matches")
+                    print("3. Analyze matches with high profit/loss")
+                    print("4. Exit analysis")
+                    
+                    choice = input("\nEnter your choice (1-4): ")
+                    
+                    if choice == '1':
+                        try:
+                            match_idx = int(input("Enter match index (0-{}): ".format(len(results['predictions'])-1)))
+                            if 0 <= match_idx < len(results['predictions']):
+                                match_id = results['predictions'][match_idx]['match_id']
+                                analyze_specific_match(results, match_id)
+                            else:
+                                print("Invalid match index")
+                        except ValueError:
+                            print("Invalid input")
+                    elif choice == '2':
+                        team_name = input("Enter team name: ")
+                        team_matches = []
+                        
+                        for pred in results['predictions']:
+                            if pred['team1'].lower() == team_name.lower() or pred['team2'].lower() == team_name.lower():
+                                team_matches.append(pred)
+                        
+                        if not team_matches:
+                            print(f"No matches found for {team_name}")
+                        else:
+                            print(f"\nFound {len(team_matches)} matches for {team_name}:")
+                            for i, match in enumerate(team_matches):
+                                print(f"{i}. {match['team1']} vs {match['team2']} ({match['score']})")
+                            
+                            try:
+                                match_idx = int(input("Enter match index to analyze: "))
+                                if 0 <= match_idx < len(team_matches):
+                                    match_id = team_matches[match_idx]['match_id']
+                                    analyze_specific_match(results, match_id)
+                                else:
+                                    print("Invalid match index")
+                            except ValueError:
+                                print("Invalid input")
+                    elif choice == '3':
+                        # Find matches with high profit or loss
+                        profitable_matches = []
+                        unprofitable_matches = []
+                        
+                        for bet_record in results['bets']:
+                            match_id = bet_record.get('match_id')
+                            if not match_id:
+                                continue
+                                
+                            total_profit = sum(bet['profit'] for bet in bet_record['bets'])
+                            if total_profit > 50:  # Significant profit
+                                profitable_matches.append((match_id, bet_record, total_profit))
+                            elif total_profit < -50:  # Significant loss
+                                unprofitable_matches.append((match_id, bet_record, total_profit))
+                        
+                        print("\nMatches with high profit/loss:")
+                        print("\nMost Profitable Matches:")
+                        profitable_matches.sort(key=lambda x: x[2], reverse=True)
+                        for i, (match_id, bet_record, profit) in enumerate(profitable_matches[:5]):
+                            print(f"{i}. {bet_record['team1']} vs {bet_record['team2']}: ${profit:.2f}")
+                        
+                        print("\nLeast Profitable Matches:")
+                        unprofitable_matches.sort(key=lambda x: x[2])
+                        for i, (match_id, bet_record, profit) in enumerate(unprofitable_matches[:5]):
+                            print(f"{i}. {bet_record['team1']} vs {bet_record['team2']}: ${profit:.2f}")
+                        
+                        analyze_type = input("\nAnalyze (P)rofitable or (U)nprofitable matches? ").lower()
+                        if analyze_type.startswith('p'):
+                            matches_to_analyze = profitable_matches[:5]
+                        else:
+                            matches_to_analyze = unprofitable_matches[:5]
+                        
+                        try:
+                            match_idx = int(input("Enter match index to analyze: "))
+                            if 0 <= match_idx < len(matches_to_analyze):
+                                match_id = matches_to_analyze[match_idx][0]
+                                analyze_specific_match(results, match_id)
+                            else:
+                                print("Invalid match index")
+                        except ValueError:
+                            print("Invalid input")
+                    elif choice == '4':
+                        break
+                    else:
+                        print("Invalid choice")
+        except Exception as e:
+            print(f"Error analyzing backtest results: {e}")
+            print("Make sure the file exists and contains valid backtest results.")
+
     elif args.stats:
         # View betting performance statistics
         view_betting_performance()
     
     else:
-        print("Please specify an action: --train, --retrain, --predict, or --stats")
+        print("Please specify an action: --train, --retrain, --predict, --backtest, --analyze-results, or --stats")
+        print("\nExample commands:")
+        print("  python valorant_predictor.py --train --cross-validate --folds 10")
+        print("  python valorant_predictor.py --predict --team1 'Sentinels' --team2 'Cloud9'")
+        print("  python valorant_predictor.py --backtest --teams 40 --interactive")
+        print("  python valorant_predictor.py --analyze-results backtest_results_20240505_120000.json")
+        print("  python valorant_predictor.py --stats")
 
 
 if __name__ == "__main__":
