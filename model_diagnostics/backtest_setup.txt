@@ -1,0 +1,62 @@
+Backtest Run: 2025-05-06 00:39:42
+Min edge: 6.0%
+Min confidence: 30.0%
+
+Models loaded:
+  - NN: 5 models
+  - GB: 1 models
+  - RF: 1 models
+  - LR: 1 models
+  - SVM: 1 models
+
+Features loaded:
+  1. h2h_win_rate
+  2. h2h_score_diff
+  3. h2h_advantage_team1
+  4. h2h_x_win_rate
+  5. h2h_x_form
+  6. score_diff_differential
+  7. avg_score_diff
+  8. win_rate_diff
+  9. h2h_matches
+  10. win_loss_ratio_diff
+  11. avg_opponent_score_diff
+  12. haven_win_rate_diff
+  13. full_buy_win_rate_diff
+  14. economy_efficiency_diff
+  15. total_matches
+  16. h2h_significant
+  17. better_avg_score_team1
+  18. pearl_win_rate_diff
+  19. rating_x_win_rate
+  20. wins_diff
+  21. icebox_win_rate_diff
+  22. first_blood_x_win_rate
+  23. abyss_atk_win_rate_diff
+  24. consistency_diff
+  25. pistol_x_full_buy
+  26. split_win_rate_diff
+  27. breeze_def_win_rate_diff
+  28. avg_headshot
+  29. acs_diff
+  30. pistol_win_rate_diff
+  31. lotus_win_rate_diff
+  32. match_count_diff
+  33. kast_diff
+  34. adr_diff
+  35. fk_fd_diff
+  36. avg_fk_fd
+  37. avg_defense_metric
+  38. abyss_win_rate_diff
+  39. headshot_diff
+  40. eco_win_rate_diff
+  41. pearl_def_win_rate_diff
+  42. avg_win_rate
+  43. fracture_win_rate_diff
+  44. abyss_def_win_rate_diff
+  45. sunset_win_rate_diff
+  46. pistol_x_eco
+  47. avg_eco_win_rate
+  48. player_rating_diff
+  49. kd_diff
+  50. breeze_win_rate_diff

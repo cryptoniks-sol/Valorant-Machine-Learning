@@ -4455,16 +4455,17 @@ def get_backtest_params():
     return params
 
 
+# 3. Updated betting analysis with adjusted thresholds
 def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_data, confidence_score, bankroll=1000.0):
     """
-    Analyze betting edges with adjusted thresholds and more realistic Kelly sizing
+    Analyze betting edges with further adjusted thresholds and more realistic Kelly sizing
     based on confidence level.
     """
     betting_analysis = {}
     
     # IMPROVED: Dynamic threshold adjustment based on confidence
-    # Base minimum edge (absolute minimum edge for a bet)
-    base_min_edge = 0.06  # Reduced from 0.08 to allow more bets
+    # Lower base minimum edge to allow more bets
+    base_min_edge = 0.03  # Reduced from 0.05 to 0.03
     
     # Confidence adjustment - lower confidence requires higher edge
     confidence_factor = 0.5 + (confidence_score * 0.5)  # Scale from 0.5 to 1.0
@@ -4506,11 +4507,26 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
         ('under_2_5_maps', under_prob, odds_data['under_2_5_maps_odds'])
     ]
     
-    # IMPROVED: Analyze each bet type with more realistic bet sizing
+    # IMPROVED: Further reduced thresholds by bet type
+    type_thresholds = {
+        'team1_ml': adjusted_threshold * 0.8,  # Further reduced (was 0.9)
+        'team2_ml': adjusted_threshold * 0.8,  # Further reduced (was 0.9)
+        'team1_plus_1_5': adjusted_threshold * 0.7,  # Further reduced (was 0.8)
+        'team2_plus_1_5': adjusted_threshold * 0.7,  # Further reduced (was 0.8)
+        'team1_minus_1_5': adjusted_threshold * 1.1,  # Reduced (was 1.2)
+        'team2_minus_1_5': adjusted_threshold * 1.1,  # Reduced (was 1.2)
+        'over_2_5_maps': adjusted_threshold * 0.9,  # Reduced (was 1.0)
+        'under_2_5_maps': adjusted_threshold * 0.9,  # Reduced (was 1.0)
+    }
+    
+    # Analyze each bet type with more realistic bet sizing
     for bet_type, prob, odds in bet_types:
         # Calculate implied probability and edge
         implied_prob = 1 / odds
         edge = prob - implied_prob
+        
+        # Get specific threshold for this bet type
+        bet_threshold = type_thresholds.get(bet_type, adjusted_threshold)
         
         # IMPROVED: Kelly calculation with confidence-based fractional adjustment
         # Base fractional Kelly (higher confidence = higher fraction)
@@ -4542,44 +4558,27 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
         # Calculate bet amount
         bet_amount = round(bankroll * kelly, 2)
         
-        # IMPROVED: More realistic bet qualification logic
-        # Custom thresholds by bet type
-        type_thresholds = {
-            'team1_ml': adjusted_threshold,
-            'team2_ml': adjusted_threshold,
-            'team1_plus_1_5': adjusted_threshold * 0.9,  # Slightly lower for +1.5 bets
-            'team2_plus_1_5': adjusted_threshold * 0.9,
-            'team1_minus_1_5': adjusted_threshold * 1.3,  # Higher for riskier -1.5 bets
-            'team2_minus_1_5': adjusted_threshold * 1.3,
-            'over_2_5_maps': adjusted_threshold * 1.1,  # Slightly higher for totals
-            'under_2_5_maps': adjusted_threshold * 1.1
-        }
-        
-        # Get specific threshold for this bet type
-        bet_threshold = type_thresholds.get(bet_type, adjusted_threshold)
-        
         # Additional filters based on bet type and confidence
         extra_filter = True
+        filter_reason = "Passed all filters"
         
-        # Higher confidence requirements for riskier bets
-        if ('minus_1_5' in bet_type) and confidence_score < 0.5:
+        # LOOSER FILTERS: Only filter out the most extreme cases
+        if ('minus_1_5' in bet_type) and confidence_score < 0.35:  # Reduced from 0.5
             extra_filter = False
             filter_reason = "Low confidence for -1.5 spread"
         
-        # For 50/50 probabilities, require higher edge
+        # For 50/50 probabilities, require slightly higher edge
         elif 0.45 < prob < 0.55:
-            # Higher edge required when probability is close to 50/50
-            if edge < bet_threshold * 1.2:
+            # Reduced multiplier from 1.2 to 1.1
+            if edge < bet_threshold * 1.1:
                 extra_filter = False
                 filter_reason = "Insufficient edge for 50/50 probability"
-        else:
-            filter_reason = "Passed all filters"
         
         # Final edge check against bet-specific threshold
         meets_edge = edge > bet_threshold
         
-        # Minimum bet amount check - avoid tiny bets
-        meets_min_amount = bet_amount >= 5
+        # REDUCED minimum bet amount to 1.0 (from 2.0)
+        meets_min_amount = bet_amount >= 1.0
         
         # Final recommendation logic
         recommended = meets_edge and meets_min_amount and extra_filter
@@ -4688,16 +4687,11 @@ def get_teams_for_backtesting(limit=100):
         print(f"Error in get_teams_for_backtesting: {e}")
         return []
 
+# 1. Fix Neural Network Calibration in predict_with_ensemble function
 def predict_with_ensemble(ensemble_models, X):
     """
-    Make predictions using ensemble of models with improved calibration and weighting.
-    
-    Args:
-        ensemble_models (list): List of (model_type, model, scaler) tuples
-        X (numpy.ndarray): Preprocessed features for prediction
-        
-    Returns:
-        tuple: (win_probability, raw_predictions, confidence_score)
+    Make predictions using the ensemble with improved calibration and 
+    more balanced model weighting.
     """
     if not ensemble_models:
         raise ValueError("No models provided for prediction")
@@ -4709,6 +4703,9 @@ def predict_with_ensemble(ensemble_models, X):
     # Get predictions from each model
     raw_predictions = []
     model_weights = []
+    model_types = []
+    
+    print("\n----- ENSEMBLE PREDICTION -----")
     
     for i, (model_type, model, model_scaler) in enumerate(ensemble_models):
         try:
@@ -4717,66 +4714,154 @@ def predict_with_ensemble(ensemble_models, X):
             if model_scaler is not None:
                 try:
                     X_pred = model_scaler.transform(X_pred)
-                except:
-                    print(f"Scaling error in model {i}, using unscaled features")
+                except Exception as e:
+                    print(f"Warning: Scaling error for {model_type} model {i}, using unscaled features")
             
-            # Make prediction based on model type
+            # Make prediction based on model type with better error handling
             if model_type == 'nn':
-                pred = model.predict(X_pred, verbose=0)[0][0]
+                raw_pred = model.predict(X_pred, verbose=0)[0][0]
+                # CRITICAL FIX: Apply immediate calibration to neural networks BEFORE storing
+                # This ensures extreme values are handled before aggregation
+                if raw_pred > 0.8 or raw_pred < 0.2:
+                    # Pull extreme predictions strongly toward center
+                    calibrated_pred = 0.5 + (raw_pred - 0.5) * 0.4  # More aggressive calibration
+                    print(f"NN model {i}: {raw_pred:.4f} → {calibrated_pred:.4f} (calibrated)")
+                    pred = calibrated_pred
+                else:
+                    pred = raw_pred
             else:
-                pred = model.predict_proba(X_pred)[0][1]
+                # Handle different API for scikit-learn models
+                if hasattr(model, 'predict_proba'):
+                    # Classification models with predict_proba
+                    pred = model.predict_proba(X_pred)[0][1]
+                    
+                    # If it's a logistic regression with extreme prediction, calibrate it
+                    if model_type == 'lr' and pred > 0.9:
+                        # Apply calibration to extreme LR predictions
+                        calibrated_pred = 0.7 + (pred - 0.9) * 0.3  # Cap at 0.7 plus small scaling
+                        print(f"LR model {i}: {pred:.4f} → {calibrated_pred:.4f} (calibrated)")
+                        pred = calibrated_pred
+                else:
+                    # Regression models or other types
+                    pred = model.predict(X_pred)[0]
+                    # Clip regression outputs to [0,1]
+                    pred = max(0, min(1, pred))
             
             # Handle NaN or invalid predictions
             if np.isnan(pred) or not np.isfinite(pred):
-                print(f"Model {i+1} returned invalid prediction, using 0.5")
+                print(f"Warning: Model {i+1} returned invalid prediction, using 0.5")
                 pred = 0.5
-            
-            # Set weight based on model type to reduce neural network dominance
-            if model_type == 'nn':
-                weight = 0.5  # Reduce neural network weight
-            elif model_type == 'gb' or model_type == 'rf':
-                weight = 2.0  # Increase tree-based model weight
-            else:
-                weight = 1.0
                 
-            # Store both prediction and weight
+            # IMPROVED: Set weight based on model type and prediction value
+            # Reduce weight for extreme predictions from any model type
+            extremeness = abs(pred - 0.5) / 0.5  # 0 for 0.5, 1 for 0 or 1
+            base_weight = 1.0
+            
+            if model_type == 'nn':
+                # Further penalize neural networks' weight
+                base_weight = 0.4
+            elif model_type == 'gb':
+                base_weight = 1.6
+            elif model_type == 'rf':
+                base_weight = 1.4
+            elif model_type == 'lr':
+                base_weight = 0.8
+            
+            # Apply extremeness penalty
+            weight = base_weight * (1.0 - extremeness * 0.5)
+                
+            # Store prediction, weight, and model type
             raw_predictions.append(pred)
             model_weights.append(weight)
+            model_types.append(model_type)
             
-            print(f"{model_type.upper()} model prediction: {pred:.4f}")
+            print(f"{model_type.upper()} model {i} prediction: {pred:.4f} (weight: {weight:.2f})")
         except Exception as e:
-            print(f"Error with model {i+1}: {e}")
+            print(f"Error with model {i}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
     
     if not raw_predictions:
-        print("All models failed to produce predictions, using default value")
+        print("ERROR: All models failed to produce predictions, using default value")
         return 0.5, [0.5], 0.0
     
     # Calculate weighted average
     if raw_predictions and sum(model_weights) > 0:
-        mean_pred = np.average(raw_predictions, weights=model_weights)
+        weighted_sum = sum(p * w for p, w in zip(raw_predictions, model_weights))
+        total_weight = sum(model_weights)
+        mean_pred = weighted_sum / total_weight
+        print(f"Weighted ensemble mean: {mean_pred:.4f} (total weight: {total_weight:.1f})")
     else:
         mean_pred = 0.5
-        
-    # Calculate standard deviation for confidence calculation
+        print("Using default prediction of 0.5 due to weighting issues")
+    
+    # IMPROVED: Enhanced confidence calculation
+    # 1. Calculate overall standard deviation
     std_pred = np.std(raw_predictions)
-    confidence_score = 1 - min(1, std_pred * 2)  # Higher means more agreement
     
-    print(f"Raw ensemble mean: {mean_pred:.4f}, std: {std_pred:.4f}, confidence: {confidence_score:.4f}")
+    # 2. Analyze disagreement patterns between model types
+    model_type_means = {}
+    for pred, model_type in zip(raw_predictions, model_types):
+        if model_type not in model_type_means:
+            model_type_means[model_type] = []
+        model_type_means[model_type].append(pred)
     
-    # More aggressive calibration to fix overconfidence
-    if std_pred > 0.25:  # Lower threshold for regression
-        # Regress extreme predictions more heavily toward 0.5
-        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.3
+    # Calculate mean by model type
+    for model_type, preds in model_type_means.items():
+        model_type_means[model_type] = np.mean(preds)
+    
+    # Calculate variance between model types
+    if len(model_type_means) > 1:
+        between_model_variance = np.var(list(model_type_means.values()))
     else:
-        # For normal predictions, still apply moderate calibration
-        # Move predictions closer to 0.5 by 40%
-        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.6
+        between_model_variance = 0
+    
+    # 3. Use interquartile range instead of full range to reduce impact of outliers
+    raw_predictions_array = np.array(raw_predictions)
+    q1 = np.percentile(raw_predictions_array, 25)
+    q3 = np.percentile(raw_predictions_array, 75)
+    iqr = q3 - q1
+    range_penalty = min(1, iqr / 0.4)  # More reasonable scaling
+    
+    print(f"Prediction quartiles: Q1={q1:.4f}, Q3={q3:.4f}, IQR={iqr:.4f}")
+    print(f"Range penalty (IQR-based): {range_penalty:.4f}")
+    
+    # 4. Create confidence score based on multiple factors
+    base_confidence = 1 - min(1, std_pred * 2)  # Base confidence from standard deviation
+    type_agreement = 1 - min(1, between_model_variance * 4)  # Agreement between model types
+    
+    # Combine for final confidence score (weighted average with range penalty)
+    confidence_score = (0.6 * base_confidence + 0.4 * type_agreement) * (1 - range_penalty * 0.3)
+    
+    print(f"Standard deviation: {std_pred:.4f}, Between-model variance: {between_model_variance:.4f}")
+    print(f"Base confidence: {base_confidence:.4f}, Type agreement: {type_agreement:.4f}")
+    print(f"Final confidence score: {confidence_score:.4f}")
+    
+    # Apply confidence-based calibration
+    if confidence_score < 0.3:  # Very low confidence
+        # Regress extreme predictions more heavily toward 0.5
+        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.25
+        print(f"Low confidence calibration: {mean_pred:.4f} → {calibrated_pred:.4f}")
+    elif confidence_score < 0.5:  # Moderate confidence
+        # Still apply significant calibration
+        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.5
+        print(f"Moderate confidence calibration: {mean_pred:.4f} → {calibrated_pred:.4f}")
+    else:  # High confidence
+        # Apply gentle calibration
+        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.7
+        print(f"High confidence calibration: {mean_pred:.4f} → {calibrated_pred:.4f}")
     
     # Extra safeguard against extreme predictions
-    calibrated_pred = max(0.3, min(0.7, calibrated_pred))
+    if calibrated_pred > 0.7:
+        calibrated_pred = 0.7
+        print(f"Capped high prediction: → {calibrated_pred:.4f}")
+    elif calibrated_pred < 0.3:
+        calibrated_pred = 0.3
+        print(f"Capped low prediction: → {calibrated_pred:.4f}")
     
     return calibrated_pred, raw_predictions, confidence_score
+
 
 def prepare_features_for_backtest(team1_stats, team2_stats, selected_features):
     """
@@ -4949,16 +5034,161 @@ def prepare_features_for_backtest(team1_stats, team2_stats, selected_features):
             missing_features.remove(feature)
             derived_features.append(feature)
             
-        # Economy features
+        # Economy features - ENHANCED with better fallbacks
         elif feature == 'pistol_win_rate_diff':
             val = team1_stats.get('pistol_win_rate', 0.5) - team2_stats.get('pistol_win_rate', 0.5)
             complete_features[feature] = val
             missing_features.remove(feature)
             derived_features.append(feature)
             
-        # Interaction terms
+        elif feature == 'eco_win_rate_diff':
+            val = team1_stats.get('eco_win_rate', 0.4) - team2_stats.get('eco_win_rate', 0.4)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'semi_eco_win_rate_diff':
+            val = team1_stats.get('semi_eco_win_rate', 0.35) - team2_stats.get('semi_eco_win_rate', 0.35)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'full_buy_win_rate_diff':
+            val = team1_stats.get('full_buy_win_rate', 0.5) - team2_stats.get('full_buy_win_rate', 0.5)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'economy_efficiency_diff':
+            val = team1_stats.get('economy_efficiency', 0.5) - team2_stats.get('economy_efficiency', 0.5)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Map-specific win rates - EXPANDED to include more maps
+        elif feature.endswith('_win_rate_diff') and feature.split('_win_rate_diff')[0] in ['haven', 'bind', 'ascent', 'split', 'icebox', 'breeze', 'pearl', 'fracture', 'lotus', 'abyss']:
+            map_name = feature.split('_win_rate_diff')[0]
+            
+            # Try to get map stats from team stats
+            team1_map_win_rate = 0.5
+            team2_map_win_rate = 0.5
+            
+            # Check multiple possible paths for map stats
+            if 'map_statistics' in team1_stats and map_name in team1_stats['map_statistics']:
+                team1_map_win_rate = team1_stats['map_statistics'][map_name].get('win_percentage', 0.5)
+            elif 'map_performance' in team1_stats and map_name in team1_stats['map_performance']:
+                team1_map_win_rate = team1_stats['map_performance'][map_name].get('win_rate', 0.5)
+            elif 'map_stats' in team1_stats and map_name in team1_stats['map_stats']:
+                team1_map_win_rate = team1_stats['map_stats'][map_name].get('win_rate', 0.5)
+            
+            # Same for team2
+            if 'map_statistics' in team2_stats and map_name in team2_stats['map_statistics']:
+                team2_map_win_rate = team2_stats['map_statistics'][map_name].get('win_percentage', 0.5)
+            elif 'map_performance' in team2_stats and map_name in team2_stats['map_performance']:
+                team2_map_win_rate = team2_stats['map_performance'][map_name].get('win_rate', 0.5)
+            elif 'map_stats' in team2_stats and map_name in team2_stats['map_stats']:
+                team2_map_win_rate = team2_stats['map_stats'][map_name].get('win_rate', 0.5)
+            
+            # Calculate differential
+            val = team1_map_win_rate - team2_map_win_rate
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Attack/Defense specific win rates
+        elif '_atk_win_rate_diff' in feature or '_def_win_rate_diff' in feature:
+            parts = feature.split('_win_rate_diff')[0].split('_')
+            map_name = parts[0]
+            side = parts[1]  # 'atk' or 'def'
+            
+            # Default values
+            team1_side_win_rate = 0.5
+            team2_side_win_rate = 0.5
+            
+            # Try to get from map_statistics
+            if 'map_statistics' in team1_stats and map_name in team1_stats['map_statistics']:
+                if side == 'atk':
+                    team1_side_win_rate = team1_stats['map_statistics'][map_name].get('atk_win_rate', 0.5)
+                else:
+                    team1_side_win_rate = team1_stats['map_statistics'][map_name].get('def_win_rate', 0.5)
+            
+            # Try to get from map_performance
+            elif 'map_performance' in team1_stats and map_name in team1_stats['map_performance']:
+                if side == 'atk':
+                    team1_side_win_rate = team1_stats['map_performance'][map_name].get('attack_win_rate', 0.5)
+                else:
+                    team1_side_win_rate = team1_stats['map_performance'][map_name].get('defense_win_rate', 0.5)
+            
+            # Same for team2
+            if 'map_statistics' in team2_stats and map_name in team2_stats['map_statistics']:
+                if side == 'atk':
+                    team2_side_win_rate = team2_stats['map_statistics'][map_name].get('atk_win_rate', 0.5)
+                else:
+                    team2_side_win_rate = team2_stats['map_statistics'][map_name].get('def_win_rate', 0.5)
+            
+            # Try to get from map_performance
+            elif 'map_performance' in team2_stats and map_name in team2_stats['map_performance']:
+                if side == 'atk':
+                    team2_side_win_rate = team2_stats['map_performance'][map_name].get('attack_win_rate', 0.5)
+                else:
+                    team2_side_win_rate = team2_stats['map_performance'][map_name].get('defense_win_rate', 0.5)
+            
+            # Calculate differential
+            val = team1_side_win_rate - team2_side_win_rate
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Team consistency difference
+        elif feature == 'consistency_diff':
+            team1_consistency = team1_stats.get('team_consistency', 0.5)
+            team2_consistency = team2_stats.get('team_consistency', 0.5)
+            
+            # Check player_stats as well
+            if 'player_stats' in team1_stats and 'team_consistency' in team1_stats['player_stats']:
+                team1_consistency = team1_stats['player_stats']['team_consistency']
+            
+            if 'player_stats' in team2_stats and 'team_consistency' in team2_stats['player_stats']:
+                team2_consistency = team2_stats['player_stats']['team_consistency']
+            
+            val = team1_consistency - team2_consistency
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        # Interaction terms - ENHANCED with additional derivations
+        elif feature == 'h2h_x_win_rate' and 'h2h_win_rate' in complete_features.columns and 'win_rate_diff' in complete_features.columns:
+            val = complete_features['h2h_win_rate'].values[0] * complete_features['win_rate_diff'].values[0]
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'h2h_x_form' and 'h2h_win_rate' in complete_features.columns and 'recent_form_diff' in complete_features.columns:
+            val = complete_features['h2h_win_rate'].values[0] * complete_features['recent_form_diff'].values[0]
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
         elif feature == 'rating_x_win_rate' and 'player_rating_diff' in complete_features.columns and 'win_rate_diff' in complete_features.columns:
             val = complete_features['player_rating_diff'].values[0] * complete_features['win_rate_diff'].values[0]
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'first_blood_x_win_rate' and 'fk_fd_diff' in complete_features.columns and 'win_rate_diff' in complete_features.columns:
+            val = complete_features['fk_fd_diff'].values[0] * complete_features['win_rate_diff'].values[0]
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'pistol_x_eco' and 'pistol_win_rate_diff' in complete_features.columns and 'eco_win_rate_diff' in complete_features.columns:
+            val = complete_features['pistol_win_rate_diff'].values[0] * complete_features['eco_win_rate_diff'].values[0]
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+            
+        elif feature == 'pistol_x_full_buy' and 'pistol_win_rate_diff' in complete_features.columns and 'full_buy_win_rate_diff' in complete_features.columns:
+            val = complete_features['pistol_win_rate_diff'].values[0] * complete_features['full_buy_win_rate_diff'].values[0]
             complete_features[feature] = val
             missing_features.remove(feature)
             derived_features.append(feature)
@@ -4996,11 +5226,20 @@ def prepare_features_for_backtest(team1_stats, team2_stats, selected_features):
     if still_missing > 0:
         print(f"Missing features that couldn't be derived: {missing_features[:5]}...")
     
+    # Log detailed feature summary
+    print("Feature values summary:")
+    for feature in selected_features:
+        if feature in features_df.columns or feature in derived_features:
+            value = complete_features[feature].values[0]
+            if abs(value) > 0.1:  # Only print significant values
+                print(f"  - {feature}: {value:.4f}")
+    
     return X
 
-def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0, bet_pct=0.05, min_edge=0.08, confidence_threshold=0.4):
+def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0, bet_pct=0.05, min_edge=0.03, confidence_threshold=0.2):
     """
-    Enhanced backtesting system with improved risk management and analysis capabilities.
+    Enhanced backtesting system with further adjusted thresholds.
+    Uses the properly loaded retrained models with consistent feature preparation.
     
     Args:
         start_date (str): Start date for backtesting (YYYY-MM-DD)
@@ -5008,8 +5247,8 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         team_limit (int): Maximum number of teams to analyze
         bankroll (float): Starting bankroll
         bet_pct (float): Maximum percentage of bankroll to bet
-        min_edge (float): Minimum edge required for betting
-        confidence_threshold (float): Minimum model confidence required
+        min_edge (float): Minimum edge required for betting (lowered from 0.05 to 0.03)
+        confidence_threshold (float): Minimum model confidence required (lowered from 0.25 to 0.2)
         
     Returns:
         dict: Detailed backtest results
@@ -5017,12 +5256,48 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     print("\n========== STARTING ENHANCED BACKTEST ==========")
     print(f"Parameters: teams={team_limit}, bankroll=${bankroll}, max bet={bet_pct*100}%")
     print(f"Min edge: {min_edge*100}%, min confidence: {confidence_threshold*100}%")
+    print(f"NOTE: Using UPDATED thresholds for more realistic betting")
     
-    # Load models and metadata
+    # Use the enhanced model loading function
     ensemble_models, selected_features = load_backtesting_models()
-    if not ensemble_models or not selected_features:
-        print("Failed to load required models and features. Aborting backtest.")
+    
+    # Add verification of model loading success
+    if not ensemble_models:
+        print("ERROR: Failed to load any models. Aborting backtest.")
         return None
+        
+    if not selected_features:
+        print("ERROR: Failed to load feature list. Aborting backtest.")
+        return None
+        
+    print(f"Successfully loaded {len(ensemble_models)} models and {len(selected_features)} features")
+    
+    # Create directory for model diagnostics report
+    os.makedirs("model_diagnostics", exist_ok=True)
+    
+    # Save detailed model and feature information for verification
+    with open("model_diagnostics/backtest_setup.txt", "w") as f:
+        f.write(f"Backtest Run: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Min edge: {min_edge*100}%\n")
+        f.write(f"Min confidence: {confidence_threshold*100}%\n\n")
+        
+        # Log model details
+        f.write("Models loaded:\n")
+        model_types = {}
+        for model_type, _, _ in ensemble_models:
+            if model_type not in model_types:
+                model_types[model_type] = 0
+            model_types[model_type] += 1
+        
+        for model_type, count in model_types.items():
+            f.write(f"  - {model_type.upper()}: {count} models\n")
+            
+        # Log feature details
+        f.write("\nFeatures loaded:\n")
+        for i, feature in enumerate(selected_features):
+            f.write(f"  {i+1}. {feature}\n")
+    
+    print(f"Model setup verification saved to model_diagnostics/backtest_setup.txt")
     
     # Collect team data with progress tracking
     print("Collecting team data for backtesting...")
@@ -5095,7 +5370,10 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             }
             
             team_count += 1
-            print(f"Loaded data for {team_name}: {len(team_matches)} matches ({team_idx+1}/{len(teams_list)})")
+            
+            # Print progress every 5 teams
+            if team_count % 5 == 0:
+                print(f"Loaded data for {team_count} teams so far ({team_idx+1}/{len(teams_list)})")
             
             # Break if we reach the team limit
             if team_count >= team_limit:
@@ -5103,9 +5381,10 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                 
         except Exception as e:
             print(f"Error processing team {team_name}: {e}")
+            traceback.print_exc()
             continue
     
-    print(f"Successfully loaded data for {len(team_data)} teams")
+    print(f"\nSuccessfully loaded data for {len(team_data)} teams")
     
     if not team_data:
         print("Error: No team data collected. Aborting backtest.")
@@ -5116,6 +5395,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     seen_match_ids = set()
     
     # Collect matches with available data for both teams
+    print("Building match dataset for backtesting...")
     for team_name, team_info in team_data.items():
         for match in team_info['matches']:
             match_id = match.get('match_id', '')
@@ -5203,20 +5483,31 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             team1_stats = team_data[team1_name]['stats']
             team2_stats = team_data[team2_name]['stats']
             
-            # Prepare features for prediction with better error handling
+            # Use our enhanced feature preparation function
             X = prepare_features_for_backtest(team1_stats, team2_stats, selected_features)
             
             if X is None:
                 print(f"Failed to prepare features for {team1_name} vs {team2_name}, skipping")
                 continue
             
-            # Make prediction with improved error handling
+            # Use enhanced prediction function with our fixes
             try:
+                # Replace the original prediction function with our enhanced one
                 win_probability, raw_predictions, confidence_score = predict_with_ensemble(
                     ensemble_models, X
                 )
+                
+                # Log the prediction results for debugging
+                print(f"\nPrediction for {team1_name} vs {team2_name}:")
+                print(f"Win probability: {win_probability:.4f}, Confidence: {confidence_score:.4f}")
+                print(f"Raw predictions range: {min(raw_predictions):.4f} - {max(raw_predictions):.4f}")
+                
+                # Alert if confidence is very low
+                if confidence_score < 0.3:
+                    print("WARNING: Very low confidence prediction - models disagree significantly")
             except Exception as e:
                 print(f"Error making prediction for {team1_name} vs {team2_name}: {e}")
+                traceback.print_exc()  # Print full stack trace for debugging
                 continue
             
             # Get actual result with better parsing
@@ -5268,25 +5559,15 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             
             odds_data = jittered_odds
             
-            # Analyze betting edges with enhanced risk management
+            # Use our enhanced betting analysis function with adjusted thresholds
             betting_analysis = analyze_betting_edge_for_backtesting(
                 win_probability, 1 - win_probability, odds_data, 
                 confidence_score, current_bankroll
             )
             
-            # Apply enhanced filtering criteria
-            filtered_analysis = {}
-            for bet_type, analysis in betting_analysis.items():
-                # Override recommendation based on enhanced criteria
-                is_recommended = (
-                    analysis['edge'] >= min_edge and
-                    analysis['bet_amount'] > 0 and
-                    confidence_score >= confidence_threshold
-                )
-                
-                # Copy analysis and update recommendation
-                filtered_analysis[bet_type] = analysis.copy()
-                filtered_analysis[bet_type]['recommended'] = is_recommended
+            # The recommendations are now built into the analyze_betting_edge_for_backtesting function
+            # No need to apply additional filtering here
+            filtered_analysis = betting_analysis
             
             # Simulate bets with better record keeping
             match_bets = []
@@ -5296,10 +5577,6 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                     # Calculate bet size (respecting max bet percentage and current bankroll)
                     max_bet = current_bankroll * bet_pct
                     bet_amount = min(analysis['bet_amount'], max_bet)
-                    
-                    # Ensure minimum bet size for practicality
-                    if bet_amount < 1.0:
-                        continue
                     
                     # Determine if bet won
                     bet_won = evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score)
@@ -5412,6 +5689,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         
         except Exception as e:
             print(f"Error processing match {match_id}: {e}")
+            traceback.print_exc()
             continue
     
     # Store confidence bin metrics
