@@ -1,101 +1,21 @@
 
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Backtest Results Visualization</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 20px;
-                background-color: #f5f5f5;
-            }
-            h1, h2 {
-                color: #333;
-            }
-            .container {
-                max-width: 1200px;
-                margin: 0 auto;
-            }
-            .plot-container {
-                background-color: white;
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                padding: 20px;
-                margin-bottom: 20px;
-            }
-            .plot-image {
-                max-width: 100%;
-                height: auto;
-                display: block;
-                margin: 0 auto;
-            }
-            .description {
-                margin-top: 10px;
-                color: #666;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Backtest Results</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #333; }
+                .plot-container { margin-bottom: 30px; }
+                img { max-width: 100%; border: 1px solid #ddd; }
+            </style>
+        </head>
+        <body>
             <h1>Valorant Match Prediction Backtest Results</h1>
-            <p>Generated on: 2025-05-06 01:39:36</p>
-            
             <div class="plot-container">
                 <h2>Bankroll History</h2>
-                <img class="plot-image" src="bankroll_history.png" alt="Bankroll History">
-                <div class="description">
-                    Shows how the bankroll changed over the course of the backtest. Annotations indicate maximum and minimum points.
-                </div>
+                <img src="bankroll_history.png" alt="Bankroll History">
             </div>
-            
-            <div class="plot-container">
-                <h2>Prediction Calibration</h2>
-                <img class="plot-image" src="calibration_curve.png" alt="Calibration Curve">
-                <div class="description">
-                    Compares predicted probabilities vs. actual outcomes. A well-calibrated model should follow the diagonal line.
-                </div>
-            </div>
-            
-            <div class="plot-container">
-                <h2>ROI vs. Predicted Edge</h2>
-                <img class="plot-image" src="roi_by_edge.png" alt="ROI by Edge">
-                <div class="description">
-                    Shows the relationship between predicted edge and actual ROI. Points are sized by amount wagered.
-                </div>
-            </div>
-            
-            <div class="plot-container">
-                <h2>Performance by Bet Type</h2>
-                <img class="plot-image" src="bet_type_performance.png" alt="Bet Type Performance">
-                <div class="description">
-                    Compares win rates and ROI across different bet types, with volume information.
-                </div>
-            </div>
-            
-            <div class="plot-container">
-                <h2>Team Performance</h2>
-                <img class="plot-image" src="team_performance.png" alt="Team Performance">
-                <div class="description">
-                    Shows ROI and win rates for teams with at least 5 bets placed, sorted by ROI.
-                </div>
-            </div>
-            
-            <div class="plot-container">
-                <h2>Model Confidence vs. Accuracy</h2>
-                <img class="plot-image" src="confidence_vs_accuracy.png" alt="Confidence vs Accuracy">
-                <div class="description">
-                    Analyzes how model confidence correlates with actual prediction accuracy.
-                </div>
-            </div>
-            
-            <div class="plot-container">
-                <h2>Daily Profit/Loss</h2>
-                <img class="plot-image" src="daily_profit_loss.png" alt="Daily Profit/Loss">
-                <div class="description">
-                    Shows daily profit/loss and cumulative profit over time, along with number of bets placed each day.
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    
+        </body>
+        </html>
+        

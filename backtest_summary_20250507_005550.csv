@@ -1,0 +1,20 @@
+Metric,Value
+Total Matches,831
+Prediction Accuracy,0.5764
+Total Bets,821
+Winning Bets,337
+Win Rate,0.4105
+Total Wagered,8535.65
+Total Returns,7560.07
+Profit/Loss,-975.58
+ROI,-0.1143
+Initial Bankroll,1000.00
+Final Bankroll,24.42
+Max Drawdown,985.29
+Max Drawdown Percentage,0.9758
+Sharpe Ratio,-0.0908
+Expected Value,1837.51
+Actual Value,-975.58
+Calibration Error,0.3296
+Bet Diversity Score,0.2500
+Bet Balance Score,0.9464

@@ -1,0 +1,1284 @@
+{
+  "predictions": [
+    {
+      "match_id": "459857",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3988185712590938,
+      "team2_prob": 0.6011814287409062,
+      "confidence": 0.2621658035070654,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/05/02"
+    },
+    {
+      "match_id": "378825",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3988185712590938,
+      "team2_prob": 0.6011814287409062,
+      "confidence": 0.2621658035070654,
+      "correct": false,
+      "score": "2-0",
+      "date": "2024/08/15"
+    },
+    {
+      "match_id": "341821",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3988185712590938,
+      "team2_prob": 0.6011814287409062,
+      "confidence": 0.2621658035070654,
+      "correct": true,
+      "score": "2-3",
+      "date": "2024/05/12"
+    },
+    {
+      "match_id": "341820",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3988185712590938,
+      "team2_prob": 0.6011814287409062,
+      "confidence": 0.2621658035070654,
+      "correct": false,
+      "score": "2-0",
+      "date": "2024/05/10"
+    },
+    {
+      "match_id": "318915",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3988185712590938,
+      "team2_prob": 0.6011814287409062,
+      "confidence": 0.2621658035070654,
+      "correct": false,
+      "score": "2-0",
+      "date": "2024/04/04"
+    },
+    {
+      "match_id": "183946",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3988185712590938,
+      "team2_prob": 0.6011814287409062,
+      "confidence": 0.2621658035070654,
+      "correct": true,
+      "score": "0-2",
+      "date": "2023/04/06"
+    },
+    {
+      "match_id": "454035",
+      "team1": "BBL PCIFIC",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3513260835930635,
+      "team2_prob": 0.6486739164069365,
+      "confidence": 0.34428674052055896,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/03/03"
+    },
+    {
+      "match_id": "461880",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": true,
+      "score": "1-2",
+      "date": "2025/05/03"
+    },
+    {
+      "match_id": "461878",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-1",
+      "date": "2025/04/05"
+    },
+    {
+      "match_id": "438057",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/01/25"
+    },
+    {
+      "match_id": "367234",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "3-1",
+      "date": "2024/07/20"
+    },
+    {
+      "match_id": "349206",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": true,
+      "score": "0-2",
+      "date": "2024/05/21"
+    },
+    {
+      "match_id": "333789",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": true,
+      "score": "1-2",
+      "date": "2024/05/04"
+    },
+    {
+      "match_id": "327688",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-1",
+      "date": "2024/04/20"
+    },
+    {
+      "match_id": "299355",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-1",
+      "date": "2024/02/17"
+    },
+    {
+      "match_id": "285296",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "3-1",
+      "date": "2023/11/18"
+    },
+    {
+      "match_id": "272964",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-0",
+      "date": "2023/10/02"
+    },
+    {
+      "match_id": "188517",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": true,
+      "score": "2-3",
+      "date": "2023/06/10"
+    },
+    {
+      "match_id": "188516",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": true,
+      "score": "1-2",
+      "date": "2023/05/20"
+    },
+    {
+      "match_id": "188543",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-0",
+      "date": "2023/04/29"
+    },
+    {
+      "match_id": "164084",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": true,
+      "score": "0-2",
+      "date": "2023/02/25"
+    },
+    {
+      "match_id": "164180",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": true,
+      "score": "1-1",
+      "date": "2023/01/31"
+    },
+    {
+      "match_id": "152695",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/10/25"
+    },
+    {
+      "match_id": "95466",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/06/14"
+    },
+    {
+      "match_id": "69824",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.47045664249972663,
+      "team2_prob": 0.5295433575002734,
+      "confidence": 0.21427265128208106,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/02/28"
+    }
+  ],
+  "bets": [
+    {
+      "match_id": "459857",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 9.14,
+          "odds": 2.71,
+          "won": true,
+          "returns": 24.7694,
+          "profit": 15.6294,
+          "edge": 0.029814881222193446,
+          "predicted_prob": 0.3988185712590938,
+          "implied_prob": 0.36900369003690037,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 16.6,
+          "odds": 1.77,
+          "won": false,
+          "returns": 0,
+          "profit": -16.6,
+          "edge": 0.0362096773284768,
+          "predicted_prob": 0.6011814287409062,
+          "implied_prob": 0.5649717514124294,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 24.33,
+          "odds": 1.55,
+          "won": true,
+          "returns": 37.7115,
+          "profit": 13.381500000000003,
+          "edge": 0.0416543915583214,
+          "predicted_prob": 0.686815681880902,
+          "implied_prob": 0.6451612903225806,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2025/05/02"
+    },
+    {
+      "match_id": "378825",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 9.71,
+          "odds": 2.72,
+          "won": true,
+          "returns": 26.411200000000004,
+          "profit": 16.701200000000004,
+          "edge": 0.03117151243556443,
+          "predicted_prob": 0.3988185712590938,
+          "implied_prob": 0.3676470588235294,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2024/08/15"
+    },
+    {
+      "match_id": "341821",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 11.29,
+          "odds": 2.75,
+          "won": false,
+          "returns": 0,
+          "profit": -11.29,
+          "edge": 0.035182207622730166,
+          "predicted_prob": 0.3988185712590938,
+          "implied_prob": 0.36363636363636365,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 30.4,
+          "odds": 1.57,
+          "won": true,
+          "returns": 47.728,
+          "profit": 17.328000000000003,
+          "edge": 0.04987300672166639,
+          "predicted_prob": 0.686815681880902,
+          "implied_prob": 0.6369426751592356,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2024/05/12"
+    },
+    {
+      "match_id": "341820",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 8.51,
+          "odds": 2.69,
+          "won": true,
+          "returns": 22.8919,
+          "profit": 14.3819,
+          "edge": 0.027071359363183,
+          "predicted_prob": 0.3988185712590938,
+          "implied_prob": 0.3717472118959108,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 15.54,
+          "odds": 1.76,
+          "won": false,
+          "returns": 0,
+          "profit": -15.54,
+          "edge": 0.032999610559087955,
+          "predicted_prob": 0.6011814287409062,
+          "implied_prob": 0.5681818181818182,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2024/05/10"
+    },
+    {
+      "match_id": "318915",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team2_ml",
+          "amount": 15.52,
+          "odds": 1.76,
+          "won": false,
+          "returns": 0,
+          "profit": -15.52,
+          "edge": 0.032999610559087955,
+          "predicted_prob": 0.6011814287409062,
+          "implied_prob": 0.5681818181818182,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 17.06,
+          "odds": 1.52,
+          "won": true,
+          "returns": 25.931199999999997,
+          "profit": 8.871199999999998,
+          "edge": 0.02892094503879672,
+          "predicted_prob": 0.686815681880902,
+          "implied_prob": 0.6578947368421053,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2024/04/04"
+    },
+    {
+      "match_id": "183946",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 12.21,
+          "odds": 2.77,
+          "won": false,
+          "returns": 0,
+          "profit": -12.21,
+          "edge": 0.03780774093418404,
+          "predicted_prob": 0.3988185712590938,
+          "implied_prob": 0.36101083032490977,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 18.69,
+          "odds": 1.78,
+          "won": true,
+          "returns": 33.2682,
+          "profit": 14.578199999999999,
+          "edge": 0.039383675931917383,
+          "predicted_prob": 0.6011814287409062,
+          "implied_prob": 0.5617977528089888,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 16.95,
+          "odds": 1.52,
+          "won": false,
+          "returns": 0,
+          "profit": -16.95,
+          "edge": 0.02892094503879672,
+          "predicted_prob": 0.686815681880902,
+          "implied_prob": 0.6578947368421053,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2023/04/06"
+    },
+    {
+      "match_id": "454035",
+      "team1": "BBL PCIFIC",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 9.91,
+          "odds": 3.13,
+          "won": true,
+          "returns": 31.0183,
+          "profit": 21.1083,
+          "edge": 0.03183726570168971,
+          "predicted_prob": 0.3513260835930635,
+          "implied_prob": 0.3194888178913738,
+          "team1": "BBL PCIFIC",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 22.43,
+          "odds": 1.63,
+          "won": true,
+          "returns": 36.5609,
+          "profit": 14.130899999999997,
+          "edge": 0.039053388639483155,
+          "predicted_prob": 0.6525503211548206,
+          "implied_prob": 0.6134969325153374,
+          "team1": "BBL PCIFIC",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 36.48,
+          "odds": 19.37,
+          "won": true,
+          "returns": 706.6175999999999,
+          "profit": 670.1375999999999,
+          "edge": 0.11692620725062769,
+          "predicted_prob": 0.1685524333734981,
+          "implied_prob": 0.05162622612287041,
+          "team1": "BBL PCIFIC",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2025/03/03"
+    },
+    {
+      "match_id": "461880",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team2_ml",
+          "amount": 17.07,
+          "odds": 1.99,
+          "won": true,
+          "returns": 33.9693,
+          "profit": 16.899299999999997,
+          "edge": 0.027030794686203063,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.5025125628140703,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 47.43,
+          "odds": 1.45,
+          "won": true,
+          "returns": 68.7735,
+          "profit": 21.3435,
+          "edge": 0.04285064608261391,
+          "predicted_prob": 0.7325058184964071,
+          "implied_prob": 0.6896551724137931,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2025/05/03"
+    },
+    {
+      "match_id": "461878",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 31.34,
+          "odds": 1.42,
+          "won": true,
+          "returns": 44.5028,
+          "profit": 13.1628,
+          "edge": 0.02828046638373094,
+          "predicted_prob": 0.7325058184964071,
+          "implied_prob": 0.7042253521126761,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2025/04/05"
+    },
+    {
+      "match_id": "438057",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team2_ml",
+          "amount": 24.71,
+          "odds": 2.03,
+          "won": false,
+          "returns": 0,
+          "profit": -24.71,
+          "edge": 0.03693252006184966,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.4926108374384237,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2025/01/25"
+    },
+    {
+      "match_id": "367234",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 17.31,
+          "odds": 2.27,
+          "won": true,
+          "returns": 39.293699999999994,
+          "profit": 21.983699999999995,
+          "edge": 0.029928008138493167,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.44052863436123346,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 24.37,
+          "odds": 2.03,
+          "won": false,
+          "returns": 0,
+          "profit": -24.37,
+          "edge": 0.03693252006184966,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.4926108374384237,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 31.14,
+          "odds": 1.42,
+          "won": true,
+          "returns": 44.2188,
+          "profit": 13.078800000000001,
+          "edge": 0.02828046638373094,
+          "predicted_prob": 0.7325058184964071,
+          "implied_prob": 0.7042253521126761,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2024/07/20"
+    },
+    {
+      "match_id": "349206",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 28.58,
+          "odds": 2.36,
+          "won": false,
+          "returns": 0,
+          "profit": -28.58,
+          "edge": 0.04672782894040456,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.42372881355932207,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 33.42,
+          "odds": 2.08,
+          "won": true,
+          "returns": 69.51360000000001,
+          "profit": 36.09360000000001,
+          "edge": 0.048774126731042644,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.4807692307692307,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2024/05/21"
+    },
+    {
+      "match_id": "333789",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 27.46,
+          "odds": 2.35,
+          "won": false,
+          "returns": 0,
+          "profit": -27.46,
+          "edge": 0.044924727606109605,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.425531914893617,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2024/05/04"
+    },
+    {
+      "match_id": "327688",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 17.22,
+          "odds": 2.27,
+          "won": true,
+          "returns": 39.0894,
+          "profit": 21.8694,
+          "edge": 0.029928008138493167,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.44052863436123346,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 17.24,
+          "odds": 1.99,
+          "won": false,
+          "returns": 0,
+          "profit": -17.24,
+          "edge": 0.027030794686203063,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.5025125628140703,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2024/04/20"
+    },
+    {
+      "match_id": "299355",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team2_ml",
+          "amount": 31.36,
+          "odds": 2.07,
+          "won": false,
+          "returns": 0,
+          "profit": -31.36,
+          "edge": 0.04645157006065981,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.48309178743961356,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2024/02/17"
+    },
+    {
+      "match_id": "285296",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 18.16,
+          "odds": 2.28,
+          "won": true,
+          "returns": 41.404799999999994,
+          "profit": 23.244799999999994,
+          "edge": 0.03186015127165642,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.4385964912280702,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2023/11/18"
+    },
+    {
+      "match_id": "272964",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 22.07,
+          "odds": 2.31,
+          "won": true,
+          "returns": 50.981700000000004,
+          "profit": 28.911700000000003,
+          "edge": 0.03755620959929373,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.4329004329004329,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 47.81,
+          "odds": 1.45,
+          "won": true,
+          "returns": 69.3245,
+          "profit": 21.514499999999998,
+          "edge": 0.04285064608261391,
+          "predicted_prob": 0.7325058184964071,
+          "implied_prob": 0.6896551724137931,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2023/10/02"
+    },
+    {
+      "match_id": "188516",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team2_ml",
+          "amount": 24.89,
+          "odds": 2.03,
+          "won": true,
+          "returns": 50.5267,
+          "profit": 25.636699999999998,
+          "edge": 0.03693252006184966,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.4926108374384237,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2023/05/20"
+    },
+    {
+      "match_id": "188543",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 25.6,
+          "odds": 2.33,
+          "won": true,
+          "returns": 59.648,
+          "profit": 34.048,
+          "edge": 0.04127209314350344,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.4291845493562232,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2023/04/29"
+    },
+    {
+      "match_id": "152695",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 50.85,
+          "odds": 1.45,
+          "won": true,
+          "returns": 73.7325,
+          "profit": 22.8825,
+          "edge": 0.04285064608261391,
+          "predicted_prob": 0.7325058184964071,
+          "implied_prob": 0.6896551724137931,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2022/10/25"
+    },
+    {
+      "match_id": "95466",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 33.28,
+          "odds": 1.42,
+          "won": true,
+          "returns": 47.2576,
+          "profit": 13.977599999999995,
+          "edge": 0.02828046638373094,
+          "predicted_prob": 0.7325058184964071,
+          "implied_prob": 0.7042253521126761,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2022/06/14"
+    },
+    {
+      "match_id": "69824",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "bets": [
+        {
+          "bet_type": "team1_ml",
+          "amount": 25.28,
+          "odds": 2.32,
+          "won": true,
+          "returns": 58.6496,
+          "profit": 33.3696,
+          "edge": 0.03942215974110591,
+          "predicted_prob": 0.47045664249972663,
+          "implied_prob": 0.4310344827586207,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 31.96,
+          "odds": 2.06,
+          "won": false,
+          "returns": 0,
+          "profit": -31.96,
+          "edge": 0.04410646429638987,
+          "predicted_prob": 0.5295433575002734,
+          "implied_prob": 0.4854368932038835,
+          "team1": "MOUZ",
+          "team2": "CGN Esports"
+        }
+      ],
+      "date": "2022/02/28"
+    }
+  ],
+  "performance": {
+    "accuracy": 0.36,
+    "roi": 0.9747096267103569,
+    "profit": 880.4746999999996,
+    "bankroll_history": [
+      {
+        "match_idx": 0,
+        "bankroll": 1012.4109,
+        "match_id": "459857",
+        "date": "2025/05/02"
+      },
+      {
+        "match_idx": 1,
+        "bankroll": 1029.1121,
+        "match_id": "378825",
+        "date": "2024/08/15"
+      },
+      {
+        "match_idx": 2,
+        "bankroll": 1035.1501,
+        "match_id": "341821",
+        "date": "2024/05/12"
+      },
+      {
+        "match_idx": 3,
+        "bankroll": 1033.9920000000002,
+        "match_id": "341820",
+        "date": "2024/05/10"
+      },
+      {
+        "match_idx": 4,
+        "bankroll": 1027.3432000000003,
+        "match_id": "318915",
+        "date": "2024/04/04"
+      },
+      {
+        "match_idx": 5,
+        "bankroll": 1012.7614000000001,
+        "match_id": "183946",
+        "date": "2023/04/06"
+      },
+      {
+        "match_idx": 6,
+        "bankroll": 1718.1382000000003,
+        "match_id": "454035",
+        "date": "2025/03/03"
+      },
+      {
+        "match_idx": 7,
+        "bankroll": 1756.3810000000003,
+        "match_id": "461880",
+        "date": "2025/05/03"
+      },
+      {
+        "match_idx": 8,
+        "bankroll": 1769.5438000000004,
+        "match_id": "461878",
+        "date": "2025/04/05"
+      },
+      {
+        "match_idx": 9,
+        "bankroll": 1744.8338000000003,
+        "match_id": "438057",
+        "date": "2025/01/25"
+      },
+      {
+        "match_idx": 10,
+        "bankroll": 1755.5263000000004,
+        "match_id": "367234",
+        "date": "2024/07/20"
+      },
+      {
+        "match_idx": 11,
+        "bankroll": 1763.0399000000004,
+        "match_id": "349206",
+        "date": "2024/05/21"
+      },
+      {
+        "match_idx": 12,
+        "bankroll": 1735.5799000000004,
+        "match_id": "333789",
+        "date": "2024/05/04"
+      },
+      {
+        "match_idx": 13,
+        "bankroll": 1740.2093000000004,
+        "match_id": "327688",
+        "date": "2024/04/20"
+      },
+      {
+        "match_idx": 14,
+        "bankroll": 1708.8493000000005,
+        "match_id": "299355",
+        "date": "2024/02/17"
+      },
+      {
+        "match_idx": 15,
+        "bankroll": 1732.0941000000005,
+        "match_id": "285296",
+        "date": "2023/11/18"
+      },
+      {
+        "match_idx": 16,
+        "bankroll": 1782.5203000000006,
+        "match_id": "272964",
+        "date": "2023/10/02"
+      },
+      {
+        "match_idx": 17,
+        "bankroll": 1782.5203000000006,
+        "match_id": "188517",
+        "date": "2023/06/10"
+      },
+      {
+        "match_idx": 18,
+        "bankroll": 1808.1570000000006,
+        "match_id": "188516",
+        "date": "2023/05/20"
+      },
+      {
+        "match_idx": 19,
+        "bankroll": 1842.2050000000006,
+        "match_id": "188543",
+        "date": "2023/04/29"
+      },
+      {
+        "match_idx": 20,
+        "bankroll": 1842.2050000000006,
+        "match_id": "164084",
+        "date": "2023/02/25"
+      },
+      {
+        "match_idx": 21,
+        "bankroll": 1842.2050000000006,
+        "match_id": "164180",
+        "date": "2023/01/31"
+      },
+      {
+        "match_idx": 22,
+        "bankroll": 1865.0875000000005,
+        "match_id": "152695",
+        "date": "2022/10/25"
+      },
+      {
+        "match_idx": 23,
+        "bankroll": 1879.0651000000005,
+        "match_id": "95466",
+        "date": "2022/06/14"
+      },
+      {
+        "match_idx": 24,
+        "bankroll": 1880.4747000000004,
+        "match_id": "69824",
+        "date": "2022/02/28"
+      }
+    ],
+    "win_rate": 0.6578947368421053,
+    "final_bankroll": 1880.4747000000004,
+    "total_bets": 38,
+    "winning_bets": 25,
+    "total_wagered": 903.32,
+    "total_returns": 1783.7946999999997
+  },
+  "metrics": {
+    "accuracy_by_edge": {
+      "0%-5%": {
+        "total": 37,
+        "correct": 24
+      },
+      "10%-15%": {
+        "total": 1,
+        "correct": 1
+      }
+    },
+    "roi_by_edge": {
+      "0%-5%": {
+        "wagered": 866.84,
+        "returns": 1077.1770999999999
+      },
+      "10%-15%": {
+        "wagered": 36.48,
+        "returns": 706.6175999999999
+      }
+    },
+    "bet_types": {
+      "team1_ml": {
+        "total": 14,
+        "won": 10,
+        "wagered": 242.45,
+        "returns": 394.1580000000001
+      },
+      "team2_ml": {
+        "total": 12,
+        "won": 4,
+        "wagered": 271.37,
+        "returns": 187.2778
+      },
+      "team1_plus_1_5": {
+        "total": 11,
+        "won": 10,
+        "wagered": 353.02,
+        "returns": 495.7413
+      },
+      "team1_minus_1_5": {
+        "total": 1,
+        "won": 1,
+        "wagered": 36.48,
+        "returns": 706.6175999999999
+      }
+    },
+    "confidence_bins": {
+      "20%": {
+        "total": 24,
+        "correct": 9
+      },
+      "30%": {
+        "total": 1,
+        "correct": 0
+      }
+    }
+  },
+  "team_performance": {
+    "Team Heretics": {
+      "predictions": 6,
+      "correct": 0,
+      "bets": 9,
+      "wins": 6,
+      "wagered": 139.6,
+      "returns": 185.4432,
+      "accuracy": 0.0,
+      "win_rate": 0.6666666666666666,
+      "roi": 0.3283896848137536,
+      "profit": 45.843199999999996
+    },
+    "FNATIC": {
+      "predictions": 6,
+      "correct": 2,
+      "bets": 4,
+      "wins": 1,
+      "wagered": 66.35,
+      "returns": 33.2682,
+      "accuracy": 0.3333333333333333,
+      "win_rate": 0.25,
+      "roi": -0.4985953278070836,
+      "profit": -33.081799999999994
+    },
+    "BBL PCIFIC": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 3,
+      "wins": 3,
+      "wagered": 68.82,
+      "returns": 774.1967999999999,
+      "accuracy": 0.0,
+      "win_rate": 1.0,
+      "roi": 10.249590235396688,
+      "profit": 705.3768
+    },
+    "CGN Esports": {
+      "predictions": 19,
+      "correct": 7,
+      "bets": 8,
+      "wins": 3,
+      "wagered": 205.02,
+      "returns": 154.0096,
+      "accuracy": 0.3684210526315789,
+      "win_rate": 0.375,
+      "roi": -0.24880694566383768,
+      "profit": -51.010400000000004
+    },
+    "MOUZ": {
+      "predictions": 18,
+      "correct": 0,
+      "bets": 14,
+      "wins": 12,
+      "wagered": 423.53,
+      "returns": 636.8769,
+      "accuracy": 0.0,
+      "win_rate": 0.8571428571428571,
+      "roi": 0.503735036479116,
+      "profit": 213.3469
+    }
+  }
+}

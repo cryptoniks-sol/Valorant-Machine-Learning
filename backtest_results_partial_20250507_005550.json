@@ -1,0 +1,6672 @@
+{
+  "performance": {
+    "accuracy": 0.5764139590854392,
+    "roi": -0.11429452941486666,
+    "profit": -975.578100000007,
+    "bankroll_history": [
+      {
+        "match_idx": 0,
+        "bankroll": 960.0,
+        "match_id": "459857",
+        "date": "2025/05/02",
+        "teams": "Team Heretics vs FNATIC",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 1,
+        "bankroll": 921.6,
+        "match_id": "459842",
+        "date": "2025/04/10",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 2,
+        "bankroll": 955.5112,
+        "match_id": "429401",
+        "date": "2025/02/08",
+        "teams": "Team Heretics vs Team Liquid",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 3,
+        "bankroll": 917.2912,
+        "match_id": "429389",
+        "date": "2025/02/07",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 4,
+        "bankroll": 880.6012000000001,
+        "match_id": "429388",
+        "date": "2025/01/29",
+        "teams": "Team Heretics vs BBL Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 5,
+        "bankroll": 913.3558,
+        "match_id": "378836",
+        "date": "2024/08/24",
+        "teams": "Team Heretics vs LEVIAT\u00c1N",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 6,
+        "bankroll": 945.5022,
+        "match_id": "378835",
+        "date": "2024/08/23",
+        "teams": "Team Heretics vs Sentinels",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 7,
+        "bankroll": 981.053,
+        "match_id": "378833",
+        "date": "2024/08/18",
+        "teams": "Team Heretics vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 8,
+        "bankroll": 941.813,
+        "match_id": "378827",
+        "date": "2024/08/17",
+        "teams": "Team Heretics vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 9,
+        "bankroll": 904.143,
+        "match_id": "378825",
+        "date": "2024/08/15",
+        "teams": "Team Heretics vs FNATIC",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 10,
+        "bankroll": 938.1428000000001,
+        "match_id": "378664",
+        "date": "2024/08/06",
+        "teams": "Team Heretics vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 11,
+        "bankroll": 971.5445000000001,
+        "match_id": "371285",
+        "date": "2024/07/19",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 12,
+        "bankroll": 918.8145000000001,
+        "match_id": "371284",
+        "date": "2024/07/17",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 13,
+        "bankroll": 951.1545000000001,
+        "match_id": "371280",
+        "date": "2024/07/16",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 14,
+        "bankroll": 913.1045000000001,
+        "match_id": "353161",
+        "date": "2024/06/26",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 15,
+        "bankroll": 945.6073000000001,
+        "match_id": "348476",
+        "date": "2024/06/09",
+        "teams": "Team Heretics vs Gen.G",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 16,
+        "bankroll": 979.6453000000001,
+        "match_id": "348475",
+        "date": "2024/06/08",
+        "teams": "Team Heretics vs G2 Esports",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 17,
+        "bankroll": 940.4553000000001,
+        "match_id": "348474",
+        "date": "2024/06/07",
+        "teams": "Team Heretics vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 18,
+        "bankroll": 902.8353000000001,
+        "match_id": "348472",
+        "date": "2024/06/03",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 19,
+        "bankroll": 937.5009000000001,
+        "match_id": "348469",
+        "date": "2024/06/02",
+        "teams": "Team Heretics vs G2 Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 20,
+        "bankroll": 972.0009000000001,
+        "match_id": "348457",
+        "date": "2024/05/25",
+        "teams": "Team Heretics vs G2 Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 21,
+        "bankroll": 1009.7145000000002,
+        "match_id": "341821",
+        "date": "2024/05/12",
+        "teams": "Team Heretics vs FNATIC",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 22,
+        "bankroll": 969.3245000000002,
+        "match_id": "341820",
+        "date": "2024/05/10",
+        "teams": "Team Heretics vs FNATIC",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 23,
+        "bankroll": 930.5545000000002,
+        "match_id": "341819",
+        "date": "2024/05/09",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 24,
+        "bankroll": 893.3345000000002,
+        "match_id": "318930",
+        "date": "2024/04/24",
+        "teams": "Team Heretics vs Team Liquid",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 25,
+        "bankroll": 857.6045000000001,
+        "match_id": "318926",
+        "date": "2024/04/18",
+        "teams": "Team Heretics vs BBL Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 26,
+        "bankroll": 888.8175000000001,
+        "match_id": "318919",
+        "date": "2024/04/10",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 27,
+        "bankroll": 853.2675000000002,
+        "match_id": "318915",
+        "date": "2024/04/04",
+        "teams": "Team Heretics vs FNATIC",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 28,
+        "bankroll": 885.0084000000002,
+        "match_id": "312799",
+        "date": "2024/03/17",
+        "teams": "Team Heretics vs Paper Rex",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 29,
+        "bankroll": 919.3464000000001,
+        "match_id": "312768",
+        "date": "2024/03/15",
+        "teams": "Team Heretics vs Sentinels",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 30,
+        "bankroll": 882.5764000000001,
+        "match_id": "297401",
+        "date": "2024/02/20",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 31,
+        "bankroll": 847.2764000000002,
+        "match_id": "279601",
+        "date": "2023/10/14",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 32,
+        "bankroll": 813.3864000000002,
+        "match_id": "184058",
+        "date": "2023/05/18",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 33,
+        "bankroll": 842.9978000000002,
+        "match_id": "184043",
+        "date": "2023/04/27",
+        "teams": "Team Heretics vs BBL Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 34,
+        "bankroll": 809.2778000000002,
+        "match_id": "184037",
+        "date": "2023/04/19",
+        "teams": "Team Heretics vs Team Liquid",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 35,
+        "bankroll": 776.9078000000002,
+        "match_id": "183946",
+        "date": "2023/04/06",
+        "teams": "Team Heretics vs FNATIC",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 36,
+        "bankroll": 745.8278000000001,
+        "match_id": "173216",
+        "date": "2023/03/28",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 37,
+        "bankroll": 715.9978000000001,
+        "match_id": "167354",
+        "date": "2023/02/15",
+        "teams": "Team Heretics vs Evil Geniuses",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 38,
+        "bankroll": 687.3578000000001,
+        "match_id": "161213",
+        "date": "2022/12/10",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 39,
+        "bankroll": 659.8678000000001,
+        "match_id": "161212",
+        "date": "2022/12/09",
+        "teams": "Team Heretics vs Team Liquid",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 40,
+        "bankroll": 633.4778000000001,
+        "match_id": "161208",
+        "date": "2022/12/09",
+        "teams": "Team Heretics vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 41,
+        "bankroll": 655.5236000000001,
+        "match_id": "161203",
+        "date": "2022/12/09",
+        "teams": "Team Heretics vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 42,
+        "bankroll": 679.9082000000001,
+        "match_id": "157705",
+        "date": "2022/11/19",
+        "teams": "Team Heretics vs Paper Rex",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 43,
+        "bankroll": 643.0782,
+        "match_id": "157688",
+        "date": "2022/11/18",
+        "teams": "Team Heretics vs Rex Regum Qeon",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 44,
+        "bankroll": 617.3582,
+        "match_id": "28216",
+        "date": "2021/07/24",
+        "teams": "Team Heretics vs Team Vitality",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 45,
+        "bankroll": 592.6682,
+        "match_id": "16328",
+        "date": "2021/04/12",
+        "teams": "Team Heretics vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 46,
+        "bankroll": 615.6668999999999,
+        "match_id": "7099",
+        "date": "2020/12/05",
+        "teams": "Team Heretics vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 47,
+        "bankroll": 633.8054,
+        "match_id": "6869",
+        "date": "2020/12/03",
+        "teams": "Team Heretics vs Team Liquid",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 48,
+        "bankroll": 657.6343999999999,
+        "match_id": "454036",
+        "date": "2025/03/04",
+        "teams": "BBL PCIFIC vs Enterprise Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 49,
+        "bankroll": 631.3244,
+        "match_id": "454035",
+        "date": "2025/03/03",
+        "teams": "BBL PCIFIC vs CGN Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 50,
+        "bankroll": 653.7968999999999,
+        "match_id": "415801",
+        "date": "2024/10/27",
+        "teams": "BBL PCIFIC vs FUT Esports",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 51,
+        "bankroll": 669.5423999999999,
+        "match_id": "459836",
+        "date": "2025/04/04",
+        "teams": "FNATIC vs Team Vitality",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 52,
+        "bankroll": 642.7624,
+        "match_id": "429397",
+        "date": "2025/01/31",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 53,
+        "bankroll": 655.654,
+        "match_id": "429385",
+        "date": "2025/01/17",
+        "teams": "FNATIC vs BBL Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 54,
+        "bankroll": 629.424,
+        "match_id": "423495",
+        "date": "2024/12/15",
+        "teams": "FNATIC vs LEVIAT\u00c1N",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 55,
+        "bankroll": 659.5236,
+        "match_id": "424022",
+        "date": "2024/11/22",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 56,
+        "bankroll": 685.376,
+        "match_id": "378834",
+        "date": "2024/08/18",
+        "teams": "FNATIC vs Sentinels",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 57,
+        "bankroll": 657.956,
+        "match_id": "378832",
+        "date": "2024/08/16",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 58,
+        "bankroll": 631.636,
+        "match_id": "378658",
+        "date": "2024/08/06",
+        "teams": "FNATIC vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 59,
+        "bankroll": 646.5952,
+        "match_id": "371283",
+        "date": "2024/07/20",
+        "teams": "FNATIC vs Team Vitality",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 60,
+        "bankroll": 611.6952,
+        "match_id": "371282",
+        "date": "2024/07/17",
+        "teams": "FNATIC vs Team Vitality",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 61,
+        "bankroll": 587.2252,
+        "match_id": "371281",
+        "date": "2024/07/16",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 62,
+        "bankroll": 563.7352,
+        "match_id": "353174",
+        "date": "2024/07/10",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 63,
+        "bankroll": 577.5342,
+        "match_id": "353160",
+        "date": "2024/06/26",
+        "teams": "FNATIC vs Team Vitality",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 64,
+        "bankroll": 598.7862,
+        "match_id": "353154",
+        "date": "2024/06/19",
+        "teams": "FNATIC vs BBL Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 65,
+        "bankroll": 620.1017,
+        "match_id": "348468",
+        "date": "2024/06/01",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 66,
+        "bankroll": 641.9257,
+        "match_id": "348466",
+        "date": "2024/05/30",
+        "teams": "FNATIC vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 67,
+        "bankroll": 656.9748999999999,
+        "match_id": "341823",
+        "date": "2024/05/11",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 68,
+        "bankroll": 674.5613,
+        "match_id": "341816",
+        "date": "2024/05/08",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 69,
+        "bankroll": 647.5812999999999,
+        "match_id": "318932",
+        "date": "2024/04/25",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 70,
+        "bankroll": 612.0812999999999,
+        "match_id": "297414",
+        "date": "2024/02/23",
+        "teams": "FNATIC vs Team Vitality",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 71,
+        "bankroll": 587.6012999999999,
+        "match_id": "283100",
+        "date": "2023/11/04",
+        "teams": "FNATIC vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 72,
+        "bankroll": 608.9862999999999,
+        "match_id": "248282",
+        "date": "2023/08/24",
+        "teams": "FNATIC vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 73,
+        "bankroll": 632.1282999999999,
+        "match_id": "248280",
+        "date": "2023/08/20",
+        "teams": "FNATIC vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 74,
+        "bankroll": 606.8382999999999,
+        "match_id": "248278",
+        "date": "2023/08/18",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 75,
+        "bankroll": 582.5682999999999,
+        "match_id": "248270",
+        "date": "2023/08/16",
+        "teams": "FNATIC vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 76,
+        "bankroll": 596.0163,
+        "match_id": "220448",
+        "date": "2023/06/24",
+        "teams": "FNATIC vs Evil Geniuses",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 77,
+        "bankroll": 616.5187,
+        "match_id": "220447",
+        "date": "2023/06/20",
+        "teams": "FNATIC vs Evil Geniuses",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 78,
+        "bankroll": 591.8587,
+        "match_id": "220445",
+        "date": "2023/06/18",
+        "teams": "FNATIC vs Paper Rex",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 79,
+        "bankroll": 559.4487,
+        "match_id": "220442",
+        "date": "2023/06/16",
+        "teams": "FNATIC vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 80,
+        "bankroll": 601.4631,
+        "match_id": "213198",
+        "date": "2023/05/28",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 81,
+        "bankroll": 577.4031000000001,
+        "match_id": "213197",
+        "date": "2023/05/26",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 82,
+        "bankroll": 599.3481000000002,
+        "match_id": "213195",
+        "date": "2023/05/24",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 83,
+        "bankroll": 566.9381000000001,
+        "match_id": "184047",
+        "date": "2023/05/03",
+        "teams": "FNATIC vs Team Vitality",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 84,
+        "bankroll": 535.6981000000002,
+        "match_id": "184045",
+        "date": "2023/04/28",
+        "teams": "FNATIC vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 85,
+        "bankroll": 509.5881000000002,
+        "match_id": "183951",
+        "date": "2023/04/13",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 86,
+        "bankroll": 528.3377000000003,
+        "match_id": "173222",
+        "date": "2023/03/31",
+        "teams": "FNATIC vs BBL Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 87,
+        "bankroll": 547.9886000000002,
+        "match_id": "167393",
+        "date": "2023/03/04",
+        "teams": "FNATIC vs LOUD",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 88,
+        "bankroll": 526.0686000000003,
+        "match_id": "167375",
+        "date": "2023/02/27",
+        "teams": "FNATIC vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 89,
+        "bankroll": 505.02860000000027,
+        "match_id": "167373",
+        "date": "2023/02/26",
+        "teams": "FNATIC vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 90,
+        "bankroll": 484.8286000000003,
+        "match_id": "167368",
+        "date": "2023/02/24",
+        "teams": "FNATIC vs Sentinels",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 91,
+        "bankroll": 501.8918000000003,
+        "match_id": "130689",
+        "date": "2022/09/13",
+        "teams": "FNATIC vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 92,
+        "bankroll": 477.5518000000003,
+        "match_id": "130687",
+        "date": "2022/09/11",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 93,
+        "bankroll": 458.4518000000003,
+        "match_id": "130636",
+        "date": "2022/09/08",
+        "teams": "FNATIC vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 94,
+        "bankroll": 474.95780000000025,
+        "match_id": "130635",
+        "date": "2022/09/05",
+        "teams": "FNATIC vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 95,
+        "bankroll": 492.43780000000027,
+        "match_id": "130633",
+        "date": "2022/09/02",
+        "teams": "FNATIC vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 96,
+        "bankroll": 510.7588000000003,
+        "match_id": "112331",
+        "date": "2022/07/18",
+        "teams": "FNATIC vs LEVIAT\u00c1N",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 97,
+        "bankroll": 490.3288000000003,
+        "match_id": "112324",
+        "date": "2022/07/17",
+        "teams": "FNATIC vs Paper Rex",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 98,
+        "bankroll": 498.2595000000003,
+        "match_id": "99603",
+        "date": "2022/06/12",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 99,
+        "bankroll": 556.9817000000003,
+        "match_id": "79082",
+        "date": "2022/03/26",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 100,
+        "bankroll": 534.7017000000003,
+        "match_id": "68998",
+        "date": "2022/02/19",
+        "teams": "FNATIC vs BBL Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 101,
+        "bankroll": 545.0683000000002,
+        "match_id": "68990",
+        "date": "2022/02/11",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 102,
+        "bankroll": 543.4235000000003,
+        "match_id": "49276",
+        "date": "2021/11/05",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 103,
+        "bankroll": 557.2699000000003,
+        "match_id": "28919",
+        "date": "2021/07/31",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 104,
+        "bankroll": 534.9799000000004,
+        "match_id": "24959",
+        "date": "2021/07/08",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 105,
+        "bankroll": 554.0259000000004,
+        "match_id": "24949",
+        "date": "2021/07/07",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 106,
+        "bankroll": 578.7715000000005,
+        "match_id": "24109",
+        "date": "2021/07/01",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 107,
+        "bankroll": 601.2270000000005,
+        "match_id": "19089",
+        "date": "2021/05/30",
+        "teams": "FNATIC vs Sentinels",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 108,
+        "bankroll": 577.1770000000006,
+        "match_id": "19087",
+        "date": "2021/05/29",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 109,
+        "bankroll": 554.0870000000006,
+        "match_id": "19073",
+        "date": "2021/05/25",
+        "teams": "FNATIC vs Sentinels",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 110,
+        "bankroll": 573.3662000000005,
+        "match_id": "16836",
+        "date": "2021/05/02",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 111,
+        "bankroll": 593.7739000000005,
+        "match_id": "16483",
+        "date": "2021/04/18",
+        "teams": "FNATIC vs Team Liquid",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 112,
+        "bankroll": 561.4139000000005,
+        "match_id": "16481",
+        "date": "2021/04/17",
+        "teams": "FNATIC vs Team Vitality",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 113,
+        "bankroll": 538.9539000000004,
+        "match_id": "16478",
+        "date": "2021/04/15",
+        "teams": "FNATIC vs G2 Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 114,
+        "bankroll": 550.0779000000005,
+        "match_id": "461880",
+        "date": "2025/05/03",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 115,
+        "bankroll": 563.4679000000004,
+        "match_id": "461878",
+        "date": "2025/04/05",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 116,
+        "bankroll": 532.2779000000005,
+        "match_id": "438057",
+        "date": "2025/01/25",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 117,
+        "bankroll": 552.2905000000005,
+        "match_id": "367234",
+        "date": "2024/07/20",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 118,
+        "bankroll": 530.2005000000005,
+        "match_id": "349206",
+        "date": "2024/05/21",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 119,
+        "bankroll": 548.6532000000005,
+        "match_id": "333789",
+        "date": "2024/05/04",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 120,
+        "bankroll": 568.8472000000005,
+        "match_id": "327688",
+        "date": "2024/04/20",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 121,
+        "bankroll": 589.0947000000004,
+        "match_id": "299355",
+        "date": "2024/02/17",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 122,
+        "bankroll": 601.0819000000005,
+        "match_id": "285296",
+        "date": "2023/11/18",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 123,
+        "bankroll": 567.6919000000005,
+        "match_id": "272964",
+        "date": "2023/10/02",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 124,
+        "bankroll": 589.2664000000004,
+        "match_id": "188517",
+        "date": "2023/06/10",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 125,
+        "bankroll": 602.9622000000004,
+        "match_id": "188516",
+        "date": "2023/05/20",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 126,
+        "bankroll": 569.8222000000004,
+        "match_id": "188543",
+        "date": "2023/04/29",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 127,
+        "bankroll": 547.0322000000004,
+        "match_id": "164084",
+        "date": "2023/02/25",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 128,
+        "bankroll": 525.1522000000004,
+        "match_id": "164180",
+        "date": "2023/01/31",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "1-1"
+      },
+      {
+        "match_idx": 129,
+        "bankroll": 496.4422000000004,
+        "match_id": "152695",
+        "date": "2022/10/25",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 130,
+        "bankroll": 476.5822000000004,
+        "match_id": "95466",
+        "date": "2022/06/14",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 131,
+        "bankroll": 450.5422000000004,
+        "match_id": "69824",
+        "date": "2022/02/28",
+        "teams": "MOUZ vs CGN Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 132,
+        "bankroll": 426.0222000000004,
+        "match_id": "454037",
+        "date": "2025/03/05",
+        "teams": "CGN Esports vs Enterprise Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 133,
+        "bankroll": 441.5286000000004,
+        "match_id": "449012",
+        "date": "2025/02/28",
+        "teams": "Team Vitality vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 134,
+        "bankroll": 423.86860000000036,
+        "match_id": "449009",
+        "date": "2025/02/27",
+        "teams": "Team Vitality vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 135,
+        "bankroll": 440.14060000000035,
+        "match_id": "449000",
+        "date": "2025/02/22",
+        "teams": "Team Vitality vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 136,
+        "bankroll": 422.53060000000033,
+        "match_id": "448599",
+        "date": "2025/02/21",
+        "teams": "Team Vitality vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 137,
+        "bankroll": 437.57160000000033,
+        "match_id": "429390",
+        "date": "2025/02/09",
+        "teams": "Team Vitality vs Team Liquid",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 138,
+        "bankroll": 420.07160000000033,
+        "match_id": "429387",
+        "date": "2025/01/29",
+        "teams": "Team Vitality vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 139,
+        "bankroll": 403.2716000000003,
+        "match_id": "378672",
+        "date": "2024/08/11",
+        "teams": "Team Vitality vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 140,
+        "bankroll": 379.24160000000035,
+        "match_id": "378671",
+        "date": "2024/08/09",
+        "teams": "Team Vitality vs TALON",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 141,
+        "bankroll": 385.39290000000034,
+        "match_id": "353170",
+        "date": "2024/07/05",
+        "teams": "Team Vitality vs BBL Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 142,
+        "bankroll": 369.9729000000003,
+        "match_id": "353156",
+        "date": "2024/06/20",
+        "teams": "Team Vitality vs Team Liquid",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 143,
+        "bankroll": 383.14490000000035,
+        "match_id": "318927",
+        "date": "2024/04/18",
+        "teams": "Team Vitality vs FUT Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 144,
+        "bankroll": 396.63530000000037,
+        "match_id": "289453",
+        "date": "2023/12/17",
+        "teams": "Team Vitality vs FUT Esports",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 145,
+        "bankroll": 374.85530000000034,
+        "match_id": "289450",
+        "date": "2023/12/15",
+        "teams": "Team Vitality vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 146,
+        "bankroll": 383.5259000000003,
+        "match_id": "213200",
+        "date": "2023/05/25",
+        "teams": "Team Vitality vs FUT Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 147,
+        "bankroll": 397.9455000000003,
+        "match_id": "213194",
+        "date": "2023/05/23",
+        "teams": "Team Vitality vs Team Liquid",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 148,
+        "bankroll": 416.2255000000003,
+        "match_id": "184041",
+        "date": "2023/04/21",
+        "teams": "Team Vitality vs BBL Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 149,
+        "bankroll": 425.54890000000034,
+        "match_id": "183944",
+        "date": "2023/04/05",
+        "teams": "Team Vitality vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 150,
+        "bankroll": 442.0583000000003,
+        "match_id": "173217",
+        "date": "2023/03/28",
+        "teams": "Team Vitality vs Team Liquid",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 151,
+        "bankroll": 424.3783000000003,
+        "match_id": "167371",
+        "date": "2023/02/25",
+        "teams": "Team Vitality vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 152,
+        "bankroll": 407.3983000000003,
+        "match_id": "161215",
+        "date": "2022/12/10",
+        "teams": "Team Vitality vs 100 Thieves",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 153,
+        "bankroll": 422.0683000000003,
+        "match_id": "121829",
+        "date": "2022/08/05",
+        "teams": "Team Vitality vs FUT Esports",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 154,
+        "bankroll": 405.1883000000003,
+        "match_id": "121827",
+        "date": "2022/08/02",
+        "teams": "Team Vitality vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 155,
+        "bankroll": 388.97830000000033,
+        "match_id": "63616",
+        "date": "2022/01/13",
+        "teams": "Team Vitality vs G2 Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 156,
+        "bankroll": 403.13790000000034,
+        "match_id": "28907",
+        "date": "2021/07/28",
+        "teams": "Team Vitality vs Team Liquid",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 157,
+        "bankroll": 417.97750000000036,
+        "match_id": "24104",
+        "date": "2021/06/30",
+        "teams": "Team Vitality vs G2 Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 158,
+        "bankroll": 433.02550000000036,
+        "match_id": "16335",
+        "date": "2021/04/12",
+        "teams": "Team Vitality vs G2 Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 159,
+        "bankroll": 449.30630000000036,
+        "match_id": "15178",
+        "date": "2021/03/31",
+        "teams": "Team Vitality vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 160,
+        "bankroll": 424.5563000000004,
+        "match_id": "459841",
+        "date": "2025/04/10",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 161,
+        "bankroll": 440.0081000000004,
+        "match_id": "459832",
+        "date": "2025/04/02",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 162,
+        "bankroll": 422.4081000000004,
+        "match_id": "449005",
+        "date": "2025/02/24",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 163,
+        "bankroll": 438.2941000000004,
+        "match_id": "449003",
+        "date": "2025/02/23",
+        "teams": "Team Liquid vs Sentinels",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 164,
+        "bankroll": 448.4776000000004,
+        "match_id": "429400",
+        "date": "2025/02/07",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 165,
+        "bankroll": 464.44420000000036,
+        "match_id": "429398",
+        "date": "2025/01/31",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 166,
+        "bankroll": 445.8642000000004,
+        "match_id": "429383",
+        "date": "2025/01/22",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 167,
+        "bankroll": 463.26300000000043,
+        "match_id": "353162",
+        "date": "2024/06/27",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 168,
+        "bankroll": 473.97100000000046,
+        "match_id": "318916",
+        "date": "2024/04/05",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 169,
+        "bankroll": 490.65580000000045,
+        "match_id": "286658",
+        "date": "2023/12/09",
+        "teams": "Team Liquid vs Sentinels",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 170,
+        "bankroll": 509.6969000000004,
+        "match_id": "286649",
+        "date": "2023/12/07",
+        "teams": "Team Liquid vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 171,
+        "bankroll": 489.30690000000044,
+        "match_id": "247103",
+        "date": "2023/08/10",
+        "teams": "Team Liquid vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 172,
+        "bankroll": 507.70270000000045,
+        "match_id": "220451",
+        "date": "2023/06/19",
+        "teams": "Team Liquid vs NRG Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 173,
+        "bankroll": 522.8102000000005,
+        "match_id": "220446",
+        "date": "2023/06/18",
+        "teams": "Team Liquid vs Evil Geniuses",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 174,
+        "bankroll": 542.8838000000005,
+        "match_id": "213202",
+        "date": "2023/05/27",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 175,
+        "bankroll": 563.5178000000005,
+        "match_id": "184055",
+        "date": "2023/05/12",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 176,
+        "bankroll": 574.8576000000005,
+        "match_id": "173220",
+        "date": "2023/03/30",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 177,
+        "bankroll": 595.7785000000005,
+        "match_id": "161207",
+        "date": "2022/12/09",
+        "teams": "Team Liquid vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 178,
+        "bankroll": 571.9485000000004,
+        "match_id": "161204",
+        "date": "2022/12/09",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 179,
+        "bankroll": 589.2721000000004,
+        "match_id": "130621",
+        "date": "2022/09/07",
+        "teams": "Team Liquid vs Paper Rex",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 180,
+        "bankroll": 613.7270000000003,
+        "match_id": "130618",
+        "date": "2022/08/31",
+        "teams": "Team Liquid vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 181,
+        "bankroll": 624.9730000000003,
+        "match_id": "112613",
+        "date": "2022/08/13",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 182,
+        "bankroll": 599.9730000000003,
+        "match_id": "112602",
+        "date": "2022/08/08",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 183,
+        "bankroll": 575.9730000000003,
+        "match_id": "99580",
+        "date": "2022/05/20",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 184,
+        "bankroll": 597.1698000000004,
+        "match_id": "85526",
+        "date": "2022/04/14",
+        "teams": "Team Liquid vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 185,
+        "bankroll": 573.2798000000004,
+        "match_id": "79081",
+        "date": "2022/03/25",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 186,
+        "bankroll": 595.5219000000004,
+        "match_id": "79074",
+        "date": "2022/03/22",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 187,
+        "bankroll": 616.9599000000004,
+        "match_id": "51274",
+        "date": "2021/12/04",
+        "teams": "Team Liquid vs Sentinels",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 188,
+        "bankroll": 592.2799000000005,
+        "match_id": "49178",
+        "date": "2021/11/04",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 189,
+        "bankroll": 559.7799000000005,
+        "match_id": "49162",
+        "date": "2021/11/04",
+        "teams": "Team Liquid vs FUT Esports",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 190,
+        "bankroll": 581.7221000000004,
+        "match_id": "42204",
+        "date": "2021/10/16",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 191,
+        "bankroll": 604.2940000000004,
+        "match_id": "16829",
+        "date": "2021/04/23",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 192,
+        "bankroll": 627.4972000000005,
+        "match_id": "9312",
+        "date": "2021/01/31",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 193,
+        "bankroll": 602.3972000000005,
+        "match_id": "1751",
+        "date": "2020/08/16",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 194,
+        "bankroll": 578.2972000000004,
+        "match_id": "1747",
+        "date": "2020/08/15",
+        "teams": "Team Liquid vs G2 Esports",
+        "score": "1-1"
+      },
+      {
+        "match_idx": 195,
+        "bankroll": 555.1672000000004,
+        "match_id": "1740",
+        "date": "2020/08/13",
+        "teams": "Team Liquid vs BBL Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 196,
+        "bankroll": 532.9572000000004,
+        "match_id": "459852",
+        "date": "2025/04/23",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 197,
+        "bankroll": 511.6372000000004,
+        "match_id": "421597",
+        "date": "2024/11/20",
+        "teams": "BBL Esports vs G2 Esports",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 198,
+        "bankroll": 491.16720000000043,
+        "match_id": "318941",
+        "date": "2024/05/03",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 199,
+        "bankroll": 471.51720000000046,
+        "match_id": "283063",
+        "date": "2023/10/29",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 200,
+        "bankroll": 452.65720000000044,
+        "match_id": "184061",
+        "date": "2023/05/19",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 201,
+        "bankroll": 469.6806000000004,
+        "match_id": "167352",
+        "date": "2023/02/14",
+        "teams": "BBL Esports vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 202,
+        "bankroll": 450.8906000000004,
+        "match_id": "69004",
+        "date": "2022/03/11",
+        "teams": "BBL Esports vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 203,
+        "bankroll": 467.1266000000004,
+        "match_id": "65310",
+        "date": "2022/01/23",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 204,
+        "bankroll": 448.4366000000004,
+        "match_id": "65302",
+        "date": "2022/01/21",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 205,
+        "bankroll": 457.99320000000034,
+        "match_id": "24983",
+        "date": "2021/07/07",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 206,
+        "bankroll": 475.58040000000034,
+        "match_id": "12940",
+        "date": "2021/03/21",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 207,
+        "bankroll": 456.56040000000036,
+        "match_id": "12936",
+        "date": "2021/03/18",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 208,
+        "bankroll": 473.35960000000034,
+        "match_id": "7166",
+        "date": "2020/12/06",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 209,
+        "bankroll": 454.42960000000033,
+        "match_id": "7163",
+        "date": "2020/12/05",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 210,
+        "bankroll": 436.2496000000003,
+        "match_id": "4389",
+        "date": "2020/10/28",
+        "teams": "BBL Esports vs FUT Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 211,
+        "bankroll": 418.79960000000034,
+        "match_id": "1728",
+        "date": "2020/08/11",
+        "teams": "BBL Esports vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 212,
+        "bankroll": 402.04960000000034,
+        "match_id": "1462",
+        "date": "2020/08/01",
+        "teams": "BBL Esports vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 213,
+        "bankroll": 417.32560000000035,
+        "match_id": "424006",
+        "date": "2024/11/23",
+        "teams": "FUT Esports vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 214,
+        "bankroll": 400.63560000000035,
+        "match_id": "423623",
+        "date": "2024/11/21",
+        "teams": "FUT Esports vs T1",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 215,
+        "bankroll": 384.6056000000003,
+        "match_id": "421599",
+        "date": "2024/11/20",
+        "teams": "FUT Esports vs G2 Esports",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 216,
+        "bankroll": 369.2256000000003,
+        "match_id": "378676",
+        "date": "2024/08/09",
+        "teams": "FUT Esports vs Paper Rex",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 217,
+        "bankroll": 354.45560000000035,
+        "match_id": "348465",
+        "date": "2024/05/30",
+        "teams": "FUT Esports vs 100 Thieves",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 218,
+        "bankroll": 368.06840000000034,
+        "match_id": "348461",
+        "date": "2024/05/27",
+        "teams": "FUT Esports vs LEVIAT\u00c1N",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 219,
+        "bankroll": 381.3164000000003,
+        "match_id": "289451",
+        "date": "2023/12/16",
+        "teams": "FUT Esports vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 220,
+        "bankroll": 366.0664000000003,
+        "match_id": "283095",
+        "date": "2023/11/03",
+        "teams": "FUT Esports vs DRX",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 221,
+        "bankroll": 351.42640000000034,
+        "match_id": "283089",
+        "date": "2023/11/02",
+        "teams": "FUT Esports vs 100 Thieves",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 222,
+        "bankroll": 337.36640000000034,
+        "match_id": "248271",
+        "date": "2023/08/16",
+        "teams": "FUT Esports vs Paper Rex",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 223,
+        "bankroll": 323.87640000000033,
+        "match_id": "247090",
+        "date": "2023/08/12",
+        "teams": "FUT Esports vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 224,
+        "bankroll": 310.91640000000035,
+        "match_id": "247088",
+        "date": "2023/08/08",
+        "teams": "FUT Esports vs Evil Geniuses",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 225,
+        "bankroll": 298.47640000000035,
+        "match_id": "247087",
+        "date": "2023/08/07",
+        "teams": "FUT Esports vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 226,
+        "bankroll": 309.81940000000037,
+        "match_id": "220300",
+        "date": "2023/06/13",
+        "teams": "FUT Esports vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 227,
+        "bankroll": 317.14260000000036,
+        "match_id": "220297",
+        "date": "2023/06/10",
+        "teams": "FUT Esports vs Evil Geniuses",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 228,
+        "bankroll": 328.43670000000037,
+        "match_id": "167372",
+        "date": "2023/02/26",
+        "teams": "FUT Esports vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 229,
+        "bankroll": 310.63670000000036,
+        "match_id": "167366",
+        "date": "2023/02/23",
+        "teams": "FUT Esports vs Rex Regum Qeon",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 230,
+        "bankroll": 298.20670000000035,
+        "match_id": "161211",
+        "date": "2022/12/09",
+        "teams": "FUT Esports vs 100 Thieves",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 231,
+        "bankroll": 286.27670000000035,
+        "match_id": "49171",
+        "date": "2021/11/04",
+        "teams": "FUT Esports vs G2 Esports",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 232,
+        "bankroll": 296.92520000000036,
+        "match_id": "42202",
+        "date": "2021/10/13",
+        "teams": "FUT Esports vs G2 Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 233,
+        "bankroll": 307.61720000000037,
+        "match_id": "475902",
+        "date": "2025/05/04",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 234,
+        "bankroll": 319.1792000000004,
+        "match_id": "475908",
+        "date": "2025/05/03",
+        "teams": "G2 Esports vs MIBR",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 235,
+        "bankroll": 325.55910000000034,
+        "match_id": "475907",
+        "date": "2025/05/02",
+        "teams": "G2 Esports vs Evil Geniuses",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 236,
+        "bankroll": 334.65730000000036,
+        "match_id": "475905",
+        "date": "2025/04/27",
+        "teams": "G2 Esports vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 237,
+        "bankroll": 347.51170000000036,
+        "match_id": "475900",
+        "date": "2025/04/26",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 238,
+        "bankroll": 360.85570000000035,
+        "match_id": "459536",
+        "date": "2025/04/11",
+        "teams": "G2 Esports vs LEVIAT\u00c1N",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 239,
+        "bankroll": 341.09570000000036,
+        "match_id": "459532",
+        "date": "2025/04/05",
+        "teams": "G2 Esports vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 240,
+        "bankroll": 353.91730000000035,
+        "match_id": "459526",
+        "date": "2025/03/29",
+        "teams": "G2 Esports vs MIBR",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 241,
+        "bankroll": 339.7573000000003,
+        "match_id": "459519",
+        "date": "2025/03/22",
+        "teams": "G2 Esports vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 242,
+        "bankroll": 347.8237000000003,
+        "match_id": "449011",
+        "date": "2025/03/02",
+        "teams": "G2 Esports vs T1",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 243,
+        "bankroll": 360.76000000000033,
+        "match_id": "428002",
+        "date": "2025/02/08",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 244,
+        "bankroll": 346.3300000000003,
+        "match_id": "428001",
+        "date": "2025/02/06",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 245,
+        "bankroll": 332.4800000000003,
+        "match_id": "428000",
+        "date": "2025/01/31",
+        "teams": "G2 Esports vs LEVIAT\u00c1N",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 246,
+        "bankroll": 314.1300000000003,
+        "match_id": "423973",
+        "date": "2024/11/21",
+        "teams": "G2 Esports vs T1",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 247,
+        "bankroll": 301.5600000000003,
+        "match_id": "378824",
+        "date": "2024/08/15",
+        "teams": "G2 Esports vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 248,
+        "bankroll": 289.5000000000003,
+        "match_id": "378674",
+        "date": "2024/08/04",
+        "teams": "G2 Esports vs Paper Rex",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 249,
+        "bankroll": 299.8062000000003,
+        "match_id": "371271",
+        "date": "2024/07/21",
+        "teams": "G2 Esports vs LEVIAT\u00c1N",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 250,
+        "bankroll": 287.81620000000026,
+        "match_id": "371270",
+        "date": "2024/07/19",
+        "teams": "G2 Esports vs LEVIAT\u00c1N",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 251,
+        "bankroll": 273.82620000000026,
+        "match_id": "371269",
+        "date": "2024/07/18",
+        "teams": "G2 Esports vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 252,
+        "bankroll": 262.87620000000027,
+        "match_id": "353201",
+        "date": "2024/07/14",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 253,
+        "bankroll": 252.35620000000026,
+        "match_id": "353186",
+        "date": "2024/07/01",
+        "teams": "G2 Esports vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 254,
+        "bankroll": 242.26620000000025,
+        "match_id": "348473",
+        "date": "2024/06/07",
+        "teams": "G2 Esports vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 255,
+        "bankroll": 251.56860000000026,
+        "match_id": "348463",
+        "date": "2024/05/31",
+        "teams": "G2 Esports vs Paper Rex",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 256,
+        "bankroll": 257.69620000000026,
+        "match_id": "348063",
+        "date": "2024/05/23",
+        "teams": "G2 Esports vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 257,
+        "bankroll": 277.5394000000003,
+        "match_id": "337412",
+        "date": "2024/05/12",
+        "teams": "G2 Esports vs 100 Thieves",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 258,
+        "bankroll": 282.6214000000003,
+        "match_id": "337414",
+        "date": "2024/05/11",
+        "teams": "G2 Esports vs LEVIAT\u00c1N",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 259,
+        "bankroll": 292.3394000000003,
+        "match_id": "337411",
+        "date": "2024/05/10",
+        "teams": "G2 Esports vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 260,
+        "bankroll": 280.6494000000003,
+        "match_id": "314654",
+        "date": "2024/05/05",
+        "teams": "G2 Esports vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 261,
+        "bankroll": 269.4194000000003,
+        "match_id": "314644",
+        "date": "2024/04/27",
+        "teams": "G2 Esports vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 262,
+        "bankroll": 279.87600000000026,
+        "match_id": "314642",
+        "date": "2024/04/24",
+        "teams": "G2 Esports vs LEVIAT\u00c1N",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 263,
+        "bankroll": 268.6760000000003,
+        "match_id": "314638",
+        "date": "2024/04/22",
+        "teams": "G2 Esports vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 264,
+        "bankroll": 268.2036000000003,
+        "match_id": "314628",
+        "date": "2024/04/13",
+        "teams": "G2 Esports vs 100 Thieves",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 265,
+        "bankroll": 257.47360000000026,
+        "match_id": "314624",
+        "date": "2024/04/07",
+        "teams": "G2 Esports vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 266,
+        "bankroll": 267.36160000000024,
+        "match_id": "307574",
+        "date": "2024/02/26",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 267,
+        "bankroll": 273.40020000000027,
+        "match_id": "307573",
+        "date": "2024/02/26",
+        "teams": "G2 Esports vs MIBR",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 268,
+        "bankroll": 262.46020000000027,
+        "match_id": "295617",
+        "date": "2024/02/24",
+        "teams": "G2 Esports vs Evil Geniuses",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 269,
+        "bankroll": 251.96020000000027,
+        "match_id": "282936",
+        "date": "2023/11/01",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 270,
+        "bankroll": 261.5362000000003,
+        "match_id": "281551",
+        "date": "2023/10/26",
+        "teams": "G2 Esports vs Sentinels",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 271,
+        "bankroll": 271.1594000000003,
+        "match_id": "185981",
+        "date": "2023/03/31",
+        "teams": "G2 Esports vs M80",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 272,
+        "bankroll": 256.3594000000003,
+        "match_id": "475901",
+        "date": "2025/05/02",
+        "teams": "Sentinels vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 273,
+        "bankroll": 242.47940000000028,
+        "match_id": "459543",
+        "date": "2025/04/19",
+        "teams": "Sentinels vs 2Game Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 274,
+        "bankroll": 251.4034000000003,
+        "match_id": "459538",
+        "date": "2025/04/12",
+        "teams": "Sentinels vs LOUD",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 275,
+        "bankroll": 241.3434000000003,
+        "match_id": "459529",
+        "date": "2025/04/04",
+        "teams": "Sentinels vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 276,
+        "bankroll": 250.6074000000003,
+        "match_id": "459522",
+        "date": "2025/03/23",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 277,
+        "bankroll": 256.8088000000003,
+        "match_id": "448600",
+        "date": "2025/02/20",
+        "teams": "Sentinels vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 278,
+        "bankroll": 265.6410000000003,
+        "match_id": "428012",
+        "date": "2025/02/07",
+        "teams": "Sentinels vs MIBR",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 279,
+        "bankroll": 275.8458000000003,
+        "match_id": "427999",
+        "date": "2025/01/31",
+        "teams": "Sentinels vs LOUD",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 280,
+        "bankroll": 283.23220000000026,
+        "match_id": "427996",
+        "date": "2025/01/18",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 281,
+        "bankroll": 290.0174000000003,
+        "match_id": "425339",
+        "date": "2024/12/12",
+        "teams": "Sentinels vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 282,
+        "bankroll": 278.41740000000027,
+        "match_id": "425335",
+        "date": "2024/12/10",
+        "teams": "Sentinels vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 283,
+        "bankroll": 284.6873000000003,
+        "match_id": "417835",
+        "date": "2024/11/03",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 284,
+        "bankroll": 273.2973000000003,
+        "match_id": "417834",
+        "date": "2024/11/03",
+        "teams": "Sentinels vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 285,
+        "bankroll": 280.7681000000003,
+        "match_id": "417829",
+        "date": "2024/11/02",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 286,
+        "bankroll": 286.3559000000003,
+        "match_id": "417825",
+        "date": "2024/11/01",
+        "teams": "Sentinels vs Evil Geniuses",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 287,
+        "bankroll": 270.76590000000033,
+        "match_id": "378822",
+        "date": "2024/08/14",
+        "teams": "Sentinels vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 288,
+        "bankroll": 259.93590000000034,
+        "match_id": "378666",
+        "date": "2024/08/10",
+        "teams": "Sentinels vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 289,
+        "bankroll": 266.0155000000004,
+        "match_id": "378662",
+        "date": "2024/08/01",
+        "teams": "Sentinels vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 290,
+        "bankroll": 255.3755000000004,
+        "match_id": "371267",
+        "date": "2024/07/17",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 291,
+        "bankroll": 245.1555000000004,
+        "match_id": "353178",
+        "date": "2024/06/22",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 292,
+        "bankroll": 235.34550000000038,
+        "match_id": "314650",
+        "date": "2024/05/03",
+        "teams": "Sentinels vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 293,
+        "bankroll": 225.9355000000004,
+        "match_id": "314645",
+        "date": "2024/04/27",
+        "teams": "Sentinels vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 294,
+        "bankroll": 231.2035000000004,
+        "match_id": "314640",
+        "date": "2024/04/23",
+        "teams": "Sentinels vs Evil Geniuses",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 295,
+        "bankroll": 221.9535000000004,
+        "match_id": "314634",
+        "date": "2024/04/20",
+        "teams": "Sentinels vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 296,
+        "bankroll": 213.0735000000004,
+        "match_id": "314629",
+        "date": "2024/04/13",
+        "teams": "Sentinels vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 297,
+        "bankroll": 202.6435000000004,
+        "match_id": "314625",
+        "date": "2024/04/07",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 298,
+        "bankroll": 207.00140000000036,
+        "match_id": "312779",
+        "date": "2024/03/24",
+        "teams": "Sentinels vs Gen.G",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 299,
+        "bankroll": 215.03300000000036,
+        "match_id": "312781",
+        "date": "2024/03/23",
+        "teams": "Sentinels vs Paper Rex",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 300,
+        "bankroll": 219.41900000000038,
+        "match_id": "312778",
+        "date": "2024/03/22",
+        "teams": "Sentinels vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 301,
+        "bankroll": 227.23320000000038,
+        "match_id": "312776",
+        "date": "2024/03/21",
+        "teams": "Sentinels vs LOUD",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 302,
+        "bankroll": 235.77780000000038,
+        "match_id": "303086",
+        "date": "2024/03/03",
+        "teams": "Sentinels vs LOUD",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 303,
+        "bankroll": 244.26480000000038,
+        "match_id": "303088",
+        "date": "2024/03/02",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 304,
+        "bankroll": 231.01480000000038,
+        "match_id": "307572",
+        "date": "2024/02/26",
+        "teams": "Sentinels vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 305,
+        "bankroll": 234.86600000000038,
+        "match_id": "295614",
+        "date": "2024/02/25",
+        "teams": "Sentinels vs LEVIAT\u00c1N",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 306,
+        "bankroll": 243.97430000000037,
+        "match_id": "295613",
+        "date": "2024/02/19",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 307,
+        "bankroll": 234.21430000000038,
+        "match_id": "295610",
+        "date": "2024/02/17",
+        "teams": "Sentinels vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 308,
+        "bankroll": 242.83470000000037,
+        "match_id": "286660",
+        "date": "2023/12/10",
+        "teams": "Sentinels vs Paper Rex",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 309,
+        "bankroll": 233.12470000000036,
+        "match_id": "286644",
+        "date": "2023/12/06",
+        "teams": "Sentinels vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 310,
+        "bankroll": 242.07190000000037,
+        "match_id": "286642",
+        "date": "2023/12/05",
+        "teams": "Sentinels vs Paper Rex",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 311,
+        "bankroll": 251.66240000000033,
+        "match_id": "232736",
+        "date": "2023/07/18",
+        "teams": "Sentinels vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 312,
+        "bankroll": 259.17030000000034,
+        "match_id": "232730",
+        "date": "2023/07/16",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 313,
+        "bankroll": 268.8144000000003,
+        "match_id": "184032",
+        "date": "2023/05/18",
+        "teams": "Sentinels vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 314,
+        "bankroll": 258.0644000000003,
+        "match_id": "183807",
+        "date": "2023/05/06",
+        "teams": "Sentinels vs Evil Geniuses",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 315,
+        "bankroll": 247.74440000000033,
+        "match_id": "183796",
+        "date": "2023/04/23",
+        "teams": "Sentinels vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 316,
+        "bankroll": 257.05980000000034,
+        "match_id": "183791",
+        "date": "2023/04/21",
+        "teams": "Sentinels vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 317,
+        "bankroll": 261.0406000000003,
+        "match_id": "183787",
+        "date": "2023/04/16",
+        "teams": "Sentinels vs LEVIAT\u00c1N",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 318,
+        "bankroll": 250.60060000000033,
+        "match_id": "183781",
+        "date": "2023/04/09",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 319,
+        "bankroll": 259.6186000000003,
+        "match_id": "183774",
+        "date": "2023/04/01",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 320,
+        "bankroll": 249.2386000000003,
+        "match_id": "166335",
+        "date": "2023/01/15",
+        "teams": "Sentinels vs TSM",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 321,
+        "bankroll": 235.7286000000003,
+        "match_id": "166331",
+        "date": "2023/01/14",
+        "teams": "Sentinels vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 322,
+        "bankroll": 242.2799000000003,
+        "match_id": "123332",
+        "date": "2022/08/11",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 323,
+        "bankroll": 247.4075000000003,
+        "match_id": "99695",
+        "date": "2022/05/21",
+        "teams": "Sentinels vs Evil Geniuses",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 324,
+        "bankroll": 256.2185000000003,
+        "match_id": "69879",
+        "date": "2022/02/12",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 325,
+        "bankroll": 265.5460000000003,
+        "match_id": "51273",
+        "date": "2021/12/02",
+        "teams": "Sentinels vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 326,
+        "bankroll": 254.92600000000027,
+        "match_id": "34974",
+        "date": "2021/09/17",
+        "teams": "Sentinels vs ENVY",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 327,
+        "bankroll": 266.68600000000026,
+        "match_id": "35942",
+        "date": "2021/09/15",
+        "teams": "Sentinels vs G2 Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 328,
+        "bankroll": 271.93920000000026,
+        "match_id": "35939",
+        "date": "2021/09/12",
+        "teams": "Sentinels vs G2 Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 329,
+        "bankroll": 282.38400000000024,
+        "match_id": "29398",
+        "date": "2021/08/15",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 330,
+        "bankroll": 268.6540000000002,
+        "match_id": "29397",
+        "date": "2021/08/13",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 331,
+        "bankroll": 253.9840000000002,
+        "match_id": "29395",
+        "date": "2021/08/11",
+        "teams": "Sentinels vs ENVY",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 332,
+        "bankroll": 243.8240000000002,
+        "match_id": "25206",
+        "date": "2021/07/10",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 333,
+        "bankroll": 234.0740000000002,
+        "match_id": "25205",
+        "date": "2021/07/10",
+        "teams": "Sentinels vs ENVY",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 334,
+        "bankroll": 242.8724000000002,
+        "match_id": "25196",
+        "date": "2021/07/08",
+        "teams": "Sentinels vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 335,
+        "bankroll": 233.1624000000002,
+        "match_id": "24004",
+        "date": "2021/07/02",
+        "teams": "Sentinels vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 336,
+        "bankroll": 241.37280000000018,
+        "match_id": "17382",
+        "date": "2021/04/30",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 337,
+        "bankroll": 231.72280000000018,
+        "match_id": "16996",
+        "date": "2021/04/24",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 338,
+        "bankroll": 239.88040000000018,
+        "match_id": "16992",
+        "date": "2021/04/22",
+        "teams": "Sentinels vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 339,
+        "bankroll": 230.28040000000018,
+        "match_id": "12555",
+        "date": "2021/03/14",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 340,
+        "bankroll": 238.47730000000018,
+        "match_id": "10258",
+        "date": "2021/02/23",
+        "teams": "Sentinels vs ENVY",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 341,
+        "bankroll": 228.9373000000002,
+        "match_id": "10253",
+        "date": "2021/02/21",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 342,
+        "bankroll": 237.4561000000002,
+        "match_id": "10251",
+        "date": "2021/02/21",
+        "teams": "Sentinels vs ENVY",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 343,
+        "bankroll": 242.93110000000019,
+        "match_id": "9286",
+        "date": "2021/02/05",
+        "teams": "Sentinels vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 344,
+        "bankroll": 248.9895000000002,
+        "match_id": "8408",
+        "date": "2021/01/16",
+        "teams": "Sentinels vs ENVY",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 345,
+        "bankroll": 258.7503000000002,
+        "match_id": "8396",
+        "date": "2021/01/15",
+        "teams": "Sentinels vs NRG Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 346,
+        "bankroll": 268.1688000000002,
+        "match_id": "7254",
+        "date": "2020/12/13",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 347,
+        "bankroll": 257.4388000000002,
+        "match_id": "7429",
+        "date": "2020/12/12",
+        "teams": "Sentinels vs TSM",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 348,
+        "bankroll": 243.31880000000018,
+        "match_id": "7424",
+        "date": "2020/12/12",
+        "teams": "Sentinels vs Gen.G",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 349,
+        "bankroll": 249.73390000000018,
+        "match_id": "7094",
+        "date": "2020/12/05",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 350,
+        "bankroll": 258.62500000000017,
+        "match_id": "4879",
+        "date": "2020/11/07",
+        "teams": "Sentinels vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 351,
+        "bankroll": 268.66450000000015,
+        "match_id": "4876",
+        "date": "2020/11/07",
+        "teams": "Sentinels vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 352,
+        "bankroll": 253.88450000000017,
+        "match_id": "4868",
+        "date": "2020/11/06",
+        "teams": "Sentinels vs ENVY",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 353,
+        "bankroll": 243.72450000000018,
+        "match_id": "4545",
+        "date": "2020/10/28",
+        "teams": "Sentinels vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 354,
+        "bankroll": 248.46950000000018,
+        "match_id": "2170",
+        "date": "2020/08/30",
+        "teams": "Sentinels vs ENVY",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 355,
+        "bankroll": 234.87950000000018,
+        "match_id": "2062",
+        "date": "2020/08/26",
+        "teams": "Sentinels vs ENVY",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 356,
+        "bankroll": 243.05750000000018,
+        "match_id": "1635",
+        "date": "2020/08/09",
+        "teams": "Sentinels vs TSM",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 357,
+        "bankroll": 249.01750000000018,
+        "match_id": "1632",
+        "date": "2020/08/08",
+        "teams": "Sentinels vs TSM",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 358,
+        "bankroll": 254.6899000000002,
+        "match_id": "1629",
+        "date": "2020/08/08",
+        "teams": "Sentinels vs ENVY",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 359,
+        "bankroll": 260.7285000000002,
+        "match_id": "1606",
+        "date": "2020/08/06",
+        "teams": "Sentinels vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 360,
+        "bankroll": 270.8456000000002,
+        "match_id": "1202",
+        "date": "2020/08/02",
+        "teams": "Sentinels vs TSM",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 361,
+        "bankroll": 260.01560000000023,
+        "match_id": "1199",
+        "date": "2020/08/02",
+        "teams": "Sentinels vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 362,
+        "bankroll": 249.61560000000023,
+        "match_id": "1517",
+        "date": "2020/08/01",
+        "teams": "Sentinels vs T1 Academy",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 363,
+        "bankroll": 235.95560000000023,
+        "match_id": "1271",
+        "date": "2020/07/25",
+        "teams": "Sentinels vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 364,
+        "bankroll": 241.06600000000023,
+        "match_id": "1274",
+        "date": "2020/07/24",
+        "teams": "Sentinels vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 365,
+        "bankroll": 249.74200000000022,
+        "match_id": "1081",
+        "date": "2020/07/12",
+        "teams": "Sentinels vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 366,
+        "bankroll": 239.7520000000002,
+        "match_id": "1068",
+        "date": "2020/07/10",
+        "teams": "Sentinels vs T1 Academy",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 367,
+        "bankroll": 226.7820000000002,
+        "match_id": "1029",
+        "date": "2020/07/08",
+        "teams": "Sentinels vs Gen.G",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 368,
+        "bankroll": 214.42200000000022,
+        "match_id": "1028",
+        "date": "2020/07/08",
+        "teams": "Sentinels vs TSM",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 369,
+        "bankroll": 205.8420000000002,
+        "match_id": "844",
+        "date": "2020/06/27",
+        "teams": "Sentinels vs Gen.G",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 370,
+        "bankroll": 197.61200000000022,
+        "match_id": "817",
+        "date": "2020/06/26",
+        "teams": "Sentinels vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 371,
+        "bankroll": 189.71200000000022,
+        "match_id": "26",
+        "date": "2020/05/04",
+        "teams": "Sentinels vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 372,
+        "bankroll": 194.2784000000002,
+        "match_id": "474632",
+        "date": "2025/04/23",
+        "teams": "ENVY vs TSM",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 373,
+        "bankroll": 201.5822000000002,
+        "match_id": "459075",
+        "date": "2025/03/10",
+        "teams": "ENVY vs M80",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 374,
+        "bankroll": 193.5222000000002,
+        "match_id": "34978",
+        "date": "2021/09/18",
+        "teams": "ENVY vs 100 Thieves",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 375,
+        "bankroll": 198.9230000000002,
+        "match_id": "29404",
+        "date": "2021/08/14",
+        "teams": "ENVY vs 100 Thieves",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 376,
+        "bankroll": 206.3258000000002,
+        "match_id": "29392",
+        "date": "2021/08/11",
+        "teams": "ENVY vs TSM",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 377,
+        "bankroll": 195.03580000000022,
+        "match_id": "25204",
+        "date": "2021/07/09",
+        "teams": "ENVY vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 378,
+        "bankroll": 194.7118000000002,
+        "match_id": "25197",
+        "date": "2021/07/09",
+        "teams": "ENVY vs 100 Thieves",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 379,
+        "bankroll": 201.5670000000002,
+        "match_id": "24022",
+        "date": "2021/07/03",
+        "teams": "ENVY vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 380,
+        "bankroll": 209.22400000000022,
+        "match_id": "17388",
+        "date": "2021/04/30",
+        "teams": "ENVY vs 100 Thieves",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 381,
+        "bankroll": 216.50590000000022,
+        "match_id": "15628",
+        "date": "2021/04/10",
+        "teams": "ENVY vs 100 Thieves",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 382,
+        "bankroll": 224.47310000000022,
+        "match_id": "12562",
+        "date": "2021/03/20",
+        "teams": "ENVY vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 383,
+        "bankroll": 232.91430000000022,
+        "match_id": "12550",
+        "date": "2021/03/11",
+        "teams": "ENVY vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 384,
+        "bankroll": 220.14430000000024,
+        "match_id": "9233",
+        "date": "2021/01/30",
+        "teams": "ENVY vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 385,
+        "bankroll": 211.33430000000024,
+        "match_id": "7722",
+        "date": "2020/12/20",
+        "teams": "ENVY vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 386,
+        "bankroll": 202.88430000000025,
+        "match_id": "7425",
+        "date": "2020/12/12",
+        "teams": "ENVY vs 100 Thieves",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 387,
+        "bankroll": 194.76430000000025,
+        "match_id": "7093",
+        "date": "2020/12/05",
+        "teams": "ENVY vs TSM",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 388,
+        "bankroll": 202.08690000000024,
+        "match_id": "4880",
+        "date": "2020/11/08",
+        "teams": "ENVY vs 100 Thieves",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 389,
+        "bankroll": 191.00690000000023,
+        "match_id": "4549",
+        "date": "2020/10/29",
+        "teams": "ENVY vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 390,
+        "bankroll": 198.03570000000022,
+        "match_id": "4546",
+        "date": "2020/10/28",
+        "teams": "ENVY vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 391,
+        "bankroll": 202.33290000000022,
+        "match_id": "2073",
+        "date": "2020/08/27",
+        "teams": "ENVY vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 392,
+        "bankroll": 207.26610000000022,
+        "match_id": "1631",
+        "date": "2020/08/08",
+        "teams": "ENVY vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 393,
+        "bankroll": 212.85020000000023,
+        "match_id": "1612",
+        "date": "2020/08/06",
+        "teams": "ENVY vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 394,
+        "bankroll": 204.34020000000024,
+        "match_id": "1273",
+        "date": "2020/07/24",
+        "teams": "ENVY vs TSM",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 395,
+        "bankroll": 196.17020000000025,
+        "match_id": "1311",
+        "date": "2020/07/23",
+        "teams": "ENVY vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 396,
+        "bankroll": 200.57220000000027,
+        "match_id": "477767",
+        "date": "2025/04/30",
+        "teams": "M80 vs TSM",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 397,
+        "bankroll": 192.55220000000025,
+        "match_id": "471024",
+        "date": "2025/04/15",
+        "teams": "M80 vs Burger Boyz",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 398,
+        "bankroll": 182.18220000000028,
+        "match_id": "459086",
+        "date": "2025/03/17",
+        "teams": "M80 vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 399,
+        "bankroll": 187.25910000000027,
+        "match_id": "445237",
+        "date": "2025/02/10",
+        "teams": "M80 vs TSM",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 400,
+        "bankroll": 190.83050000000026,
+        "match_id": "399770",
+        "date": "2024/09/21",
+        "teams": "M80 vs 2Game Esports",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 401,
+        "bankroll": 183.20050000000026,
+        "match_id": "399767",
+        "date": "2024/09/18",
+        "teams": "M80 vs 2Game Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 402,
+        "bankroll": 175.87050000000025,
+        "match_id": "399764",
+        "date": "2024/09/15",
+        "teams": "M80 vs 2Game Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 403,
+        "bankroll": 180.04960000000025,
+        "match_id": "399762",
+        "date": "2024/09/14",
+        "teams": "M80 vs TSM",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 404,
+        "bankroll": 172.84960000000027,
+        "match_id": "372553",
+        "date": "2024/07/31",
+        "teams": "M80 vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 405,
+        "bankroll": 165.93960000000027,
+        "match_id": "372549",
+        "date": "2024/07/22",
+        "teams": "M80 vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 406,
+        "bankroll": 169.54920000000027,
+        "match_id": "340953",
+        "date": "2024/05/17",
+        "teams": "M80 vs TSM",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 407,
+        "bankroll": 162.76920000000027,
+        "match_id": "314896",
+        "date": "2024/03/20",
+        "teams": "M80 vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 408,
+        "bankroll": 168.69330000000028,
+        "match_id": "196143",
+        "date": "2023/04/28",
+        "teams": "M80 vs TSM",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 409,
+        "bankroll": 161.94330000000028,
+        "match_id": "168993",
+        "date": "2023/02/09",
+        "teams": "M80 vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 410,
+        "bankroll": 155.4633000000003,
+        "match_id": "475903",
+        "date": "2025/04/25",
+        "teams": "100 Thieves vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 411,
+        "bankroll": 149.2433000000003,
+        "match_id": "475897",
+        "date": "2025/04/24",
+        "teams": "100 Thieves vs MIBR",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 412,
+        "bankroll": 141.0833000000003,
+        "match_id": "459535",
+        "date": "2025/04/11",
+        "teams": "100 Thieves vs 2Game Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 413,
+        "bankroll": 146.4413000000003,
+        "match_id": "459530",
+        "date": "2025/04/04",
+        "teams": "100 Thieves vs LOUD",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 414,
+        "bankroll": 138.37130000000028,
+        "match_id": "459525",
+        "date": "2025/03/29",
+        "teams": "100 Thieves vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 415,
+        "bankroll": 143.73540000000028,
+        "match_id": "428005",
+        "date": "2025/01/24",
+        "teams": "100 Thieves vs NRG Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 416,
+        "bankroll": 135.99540000000027,
+        "match_id": "427992",
+        "date": "2025/01/16",
+        "teams": "100 Thieves vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 417,
+        "bankroll": 140.89140000000026,
+        "match_id": "353200",
+        "date": "2024/07/14",
+        "teams": "100 Thieves vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 418,
+        "bankroll": 146.30580000000026,
+        "match_id": "353196",
+        "date": "2024/07/08",
+        "teams": "100 Thieves vs Evil Geniuses",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 419,
+        "bankroll": 140.45580000000027,
+        "match_id": "353190",
+        "date": "2024/07/03",
+        "teams": "100 Thieves vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 420,
+        "bankroll": 134.83580000000026,
+        "match_id": "353185",
+        "date": "2024/06/30",
+        "teams": "100 Thieves vs LEVIAT\u00c1N",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 421,
+        "bankroll": 129.44580000000028,
+        "match_id": "353179",
+        "date": "2024/06/23",
+        "teams": "100 Thieves vs FURIA",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 422,
+        "bankroll": 134.10780000000028,
+        "match_id": "348471",
+        "date": "2024/06/03",
+        "teams": "100 Thieves vs Paper Rex",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 423,
+        "bankroll": 128.74780000000027,
+        "match_id": "348470",
+        "date": "2024/06/02",
+        "teams": "100 Thieves vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 424,
+        "bankroll": 133.33130000000025,
+        "match_id": "337410",
+        "date": "2024/05/09",
+        "teams": "100 Thieves vs LEVIAT\u00c1N",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 425,
+        "bankroll": 128.00130000000024,
+        "match_id": "337408",
+        "date": "2024/05/08",
+        "teams": "100 Thieves vs LOUD",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 426,
+        "bankroll": 122.88130000000024,
+        "match_id": "314651",
+        "date": "2024/05/04",
+        "teams": "100 Thieves vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 427,
+        "bankroll": 127.50610000000023,
+        "match_id": "295611",
+        "date": "2024/02/17",
+        "teams": "100 Thieves vs LEVIAT\u00c1N",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 428,
+        "bankroll": 122.40610000000024,
+        "match_id": "283098",
+        "date": "2023/11/03",
+        "teams": "100 Thieves vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 429,
+        "bankroll": 124.93710000000024,
+        "match_id": "184036",
+        "date": "2023/05/20",
+        "teams": "100 Thieves vs MIBR",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 430,
+        "bankroll": 127.94710000000023,
+        "match_id": "183812",
+        "date": "2023/05/13",
+        "teams": "100 Thieves vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 431,
+        "bankroll": 122.82710000000023,
+        "match_id": "183809",
+        "date": "2023/05/07",
+        "teams": "100 Thieves vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 432,
+        "bankroll": 117.91710000000023,
+        "match_id": "183801",
+        "date": "2023/04/29",
+        "teams": "100 Thieves vs NRG Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 433,
+        "bankroll": 122.11790000000023,
+        "match_id": "183797",
+        "date": "2023/04/24",
+        "teams": "100 Thieves vs LEVIAT\u00c1N",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 434,
+        "bankroll": 117.23790000000024,
+        "match_id": "183783",
+        "date": "2023/04/10",
+        "teams": "100 Thieves vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 435,
+        "bankroll": 112.54790000000024,
+        "match_id": "130634",
+        "date": "2022/09/03",
+        "teams": "100 Thieves vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 436,
+        "bankroll": 116.73290000000024,
+        "match_id": "123325",
+        "date": "2022/08/05",
+        "teams": "100 Thieves vs NRG Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 437,
+        "bankroll": 112.06290000000024,
+        "match_id": "99714",
+        "date": "2022/06/05",
+        "teams": "100 Thieves vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 438,
+        "bankroll": 114.53120000000024,
+        "match_id": "99694",
+        "date": "2022/05/21",
+        "teams": "100 Thieves vs TSM",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 439,
+        "bankroll": 118.92800000000024,
+        "match_id": "94355",
+        "date": "2022/05/01",
+        "teams": "100 Thieves vs TSM",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 440,
+        "bankroll": 112.43800000000023,
+        "match_id": "94350",
+        "date": "2022/04/30",
+        "teams": "100 Thieves vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 441,
+        "bankroll": 114.97800000000024,
+        "match_id": "94346",
+        "date": "2022/04/30",
+        "teams": "100 Thieves vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 442,
+        "bankroll": 119.39400000000023,
+        "match_id": "94320",
+        "date": "2022/04/29",
+        "teams": "100 Thieves vs TSM",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 443,
+        "bankroll": 112.94400000000023,
+        "match_id": "70079",
+        "date": "2022/03/12",
+        "teams": "100 Thieves vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 444,
+        "bankroll": 117.10240000000023,
+        "match_id": "73218",
+        "date": "2022/02/24",
+        "teams": "100 Thieves vs TSM",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 445,
+        "bankroll": 121.54840000000023,
+        "match_id": "43764",
+        "date": "2021/10/12",
+        "teams": "100 Thieves vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 446,
+        "bankroll": 116.68840000000023,
+        "match_id": "12560",
+        "date": "2021/03/19",
+        "teams": "100 Thieves vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 447,
+        "bankroll": 119.21810000000023,
+        "match_id": "11479",
+        "date": "2021/03/06",
+        "teams": "100 Thieves vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 448,
+        "bankroll": 114.44810000000024,
+        "match_id": "11478",
+        "date": "2021/03/05",
+        "teams": "100 Thieves vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 449,
+        "bankroll": 117.19490000000023,
+        "match_id": "11476",
+        "date": "2021/03/04",
+        "teams": "100 Thieves vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 450,
+        "bankroll": 121.22830000000023,
+        "match_id": "11467",
+        "date": "2021/03/04",
+        "teams": "100 Thieves vs NRG Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 451,
+        "bankroll": 114.67830000000023,
+        "match_id": "10250",
+        "date": "2021/02/20",
+        "teams": "100 Thieves vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 452,
+        "bankroll": 119.17650000000023,
+        "match_id": "7095",
+        "date": "2020/12/06",
+        "teams": "100 Thieves vs TSM",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 453,
+        "bankroll": 114.40650000000024,
+        "match_id": "6558",
+        "date": "2020/12/04",
+        "teams": "100 Thieves vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 454,
+        "bankroll": 109.82650000000024,
+        "match_id": "4877",
+        "date": "2020/11/07",
+        "teams": "100 Thieves vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 455,
+        "bankroll": 105.43650000000024,
+        "match_id": "4547",
+        "date": "2020/10/28",
+        "teams": "100 Thieves vs TSM",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 456,
+        "bankroll": 109.15010000000024,
+        "match_id": "1306",
+        "date": "2020/07/23",
+        "teams": "100 Thieves vs TSM",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 457,
+        "bankroll": 103.18010000000024,
+        "match_id": "1026",
+        "date": "2020/07/08",
+        "teams": "100 Thieves vs Gen.G",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 458,
+        "bankroll": 99.05010000000024,
+        "match_id": "823",
+        "date": "2020/06/26",
+        "teams": "100 Thieves vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 459,
+        "bankroll": 95.09010000000025,
+        "match_id": "459546",
+        "date": "2025/04/20",
+        "teams": "LEVIAT\u00c1N vs NRG Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 460,
+        "bankroll": 89.88010000000025,
+        "match_id": "459533",
+        "date": "2025/04/06",
+        "teams": "LEVIAT\u00c1N vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 461,
+        "bankroll": 86.28010000000026,
+        "match_id": "459520",
+        "date": "2025/03/22",
+        "teams": "LEVIAT\u00c1N vs MIBR",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 462,
+        "bankroll": 89.38510000000026,
+        "match_id": "428009",
+        "date": "2025/02/02",
+        "teams": "LEVIAT\u00c1N vs MIBR",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 463,
+        "bankroll": 85.80510000000027,
+        "match_id": "427998",
+        "date": "2025/01/19",
+        "teams": "LEVIAT\u00c1N vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 464,
+        "bankroll": 80.76510000000026,
+        "match_id": "378667",
+        "date": "2024/08/03",
+        "teams": "LEVIAT\u00c1N vs TALON",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 465,
+        "bankroll": 77.53510000000026,
+        "match_id": "353199",
+        "date": "2024/07/13",
+        "teams": "LEVIAT\u00c1N vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 466,
+        "bankroll": 74.43510000000026,
+        "match_id": "353193",
+        "date": "2024/07/06",
+        "teams": "LEVIAT\u00c1N vs LOUD",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 467,
+        "bankroll": 70.41510000000025,
+        "match_id": "353188",
+        "date": "2024/07/02",
+        "teams": "LEVIAT\u00c1N vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 468,
+        "bankroll": 67.59510000000026,
+        "match_id": "353177",
+        "date": "2024/06/22",
+        "teams": "LEVIAT\u00c1N vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 469,
+        "bankroll": 64.89510000000026,
+        "match_id": "348459",
+        "date": "2024/05/26",
+        "teams": "LEVIAT\u00c1N vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 470,
+        "bankroll": 67.33910000000026,
+        "match_id": "348064",
+        "date": "2024/05/24",
+        "teams": "LEVIAT\u00c1N vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 471,
+        "bankroll": 64.64910000000026,
+        "match_id": "314637",
+        "date": "2024/04/21",
+        "teams": "LEVIAT\u00c1N vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 472,
+        "bankroll": 67.08370000000026,
+        "match_id": "295612",
+        "date": "2024/02/23",
+        "teams": "LEVIAT\u00c1N vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 473,
+        "bankroll": 69.46890000000026,
+        "match_id": "281029",
+        "date": "2023/11/12",
+        "teams": "LEVIAT\u00c1N vs FURIA",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 474,
+        "bankroll": 72.16550000000026,
+        "match_id": "189050",
+        "date": "2023/05/23",
+        "teams": "LEVIAT\u00c1N vs FURIA",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 475,
+        "bankroll": 69.27550000000026,
+        "match_id": "184035",
+        "date": "2023/05/19",
+        "teams": "LEVIAT\u00c1N vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 476,
+        "bankroll": 70.66540000000026,
+        "match_id": "183804",
+        "date": "2023/04/30",
+        "teams": "LEVIAT\u00c1N vs Evil Geniuses",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 477,
+        "bankroll": 66.83540000000026,
+        "match_id": "183792",
+        "date": "2023/04/21",
+        "teams": "LEVIAT\u00c1N vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 478,
+        "bankroll": 69.31850000000026,
+        "match_id": "183780",
+        "date": "2023/04/08",
+        "teams": "LEVIAT\u00c1N vs FURIA",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 479,
+        "bankroll": 66.54850000000026,
+        "match_id": "183778",
+        "date": "2023/04/03",
+        "teams": "LEVIAT\u00c1N vs NRG Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 480,
+        "bankroll": 69.04890000000026,
+        "match_id": "160006",
+        "date": "2022/12/04",
+        "teams": "LEVIAT\u00c1N vs MIBR",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 481,
+        "bankroll": 70.50290000000025,
+        "match_id": "160005",
+        "date": "2022/12/03",
+        "teams": "LEVIAT\u00c1N vs MIBR",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 482,
+        "bankroll": 67.68290000000026,
+        "match_id": "130679",
+        "date": "2022/09/09",
+        "teams": "LEVIAT\u00c1N vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 483,
+        "bankroll": 64.97290000000027,
+        "match_id": "130619",
+        "date": "2022/09/01",
+        "teams": "LEVIAT\u00c1N vs Paper Rex",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 484,
+        "bankroll": 67.41690000000027,
+        "match_id": "112322",
+        "date": "2022/07/15",
+        "teams": "LEVIAT\u00c1N vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 485,
+        "bankroll": 64.71690000000027,
+        "match_id": "459540",
+        "date": "2025/04/13",
+        "teams": "NRG Esports vs MIBR",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 486,
+        "bankroll": 67.15150000000027,
+        "match_id": "459523",
+        "date": "2025/03/28",
+        "teams": "NRG Esports vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 487,
+        "bankroll": 69.62630000000027,
+        "match_id": "425355",
+        "date": "2024/12/15",
+        "teams": "NRG Esports vs Gen.G",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 488,
+        "bankroll": 71.27680000000026,
+        "match_id": "417826",
+        "date": "2024/11/01",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 489,
+        "bankroll": 73.81330000000027,
+        "match_id": "314647",
+        "date": "2024/04/28",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 490,
+        "bankroll": 69.80330000000026,
+        "match_id": "314641",
+        "date": "2024/04/23",
+        "teams": "NRG Esports vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 491,
+        "bankroll": 67.01330000000026,
+        "match_id": "314631",
+        "date": "2024/04/14",
+        "teams": "NRG Esports vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 492,
+        "bankroll": 63.09330000000026,
+        "match_id": "314623",
+        "date": "2024/04/06",
+        "teams": "NRG Esports vs LOUD",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 493,
+        "bankroll": 60.57330000000026,
+        "match_id": "295605",
+        "date": "2024/02/16",
+        "teams": "NRG Esports vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 494,
+        "bankroll": 62.67870000000026,
+        "match_id": "220453",
+        "date": "2023/06/21",
+        "teams": "NRG Esports vs Paper Rex",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 495,
+        "bankroll": 60.168700000000264,
+        "match_id": "220449",
+        "date": "2023/06/17",
+        "teams": "NRG Esports vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 496,
+        "bankroll": 62.38590000000026,
+        "match_id": "220293",
+        "date": "2023/06/12",
+        "teams": "NRG Esports vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 497,
+        "bankroll": 64.53590000000027,
+        "match_id": "189055",
+        "date": "2023/05/28",
+        "teams": "NRG Esports vs LOUD",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 498,
+        "bankroll": 66.93530000000027,
+        "match_id": "189059",
+        "date": "2023/05/27",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 499,
+        "bankroll": 64.25530000000026,
+        "match_id": "189057",
+        "date": "2023/05/25",
+        "teams": "NRG Esports vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 500,
+        "bankroll": 66.69680000000027,
+        "match_id": "189051",
+        "date": "2023/05/23",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 501,
+        "bankroll": 64.02680000000026,
+        "match_id": "184033",
+        "date": "2023/05/18",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 502,
+        "bankroll": 61.46680000000026,
+        "match_id": "183815",
+        "date": "2023/05/14",
+        "teams": "NRG Esports vs LOUD",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 503,
+        "bankroll": 63.77920000000026,
+        "match_id": "183811",
+        "date": "2023/05/08",
+        "teams": "NRG Esports vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 504,
+        "bankroll": 66.02320000000026,
+        "match_id": "183786",
+        "date": "2023/04/15",
+        "teams": "NRG Esports vs MIBR",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 505,
+        "bankroll": 68.37280000000025,
+        "match_id": "167360",
+        "date": "2023/02/19",
+        "teams": "NRG Esports vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 506,
+        "bankroll": 65.64280000000025,
+        "match_id": "123331",
+        "date": "2022/08/07",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 507,
+        "bankroll": 67.93090000000025,
+        "match_id": "107739",
+        "date": "2022/06/19",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 508,
+        "bankroll": 65.21090000000025,
+        "match_id": "99690",
+        "date": "2022/05/15",
+        "teams": "NRG Esports vs TSM",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 509,
+        "bankroll": 62.60090000000025,
+        "match_id": "51703",
+        "date": "2021/11/21",
+        "teams": "NRG Esports vs T1 Academy",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 510,
+        "bankroll": 64.75090000000026,
+        "match_id": "33350",
+        "date": "2021/08/19",
+        "teams": "NRG Esports vs Evil Geniuses",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 511,
+        "bankroll": 62.160900000000254,
+        "match_id": "11477",
+        "date": "2021/03/05",
+        "teams": "NRG Esports vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 512,
+        "bankroll": 59.67090000000025,
+        "match_id": "9511",
+        "date": "2021/02/04",
+        "teams": "NRG Esports vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 513,
+        "bankroll": 57.28090000000025,
+        "match_id": "9229",
+        "date": "2021/01/29",
+        "teams": "NRG Esports vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 514,
+        "bankroll": 59.34190000000025,
+        "match_id": "6371",
+        "date": "2020/11/19",
+        "teams": "NRG Esports vs TSM",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 515,
+        "bankroll": 61.54600000000025,
+        "match_id": "459545",
+        "date": "2025/04/20",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 516,
+        "bankroll": 59.08600000000025,
+        "match_id": "459521",
+        "date": "2025/03/23",
+        "teams": "Evil Geniuses vs 2Game Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 517,
+        "bankroll": 56.72600000000025,
+        "match_id": "428007",
+        "date": "2025/02/01",
+        "teams": "Evil Geniuses vs MIBR",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 518,
+        "bankroll": 54.456000000000245,
+        "match_id": "428003",
+        "date": "2025/01/23",
+        "teams": "Evil Geniuses vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 519,
+        "bankroll": 52.276000000000245,
+        "match_id": "427991",
+        "date": "2025/01/16",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 520,
+        "bankroll": 50.18600000000025,
+        "match_id": "353198",
+        "date": "2024/07/13",
+        "teams": "Evil Geniuses vs MIBR",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 521,
+        "bankroll": 48.17600000000025,
+        "match_id": "353182",
+        "date": "2024/06/29",
+        "teams": "Evil Geniuses vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 522,
+        "bankroll": 49.932300000000254,
+        "match_id": "353180",
+        "date": "2024/06/23",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 523,
+        "bankroll": 51.812300000000256,
+        "match_id": "303087",
+        "date": "2024/03/02",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 524,
+        "bankroll": 53.77880000000025,
+        "match_id": "248277",
+        "date": "2023/08/26",
+        "teams": "Evil Geniuses vs Paper Rex",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 525,
+        "bankroll": 55.756800000000254,
+        "match_id": "248283",
+        "date": "2023/08/25",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 526,
+        "bankroll": 57.85300000000026,
+        "match_id": "248276",
+        "date": "2023/08/24",
+        "teams": "Evil Geniuses vs Paper Rex",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 527,
+        "bankroll": 55.543000000000255,
+        "match_id": "248275",
+        "date": "2023/08/19",
+        "teams": "Evil Geniuses vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 528,
+        "bankroll": 57.607600000000254,
+        "match_id": "220454",
+        "date": "2023/06/23",
+        "teams": "Evil Geniuses vs Paper Rex",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 529,
+        "bankroll": 55.30760000000026,
+        "match_id": "220444",
+        "date": "2023/06/15",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 530,
+        "bankroll": 53.097600000000256,
+        "match_id": "220298",
+        "date": "2023/06/12",
+        "teams": "Evil Geniuses vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 531,
+        "bankroll": 55.00560000000026,
+        "match_id": "189054",
+        "date": "2023/05/26",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 532,
+        "bankroll": 52.805600000000254,
+        "match_id": "183813",
+        "date": "2023/05/13",
+        "teams": "Evil Geniuses vs MIBR",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 533,
+        "bankroll": 54.704600000000255,
+        "match_id": "183798",
+        "date": "2023/04/24",
+        "teams": "Evil Geniuses vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 534,
+        "bankroll": 56.653700000000256,
+        "match_id": "183794",
+        "date": "2023/04/22",
+        "teams": "Evil Geniuses vs FURIA",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 535,
+        "bankroll": 54.38370000000025,
+        "match_id": "167359",
+        "date": "2023/02/18",
+        "teams": "Evil Geniuses vs TALON",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 536,
+        "bankroll": 56.43290000000025,
+        "match_id": "67314",
+        "date": "2022/01/28",
+        "teams": "Evil Geniuses vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 537,
+        "bankroll": 58.557300000000254,
+        "match_id": "399756",
+        "date": "2024/09/12",
+        "teams": "TSM vs 2Game Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 538,
+        "bankroll": 56.21730000000025,
+        "match_id": "166334",
+        "date": "2023/01/14",
+        "teams": "TSM vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 539,
+        "bankroll": 53.96730000000025,
+        "match_id": "71845",
+        "date": "2022/02/22",
+        "teams": "TSM vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 540,
+        "bankroll": 51.807300000000254,
+        "match_id": "71839",
+        "date": "2022/02/21",
+        "teams": "TSM vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 541,
+        "bankroll": 53.60820000000025,
+        "match_id": "29255",
+        "date": "2021/07/30",
+        "teams": "TSM vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 542,
+        "bankroll": 55.491400000000255,
+        "match_id": "29251",
+        "date": "2021/07/29",
+        "teams": "TSM vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 543,
+        "bankroll": 53.271400000000256,
+        "match_id": "13934",
+        "date": "2021/04/18",
+        "teams": "TSM vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 544,
+        "bankroll": 51.14140000000025,
+        "match_id": "11466",
+        "date": "2021/03/04",
+        "teams": "TSM vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 545,
+        "bankroll": 52.98640000000025,
+        "match_id": "10243",
+        "date": "2021/02/14",
+        "teams": "TSM vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 546,
+        "bankroll": 50.866400000000255,
+        "match_id": "7432",
+        "date": "2020/12/12",
+        "teams": "TSM vs Gen.G",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 547,
+        "bankroll": 52.652800000000255,
+        "match_id": "4722",
+        "date": "2020/10/30",
+        "teams": "TSM vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 548,
+        "bankroll": 50.542800000000256,
+        "match_id": "2070",
+        "date": "2020/08/27",
+        "teams": "TSM vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 549,
+        "bankroll": 52.36080000000025,
+        "match_id": "1898",
+        "date": "2020/08/16",
+        "teams": "TSM vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 550,
+        "bankroll": 50.27080000000025,
+        "match_id": "1892",
+        "date": "2020/08/16",
+        "teams": "TSM vs Gen.G",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 551,
+        "bankroll": 52.07980000000025,
+        "match_id": "1625",
+        "date": "2020/08/07",
+        "teams": "TSM vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 552,
+        "bankroll": 49.99980000000025,
+        "match_id": "1201",
+        "date": "2020/08/02",
+        "teams": "TSM vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 553,
+        "bankroll": 47.99980000000025,
+        "match_id": "954",
+        "date": "2020/08/01",
+        "teams": "TSM vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 554,
+        "bankroll": 49.67020000000025,
+        "match_id": "863",
+        "date": "2020/06/28",
+        "teams": "TSM vs T1",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 555,
+        "bankroll": 51.44130000000025,
+        "match_id": "847",
+        "date": "2020/06/28",
+        "teams": "TSM vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 556,
+        "bankroll": 53.41890000000025,
+        "match_id": "474",
+        "date": "2020/06/12",
+        "teams": "TSM vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 557,
+        "bankroll": 55.36630000000025,
+        "match_id": "226",
+        "date": "2020/06/07",
+        "teams": "TSM vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 558,
+        "bankroll": 53.15630000000025,
+        "match_id": "351",
+        "date": "2020/06/06",
+        "teams": "TSM vs Gen.G",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 559,
+        "bankroll": 55.03070000000025,
+        "match_id": "459542",
+        "date": "2025/04/18",
+        "teams": "MIBR vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 560,
+        "bankroll": 56.98870000000025,
+        "match_id": "430099",
+        "date": "2024/12/15",
+        "teams": "MIBR vs FURIA",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 561,
+        "bankroll": 54.70870000000025,
+        "match_id": "425936",
+        "date": "2024/12/14",
+        "teams": "MIBR vs LOUD",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 562,
+        "bankroll": 56.70160000000025,
+        "match_id": "425928",
+        "date": "2024/12/12",
+        "teams": "MIBR vs 2Game Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 563,
+        "bankroll": 54.431600000000245,
+        "match_id": "353194",
+        "date": "2024/07/07",
+        "teams": "MIBR vs FURIA",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 564,
+        "bankroll": 56.41540000000025,
+        "match_id": "353184",
+        "date": "2024/06/30",
+        "teams": "MIBR vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 565,
+        "bankroll": 54.15540000000025,
+        "match_id": "295608",
+        "date": "2024/02/19",
+        "teams": "MIBR vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 566,
+        "bankroll": 51.98540000000025,
+        "match_id": "280352",
+        "date": "2023/10/21",
+        "teams": "MIBR vs RED Canids",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 567,
+        "bankroll": 49.90540000000025,
+        "match_id": "183802",
+        "date": "2023/04/29",
+        "teams": "MIBR vs FURIA",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 568,
+        "bankroll": 51.78540000000025,
+        "match_id": "183776",
+        "date": "2023/04/02",
+        "teams": "MIBR vs LOUD",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 569,
+        "bankroll": 49.71540000000025,
+        "match_id": "167355",
+        "date": "2023/02/15",
+        "teams": "MIBR vs TALON",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 570,
+        "bankroll": 51.48650000000025,
+        "match_id": "108234",
+        "date": "2022/06/21",
+        "teams": "MIBR vs Los Grandes",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 571,
+        "bankroll": 53.34050000000025,
+        "match_id": "66281",
+        "date": "2022/01/24",
+        "teams": "MIBR vs Los Grandes",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 572,
+        "bankroll": 55.21490000000025,
+        "match_id": "454570",
+        "date": "2025/04/15",
+        "teams": "Corinthians Esports vs Stellae Gaming",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 573,
+        "bankroll": 53.00490000000025,
+        "match_id": "454569",
+        "date": "2025/04/14",
+        "teams": "Corinthians Esports vs RED Canids",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 574,
+        "bankroll": 50.88490000000025,
+        "match_id": "454563",
+        "date": "2025/04/09",
+        "teams": "Corinthians Esports vs Los Grandes",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 575,
+        "bankroll": 48.84490000000025,
+        "match_id": "441329",
+        "date": "2025/03/05",
+        "teams": "Corinthians Esports vs Gr\u00eamio Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 576,
+        "bankroll": 50.58040000000025,
+        "match_id": "441325",
+        "date": "2025/02/25",
+        "teams": "Corinthians Esports vs RED Canids",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 577,
+        "bankroll": 48.56040000000025,
+        "match_id": "454564",
+        "date": "2025/04/09",
+        "teams": "RED Canids vs Stellae Gaming",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 578,
+        "bankroll": 50.32580000000025,
+        "match_id": "441350",
+        "date": "2025/03/26",
+        "teams": "RED Canids vs Gr\u00eamio Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 579,
+        "bankroll": 48.31580000000025,
+        "match_id": "422182",
+        "date": "2024/11/26",
+        "teams": "RED Canids vs Gr\u00eamio Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 580,
+        "bankroll": 46.38580000000025,
+        "match_id": "422179",
+        "date": "2024/11/21",
+        "teams": "RED Canids vs Gr\u00eamio Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 581,
+        "bankroll": 44.52580000000025,
+        "match_id": "370864",
+        "date": "2024/07/25",
+        "teams": "RED Canids vs Stellae Gaming",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 582,
+        "bankroll": 42.74580000000025,
+        "match_id": "350487",
+        "date": "2024/06/14",
+        "teams": "RED Canids vs 2Game Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 583,
+        "bankroll": 41.03580000000025,
+        "match_id": "350457",
+        "date": "2024/05/31",
+        "teams": "RED Canids vs Stellae Gaming",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 584,
+        "bankroll": 42.52820000000025,
+        "match_id": "329327",
+        "date": "2024/04/30",
+        "teams": "RED Canids vs 2Game Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 585,
+        "bankroll": 40.828200000000244,
+        "match_id": "299653",
+        "date": "2024/03/28",
+        "teams": "RED Canids vs Stellae Gaming",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 586,
+        "bankroll": 39.19820000000024,
+        "match_id": "299608",
+        "date": "2024/02/15",
+        "teams": "RED Canids vs 2Game Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 587,
+        "bankroll": 37.62820000000024,
+        "match_id": "280349",
+        "date": "2023/10/18",
+        "teams": "RED Canids vs Stellae Gaming",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 588,
+        "bankroll": 39.00230000000024,
+        "match_id": "280332",
+        "date": "2023/10/16",
+        "teams": "RED Canids vs FURIA",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 589,
+        "bankroll": 40.51550000000024,
+        "match_id": "454566",
+        "date": "2025/04/16",
+        "teams": "Los Grandes vs Stellae Gaming",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 590,
+        "bankroll": 42.07070000000024,
+        "match_id": "454565",
+        "date": "2025/04/14",
+        "teams": "Los Grandes vs Stellae Gaming",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 591,
+        "bankroll": 43.532300000000234,
+        "match_id": "441313",
+        "date": "2025/02/13",
+        "teams": "Los Grandes vs Stellae Gaming",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 592,
+        "bankroll": 45.22010000000024,
+        "match_id": "108241",
+        "date": "2022/06/23",
+        "teams": "Los Grandes vs FURIA",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 593,
+        "bankroll": 43.410100000000234,
+        "match_id": "108236",
+        "date": "2022/06/22",
+        "teams": "Los Grandes vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 594,
+        "bankroll": 41.67010000000023,
+        "match_id": "99076",
+        "date": "2022/05/28",
+        "teams": "Los Grandes vs FURIA",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 595,
+        "bankroll": 40.00010000000023,
+        "match_id": "99073",
+        "date": "2022/05/22",
+        "teams": "Los Grandes vs LOUD",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 596,
+        "bankroll": 38.40010000000023,
+        "match_id": "459527",
+        "date": "2025/03/30",
+        "teams": "2Game Esports vs LOUD",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 597,
+        "bankroll": 36.86010000000023,
+        "match_id": "427994",
+        "date": "2025/01/17",
+        "teams": "2Game Esports vs FURIA",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 598,
+        "bankroll": 38.21250000000023,
+        "match_id": "425932",
+        "date": "2024/12/13",
+        "teams": "2Game Esports vs LOUD",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 599,
+        "bankroll": 39.54360000000023,
+        "match_id": "370866",
+        "date": "2024/07/26",
+        "teams": "2Game Esports vs Stellae Gaming",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 600,
+        "bankroll": 37.963600000000234,
+        "match_id": "350501",
+        "date": "2024/06/26",
+        "teams": "2Game Esports vs Stellae Gaming",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 601,
+        "bankroll": 39.301200000000236,
+        "match_id": "299637",
+        "date": "2024/03/07",
+        "teams": "2Game Esports vs Stellae Gaming",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 602,
+        "bankroll": 40.729900000000235,
+        "match_id": "353189",
+        "date": "2024/07/02",
+        "teams": "LOUD vs FURIA",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 603,
+        "bankroll": 39.09990000000023,
+        "match_id": "312780",
+        "date": "2024/03/22",
+        "teams": "LOUD vs Paper Rex",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 604,
+        "bankroll": 40.47270000000023,
+        "match_id": "312766",
+        "date": "2024/03/14",
+        "teams": "LOUD vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 605,
+        "bankroll": 42.04410000000023,
+        "match_id": "248274",
+        "date": "2023/08/19",
+        "teams": "LOUD vs Paper Rex",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 606,
+        "bankroll": 43.572900000000224,
+        "match_id": "247101",
+        "date": "2023/08/06",
+        "teams": "LOUD vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 607,
+        "bankroll": 41.83290000000022,
+        "match_id": "189052",
+        "date": "2023/05/24",
+        "teams": "LOUD vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 608,
+        "bankroll": 40.16290000000022,
+        "match_id": "183789",
+        "date": "2023/04/17",
+        "teams": "LOUD vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 609,
+        "bankroll": 41.61190000000022,
+        "match_id": "167391",
+        "date": "2023/03/02",
+        "teams": "LOUD vs DRX",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 610,
+        "bankroll": 39.95190000000022,
+        "match_id": "167350",
+        "date": "2023/02/15",
+        "teams": "LOUD vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 611,
+        "bankroll": 38.35190000000022,
+        "match_id": "130682",
+        "date": "2022/09/12",
+        "teams": "LOUD vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 612,
+        "bankroll": 36.82190000000022,
+        "match_id": "99067",
+        "date": "2022/05/14",
+        "teams": "LOUD vs FURIA",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 613,
+        "bankroll": 35.35190000000022,
+        "match_id": "85527",
+        "date": "2022/04/17",
+        "teams": "LOUD vs G2 Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 614,
+        "bankroll": 33.941900000000224,
+        "match_id": "167369",
+        "date": "2023/02/24",
+        "teams": "FURIA vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 615,
+        "bankroll": 32.581900000000225,
+        "match_id": "130632",
+        "date": "2022/09/02",
+        "teams": "FURIA vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 616,
+        "bankroll": 31.281900000000224,
+        "match_id": "464778",
+        "date": "2025/04/23",
+        "teams": "FULL SENSE vs Motiv Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 617,
+        "bankroll": 30.031900000000224,
+        "match_id": "431446",
+        "date": "2025/02/14",
+        "teams": "FULL SENSE vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 618,
+        "bankroll": 28.831900000000225,
+        "match_id": "415421",
+        "date": "2024/11/21",
+        "teams": "FULL SENSE vs Alter Ego",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 619,
+        "bankroll": 29.924400000000226,
+        "match_id": "399740",
+        "date": "2024/09/28",
+        "teams": "FULL SENSE vs BOOM Esports",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 620,
+        "bankroll": 28.724400000000227,
+        "match_id": "286645",
+        "date": "2023/12/07",
+        "teams": "FULL SENSE vs Paper Rex",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 621,
+        "bankroll": 29.793900000000228,
+        "match_id": "286643",
+        "date": "2023/12/05",
+        "teams": "FULL SENSE vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 622,
+        "bankroll": 30.948200000000227,
+        "match_id": "284660",
+        "date": "2023/11/25",
+        "teams": "FULL SENSE vs TALON",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 623,
+        "bankroll": 32.126200000000225,
+        "match_id": "284656",
+        "date": "2023/11/24",
+        "teams": "FULL SENSE vs TALON",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 624,
+        "bankroll": 30.836200000000225,
+        "match_id": "159631",
+        "date": "2022/11/29",
+        "teams": "FULL SENSE vs Rex Regum Qeon",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 625,
+        "bankroll": 29.606200000000225,
+        "match_id": "76243",
+        "date": "2022/03/25",
+        "teams": "FULL SENSE vs BOOM Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 626,
+        "bankroll": 28.426200000000225,
+        "match_id": "76222",
+        "date": "2022/03/20",
+        "teams": "FULL SENSE vs Velocity Gaming",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 627,
+        "bankroll": 27.286200000000225,
+        "match_id": "65040",
+        "date": "2022/01/19",
+        "teams": "FULL SENSE vs Velocity Gaming",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 628,
+        "bankroll": 28.332600000000223,
+        "match_id": "33486",
+        "date": "2021/08/21",
+        "teams": "FULL SENSE vs Alter Ego",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 629,
+        "bankroll": 29.327000000000222,
+        "match_id": "33483",
+        "date": "2021/08/20",
+        "teams": "FULL SENSE vs BOOM Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 630,
+        "bankroll": 28.157000000000224,
+        "match_id": "29752",
+        "date": "2021/08/14",
+        "teams": "FULL SENSE vs Paper Rex",
+        "score": "1-1"
+      },
+      {
+        "match_idx": 631,
+        "bankroll": 29.253100000000224,
+        "match_id": "17599",
+        "date": "2021/05/02",
+        "teams": "FULL SENSE vs Paper Rex",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 632,
+        "bankroll": 28.083100000000222,
+        "match_id": "17595",
+        "date": "2021/05/01",
+        "teams": "FULL SENSE vs BOOM Esports",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 633,
+        "bankroll": 29.15830000000022,
+        "match_id": "17587",
+        "date": "2021/04/29",
+        "teams": "FULL SENSE vs Paper Rex",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 634,
+        "bankroll": 27.988300000000223,
+        "match_id": "473840",
+        "date": "2025/05/04",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 635,
+        "bankroll": 28.996300000000222,
+        "match_id": "473836",
+        "date": "2025/05/03",
+        "teams": "Paper Rex vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 636,
+        "bankroll": 30.040300000000222,
+        "match_id": "458819",
+        "date": "2025/04/06",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 637,
+        "bankroll": 31.12030000000022,
+        "match_id": "458813",
+        "date": "2025/03/30",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 638,
+        "bankroll": 32.26110000000022,
+        "match_id": "458807",
+        "date": "2025/03/23",
+        "teams": "Paper Rex vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 639,
+        "bankroll": 33.38340000000022,
+        "match_id": "430518",
+        "date": "2025/01/20",
+        "teams": "Paper Rex vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 640,
+        "bankroll": 34.68320000000022,
+        "match_id": "418815",
+        "date": "2024/11/28",
+        "teams": "Paper Rex vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 641,
+        "bankroll": 36.03150000000022,
+        "match_id": "418812",
+        "date": "2024/11/25",
+        "teams": "Paper Rex vs Rex Regum Qeon",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 642,
+        "bankroll": 37.31310000000022,
+        "match_id": "418805",
+        "date": "2024/11/21",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 643,
+        "bankroll": 38.69880000000022,
+        "match_id": "365323",
+        "date": "2024/07/20",
+        "teams": "Paper Rex vs DRX",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 644,
+        "bankroll": 37.14880000000022,
+        "match_id": "365322",
+        "date": "2024/07/14",
+        "teams": "Paper Rex vs TALON",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 645,
+        "bankroll": 35.65880000000022,
+        "match_id": "365318",
+        "date": "2024/07/13",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 646,
+        "bankroll": 36.94580000000022,
+        "match_id": "314358",
+        "date": "2024/07/05",
+        "teams": "Paper Rex vs Rex Regum Qeon",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 647,
+        "bankroll": 38.36660000000022,
+        "match_id": "314347",
+        "date": "2024/06/22",
+        "teams": "Paper Rex vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 648,
+        "bankroll": 36.83660000000022,
+        "match_id": "314343",
+        "date": "2024/06/16",
+        "teams": "Paper Rex vs TALON",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 649,
+        "bankroll": 38.262500000000216,
+        "match_id": "329914",
+        "date": "2024/05/12",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 650,
+        "bankroll": 36.732500000000215,
+        "match_id": "329912",
+        "date": "2024/05/05",
+        "teams": "Paper Rex vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 651,
+        "bankroll": 38.011400000000215,
+        "match_id": "329910",
+        "date": "2024/05/04",
+        "teams": "Paper Rex vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 652,
+        "bankroll": 39.33380000000022,
+        "match_id": "329908",
+        "date": "2024/05/03",
+        "teams": "Paper Rex vs TALON",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 653,
+        "bankroll": 40.809600000000216,
+        "match_id": "314309",
+        "date": "2024/04/13",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 654,
+        "bankroll": 39.179600000000214,
+        "match_id": "314304",
+        "date": "2024/04/07",
+        "teams": "Paper Rex vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 655,
+        "bankroll": 37.60960000000021,
+        "match_id": "312777",
+        "date": "2024/03/21",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 656,
+        "bankroll": 39.03460000000021,
+        "match_id": "297258",
+        "date": "2024/02/25",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 657,
+        "bankroll": 37.47460000000021,
+        "match_id": "297256",
+        "date": "2024/02/24",
+        "teams": "Paper Rex vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 658,
+        "bankroll": 38.884600000000205,
+        "match_id": "296747",
+        "date": "2024/02/18",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 659,
+        "bankroll": 37.3246000000002,
+        "match_id": "286659",
+        "date": "2023/12/09",
+        "teams": "Paper Rex vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 660,
+        "bankroll": 35.8346000000002,
+        "match_id": "286646",
+        "date": "2023/12/07",
+        "teams": "Paper Rex vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 661,
+        "bankroll": 34.4046000000002,
+        "match_id": "220441",
+        "date": "2023/06/16",
+        "teams": "Paper Rex vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 662,
+        "bankroll": 35.7294000000002,
+        "match_id": "184522",
+        "date": "2023/05/28",
+        "teams": "Paper Rex vs DRX",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 663,
+        "bankroll": 34.2994000000002,
+        "match_id": "184519",
+        "date": "2023/05/22",
+        "teams": "Paper Rex vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 664,
+        "bankroll": 32.9294000000002,
+        "match_id": "184516",
+        "date": "2023/05/20",
+        "teams": "Paper Rex vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 665,
+        "bankroll": 31.6094000000002,
+        "match_id": "184502",
+        "date": "2023/05/16",
+        "teams": "Paper Rex vs Rex Regum Qeon",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 666,
+        "bankroll": 30.349400000000198,
+        "match_id": "184493",
+        "date": "2023/05/12",
+        "teams": "Paper Rex vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 667,
+        "bankroll": 31.450500000000197,
+        "match_id": "184486",
+        "date": "2023/05/01",
+        "teams": "Paper Rex vs TALON",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 668,
+        "bankroll": 30.190500000000196,
+        "match_id": "184472",
+        "date": "2023/04/15",
+        "teams": "Paper Rex vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 669,
+        "bankroll": 28.980500000000195,
+        "match_id": "184468",
+        "date": "2023/04/08",
+        "teams": "Paper Rex vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 670,
+        "bankroll": 27.820500000000195,
+        "match_id": "157698",
+        "date": "2022/11/18",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 671,
+        "bankroll": 28.886100000000194,
+        "match_id": "106910",
+        "date": "2022/06/22",
+        "teams": "Paper Rex vs Alter Ego",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 672,
+        "bankroll": 27.726100000000194,
+        "match_id": "106453",
+        "date": "2022/06/16",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 673,
+        "bankroll": 26.616100000000195,
+        "match_id": "85534",
+        "date": "2022/04/18",
+        "teams": "Paper Rex vs G2 Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 674,
+        "bankroll": 27.601900000000196,
+        "match_id": "85525",
+        "date": "2022/04/15",
+        "teams": "Paper Rex vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 675,
+        "bankroll": 26.501900000000195,
+        "match_id": "51013",
+        "date": "2021/11/25",
+        "teams": "Paper Rex vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 676,
+        "bankroll": 25.441900000000196,
+        "match_id": "49635",
+        "date": "2021/11/19",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 677,
+        "bankroll": 24.421900000000196,
+        "match_id": "33480",
+        "date": "2021/08/19",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 678,
+        "bankroll": 24.421900000000196,
+        "match_id": "22865",
+        "date": "2021/06/26",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 679,
+        "bankroll": 24.421900000000196,
+        "match_id": "6023",
+        "date": "2020/11/17",
+        "teams": "Paper Rex vs BOOM Esports",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 680,
+        "bankroll": 24.421900000000196,
+        "match_id": "473837",
+        "date": "2025/04/27",
+        "teams": "BOOM Esports vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 681,
+        "bankroll": 24.421900000000196,
+        "match_id": "458824",
+        "date": "2025/04/12",
+        "teams": "BOOM Esports vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 682,
+        "bankroll": 24.421900000000196,
+        "match_id": "458809",
+        "date": "2025/03/24",
+        "teams": "BOOM Esports vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 683,
+        "bankroll": 24.421900000000196,
+        "match_id": "430526",
+        "date": "2025/01/26",
+        "teams": "BOOM Esports vs Nongshim RedForce",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 684,
+        "bankroll": 24.421900000000196,
+        "match_id": "430514",
+        "date": "2025/01/18",
+        "teams": "BOOM Esports vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 685,
+        "bankroll": 24.421900000000196,
+        "match_id": "427515",
+        "date": "2024/12/07",
+        "teams": "BOOM Esports vs Rex Regum Qeon",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 686,
+        "bankroll": 24.421900000000196,
+        "match_id": "419920",
+        "date": "2024/11/10",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 687,
+        "bankroll": 24.421900000000196,
+        "match_id": "354550",
+        "date": "2024/07/28",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 688,
+        "bankroll": 24.421900000000196,
+        "match_id": "354547",
+        "date": "2024/07/24",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 689,
+        "bankroll": 24.421900000000196,
+        "match_id": "354539",
+        "date": "2024/07/04",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 690,
+        "bankroll": 24.421900000000196,
+        "match_id": "314067",
+        "date": "2024/03/31",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 691,
+        "bankroll": 24.421900000000196,
+        "match_id": "314066",
+        "date": "2024/03/29",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 692,
+        "bankroll": 24.421900000000196,
+        "match_id": "297867",
+        "date": "2024/03/10",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 693,
+        "bankroll": 24.421900000000196,
+        "match_id": "214830",
+        "date": "2023/06/03",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 694,
+        "bankroll": 24.421900000000196,
+        "match_id": "214823",
+        "date": "2023/05/31",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 695,
+        "bankroll": 24.421900000000196,
+        "match_id": "188318",
+        "date": "2023/03/31",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 696,
+        "bankroll": 24.421900000000196,
+        "match_id": "167810",
+        "date": "2023/02/25",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 697,
+        "bankroll": 24.421900000000196,
+        "match_id": "159633",
+        "date": "2022/11/29",
+        "teams": "BOOM Esports vs Rex Regum Qeon",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 698,
+        "bankroll": 24.421900000000196,
+        "match_id": "159629",
+        "date": "2022/11/29",
+        "teams": "BOOM Esports vs Rex Regum Qeon",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 699,
+        "bankroll": 24.421900000000196,
+        "match_id": "103219",
+        "date": "2022/05/29",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 700,
+        "bankroll": 24.421900000000196,
+        "match_id": "103082",
+        "date": "2022/05/27",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 701,
+        "bankroll": 24.421900000000196,
+        "match_id": "98844",
+        "date": "2022/05/13",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 702,
+        "bankroll": 24.421900000000196,
+        "match_id": "73867",
+        "date": "2022/02/26",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 703,
+        "bankroll": 24.421900000000196,
+        "match_id": "33102",
+        "date": "2021/08/19",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 704,
+        "bankroll": 24.421900000000196,
+        "match_id": "30786",
+        "date": "2021/08/08",
+        "teams": "BOOM Esports vs Rex Regum Qeon",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 705,
+        "bankroll": 24.421900000000196,
+        "match_id": "30784",
+        "date": "2021/08/05",
+        "teams": "BOOM Esports vs Rex Regum Qeon",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 706,
+        "bankroll": 24.421900000000196,
+        "match_id": "28566",
+        "date": "2021/07/25",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 707,
+        "bankroll": 24.421900000000196,
+        "match_id": "17147",
+        "date": "2021/04/24",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 708,
+        "bankroll": 24.421900000000196,
+        "match_id": "16562",
+        "date": "2021/04/18",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 709,
+        "bankroll": 24.421900000000196,
+        "match_id": "15378",
+        "date": "2021/04/04",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 710,
+        "bankroll": 24.421900000000196,
+        "match_id": "13163",
+        "date": "2021/03/14",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 711,
+        "bankroll": 24.421900000000196,
+        "match_id": "11900",
+        "date": "2021/02/27",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 712,
+        "bankroll": 24.421900000000196,
+        "match_id": "9539",
+        "date": "2021/02/07",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 713,
+        "bankroll": 24.421900000000196,
+        "match_id": "6049",
+        "date": "2020/11/27",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 714,
+        "bankroll": 24.421900000000196,
+        "match_id": "6046",
+        "date": "2020/11/26",
+        "teams": "BOOM Esports vs Alter Ego",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 715,
+        "bankroll": 24.421900000000196,
+        "match_id": "2902",
+        "date": "2020/09/23",
+        "teams": "BOOM Esports vs Rex Regum Qeon",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 716,
+        "bankroll": 24.421900000000196,
+        "match_id": "473838",
+        "date": "2025/04/27",
+        "teams": "Rex Regum Qeon vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 717,
+        "bankroll": 24.421900000000196,
+        "match_id": "458825",
+        "date": "2025/04/13",
+        "teams": "Rex Regum Qeon vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 718,
+        "bankroll": 24.421900000000196,
+        "match_id": "458815",
+        "date": "2025/03/31",
+        "teams": "Rex Regum Qeon vs TALON",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 719,
+        "bankroll": 24.421900000000196,
+        "match_id": "458810",
+        "date": "2025/03/24",
+        "teams": "Rex Regum Qeon vs Nongshim RedForce",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 720,
+        "bankroll": 24.421900000000196,
+        "match_id": "430530",
+        "date": "2025/02/01",
+        "teams": "Rex Regum Qeon vs Nongshim RedForce",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 721,
+        "bankroll": 24.421900000000196,
+        "match_id": "430520",
+        "date": "2025/01/25",
+        "teams": "Rex Regum Qeon vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 722,
+        "bankroll": 24.421900000000196,
+        "match_id": "414238",
+        "date": "2024/10/19",
+        "teams": "Rex Regum Qeon vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 723,
+        "bankroll": 24.421900000000196,
+        "match_id": "414231",
+        "date": "2024/10/18",
+        "teams": "Rex Regum Qeon vs TALON",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 724,
+        "bankroll": 24.421900000000196,
+        "match_id": "365316",
+        "date": "2024/07/12",
+        "teams": "Rex Regum Qeon vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 725,
+        "bankroll": 24.421900000000196,
+        "match_id": "314350",
+        "date": "2024/06/24",
+        "teams": "Rex Regum Qeon vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 726,
+        "bankroll": 24.421900000000196,
+        "match_id": "314346",
+        "date": "2024/06/22",
+        "teams": "Rex Regum Qeon vs TALON",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 727,
+        "bankroll": 24.421900000000196,
+        "match_id": "314330",
+        "date": "2024/04/29",
+        "teams": "Rex Regum Qeon vs Gen.G",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 728,
+        "bankroll": 24.421900000000196,
+        "match_id": "314315",
+        "date": "2024/04/16",
+        "teams": "Rex Regum Qeon vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 729,
+        "bankroll": 24.421900000000196,
+        "match_id": "296749",
+        "date": "2024/02/20",
+        "teams": "Rex Regum Qeon vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 730,
+        "bankroll": 24.421900000000196,
+        "match_id": "296745",
+        "date": "2024/02/17",
+        "teams": "Rex Regum Qeon vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 731,
+        "bankroll": 24.421900000000196,
+        "match_id": "237272",
+        "date": "2023/07/21",
+        "teams": "Rex Regum Qeon vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 732,
+        "bankroll": 24.421900000000196,
+        "match_id": "184497",
+        "date": "2023/05/14",
+        "teams": "Rex Regum Qeon vs TALON",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 733,
+        "bankroll": 24.421900000000196,
+        "match_id": "184485",
+        "date": "2023/04/30",
+        "teams": "Rex Regum Qeon vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 734,
+        "bankroll": 24.421900000000196,
+        "match_id": "184479",
+        "date": "2023/04/23",
+        "teams": "Rex Regum Qeon vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 735,
+        "bankroll": 24.421900000000196,
+        "match_id": "184460",
+        "date": "2023/03/27",
+        "teams": "Rex Regum Qeon vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 736,
+        "bankroll": 24.421900000000196,
+        "match_id": "106452",
+        "date": "2022/06/19",
+        "teams": "Rex Regum Qeon vs Alter Ego",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 737,
+        "bankroll": 24.421900000000196,
+        "match_id": "27207",
+        "date": "2021/07/17",
+        "teams": "Rex Regum Qeon vs Alter Ego",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 738,
+        "bankroll": 24.421900000000196,
+        "match_id": "454675",
+        "date": "2025/03/16",
+        "teams": "Revenant XSpark vs Velocity Gaming",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 739,
+        "bankroll": 24.421900000000196,
+        "match_id": "473839",
+        "date": "2025/05/04",
+        "teams": "TALON vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 740,
+        "bankroll": 24.421900000000196,
+        "match_id": "473835",
+        "date": "2025/05/03",
+        "teams": "TALON vs Nongshim RedForce",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 741,
+        "bankroll": 24.421900000000196,
+        "match_id": "473833",
+        "date": "2025/04/26",
+        "teams": "TALON vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 742,
+        "bankroll": 24.421900000000196,
+        "match_id": "458831",
+        "date": "2025/04/19",
+        "teams": "TALON vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 743,
+        "bankroll": 24.421900000000196,
+        "match_id": "458820",
+        "date": "2025/04/06",
+        "teams": "TALON vs Nongshim RedForce",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 744,
+        "bankroll": 24.421900000000196,
+        "match_id": "430534",
+        "date": "2025/02/07",
+        "teams": "TALON vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 745,
+        "bankroll": 24.421900000000196,
+        "match_id": "430532",
+        "date": "2025/02/02",
+        "teams": "TALON vs Nongshim RedForce",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 746,
+        "bankroll": 24.421900000000196,
+        "match_id": "430522",
+        "date": "2025/01/31",
+        "teams": "TALON vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 747,
+        "bankroll": 24.421900000000196,
+        "match_id": "425338",
+        "date": "2024/12/12",
+        "teams": "TALON vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 748,
+        "bankroll": 24.421900000000196,
+        "match_id": "415860",
+        "date": "2024/10/27",
+        "teams": "TALON vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 749,
+        "bankroll": 24.421900000000196,
+        "match_id": "415859",
+        "date": "2024/10/27",
+        "teams": "TALON vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 750,
+        "bankroll": 24.421900000000196,
+        "match_id": "415855",
+        "date": "2024/10/26",
+        "teams": "TALON vs Gen.G",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 751,
+        "bankroll": 24.421900000000196,
+        "match_id": "415854",
+        "date": "2024/10/26",
+        "teams": "TALON vs DRX",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 752,
+        "bankroll": 24.421900000000196,
+        "match_id": "365319",
+        "date": "2024/07/13",
+        "teams": "TALON vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 753,
+        "bankroll": 24.421900000000196,
+        "match_id": "314357",
+        "date": "2024/07/01",
+        "teams": "TALON vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 754,
+        "bankroll": 24.421900000000196,
+        "match_id": "314321",
+        "date": "2024/04/22",
+        "teams": "TALON vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 755,
+        "bankroll": 24.421900000000196,
+        "match_id": "314307",
+        "date": "2024/04/09",
+        "teams": "TALON vs Gen.G",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 756,
+        "bankroll": 24.421900000000196,
+        "match_id": "296732",
+        "date": "2024/02/20",
+        "teams": "TALON vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 757,
+        "bankroll": 24.421900000000196,
+        "match_id": "237268",
+        "date": "2023/07/19",
+        "teams": "TALON vs Gen.G",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 758,
+        "bankroll": 24.421900000000196,
+        "match_id": "184488",
+        "date": "2023/05/06",
+        "teams": "TALON vs Gen.G",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 759,
+        "bankroll": 24.421900000000196,
+        "match_id": "184470",
+        "date": "2023/04/09",
+        "teams": "TALON vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 760,
+        "bankroll": 24.421900000000196,
+        "match_id": "184462",
+        "date": "2023/04/01",
+        "teams": "TALON vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 761,
+        "bankroll": 24.421900000000196,
+        "match_id": "167361",
+        "date": "2023/02/19",
+        "teams": "TALON vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 762,
+        "bankroll": 24.421900000000196,
+        "match_id": "159144",
+        "date": "2022/11/27",
+        "teams": "TALON vs DRX",
+        "score": "0-3"
+      },
+      {
+        "match_idx": 763,
+        "bankroll": 24.421900000000196,
+        "match_id": "430833",
+        "date": "2025/01/09",
+        "teams": "Team Flash vs Alter Ego",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 764,
+        "bankroll": 24.421900000000196,
+        "match_id": "149115",
+        "date": "2022/10/09",
+        "teams": "Velocity Gaming vs Alter Ego",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 765,
+        "bankroll": 24.421900000000196,
+        "match_id": "458832",
+        "date": "2025/04/20",
+        "teams": "Gen.G vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 766,
+        "bankroll": 24.421900000000196,
+        "match_id": "430535",
+        "date": "2025/02/08",
+        "teams": "Gen.G vs T1",
+        "score": "2-3"
+      },
+      {
+        "match_idx": 767,
+        "bankroll": 24.421900000000196,
+        "match_id": "430523",
+        "date": "2025/01/31",
+        "teams": "Gen.G vs DRX",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 768,
+        "bankroll": 24.421900000000196,
+        "match_id": "425354",
+        "date": "2024/12/14",
+        "teams": "Gen.G vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 769,
+        "bankroll": 24.421900000000196,
+        "match_id": "418808",
+        "date": "2024/11/23",
+        "teams": "Gen.G vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 770,
+        "bankroll": 24.421900000000196,
+        "match_id": "415856",
+        "date": "2024/10/26",
+        "teams": "Gen.G vs DRX",
+        "score": "0-1"
+      },
+      {
+        "match_idx": 771,
+        "bankroll": 24.421900000000196,
+        "match_id": "365321",
+        "date": "2024/07/21",
+        "teams": "Gen.G vs DRX",
+        "score": "3-1"
+      },
+      {
+        "match_idx": 772,
+        "bankroll": 24.421900000000196,
+        "match_id": "365320",
+        "date": "2024/07/14",
+        "teams": "Gen.G vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 773,
+        "bankroll": 24.421900000000196,
+        "match_id": "314342",
+        "date": "2024/06/16",
+        "teams": "Gen.G vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 774,
+        "bankroll": 24.421900000000196,
+        "match_id": "329913",
+        "date": "2024/05/11",
+        "teams": "Gen.G vs T1",
+        "score": "3-0"
+      },
+      {
+        "match_idx": 775,
+        "bankroll": 24.421900000000196,
+        "match_id": "329911",
+        "date": "2024/05/05",
+        "teams": "Gen.G vs DRX",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 776,
+        "bankroll": 24.421900000000196,
+        "match_id": "329909",
+        "date": "2024/05/04",
+        "teams": "Gen.G vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 777,
+        "bankroll": 24.421900000000196,
+        "match_id": "314317",
+        "date": "2024/04/20",
+        "teams": "Gen.G vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 778,
+        "bankroll": 24.421900000000196,
+        "match_id": "297257",
+        "date": "2024/02/24",
+        "teams": "Gen.G vs DRX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 779,
+        "bankroll": 24.421900000000196,
+        "match_id": "184520",
+        "date": "2023/05/22",
+        "teams": "Gen.G vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 780,
+        "bankroll": 24.421900000000196,
+        "match_id": "184514",
+        "date": "2023/05/19",
+        "teams": "Gen.G vs T1",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 781,
+        "bankroll": 24.421900000000196,
+        "match_id": "184478",
+        "date": "2023/04/22",
+        "teams": "Gen.G vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 782,
+        "bankroll": 24.421900000000196,
+        "match_id": "184474",
+        "date": "2023/04/16",
+        "teams": "Gen.G vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 783,
+        "bankroll": 24.421900000000196,
+        "match_id": "159138",
+        "date": "2022/11/25",
+        "teams": "Gen.G vs DRX",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 784,
+        "bankroll": 24.421900000000196,
+        "match_id": "67326",
+        "date": "2022/01/28",
+        "teams": "Gen.G vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 785,
+        "bankroll": 24.421900000000196,
+        "match_id": "4867",
+        "date": "2020/11/06",
+        "teams": "Gen.G vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 786,
+        "bankroll": 24.421900000000196,
+        "match_id": "1862",
+        "date": "2020/08/16",
+        "teams": "Gen.G vs T1",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 787,
+        "bankroll": 24.421900000000196,
+        "match_id": "1626",
+        "date": "2020/08/07",
+        "teams": "Gen.G vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 788,
+        "bankroll": 24.421900000000196,
+        "match_id": "951",
+        "date": "2020/08/01",
+        "teams": "Gen.G vs T1 Academy",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 789,
+        "bankroll": 24.421900000000196,
+        "match_id": "840",
+        "date": "2020/06/27",
+        "teams": "Gen.G vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 790,
+        "bankroll": 24.421900000000196,
+        "match_id": "34",
+        "date": "2020/05/04",
+        "teams": "Gen.G vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 791,
+        "bankroll": 24.421900000000196,
+        "match_id": "31",
+        "date": "2020/05/04",
+        "teams": "Gen.G vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 792,
+        "bankroll": 24.421900000000196,
+        "match_id": "473834",
+        "date": "2025/04/26",
+        "teams": "DRX vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 793,
+        "bankroll": 24.421900000000196,
+        "match_id": "449004",
+        "date": "2025/02/24",
+        "teams": "DRX vs T1",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 794,
+        "bankroll": 24.421900000000196,
+        "match_id": "430525",
+        "date": "2025/02/09",
+        "teams": "DRX vs T1",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 795,
+        "bankroll": 24.421900000000196,
+        "match_id": "430524",
+        "date": "2025/02/07",
+        "teams": "DRX vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 796,
+        "bankroll": 24.421900000000196,
+        "match_id": "430521",
+        "date": "2025/01/20",
+        "teams": "DRX vs Nongshim RedForce",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 797,
+        "bankroll": 24.421900000000196,
+        "match_id": "314310",
+        "date": "2024/04/13",
+        "teams": "DRX vs T1",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 798,
+        "bankroll": 24.421900000000196,
+        "match_id": "278614",
+        "date": "2023/10/07",
+        "teams": "DRX vs T1",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 799,
+        "bankroll": 24.421900000000196,
+        "match_id": "278595",
+        "date": "2023/10/07",
+        "teams": "DRX vs T1",
+        "score": "1-0"
+      },
+      {
+        "match_idx": 800,
+        "bankroll": 24.421900000000196,
+        "match_id": "184521",
+        "date": "2023/05/27",
+        "teams": "DRX vs T1",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 801,
+        "bankroll": 24.421900000000196,
+        "match_id": "184499",
+        "date": "2023/05/15",
+        "teams": "DRX vs T1",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 802,
+        "bankroll": 24.421900000000196,
+        "match_id": "101881",
+        "date": "2022/06/11",
+        "teams": "DRX vs CNJ Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 803,
+        "bankroll": 24.421900000000196,
+        "match_id": "458812",
+        "date": "2025/03/29",
+        "teams": "T1 vs Nongshim RedForce",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 804,
+        "bankroll": 24.421900000000196,
+        "match_id": "423446",
+        "date": "2024/12/04",
+        "teams": "Nongshim RedForce vs SLT Seongnam",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 805,
+        "bankroll": 24.421900000000196,
+        "match_id": "417561",
+        "date": "2024/11/19",
+        "teams": "Nongshim RedForce vs FEARX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 806,
+        "bankroll": 24.421900000000196,
+        "match_id": "369429",
+        "date": "2024/07/18",
+        "teams": "Nongshim RedForce vs SLT Seongnam",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 807,
+        "bankroll": 24.421900000000196,
+        "match_id": "354501",
+        "date": "2024/06/14",
+        "teams": "Nongshim RedForce vs SLT Seongnam",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 808,
+        "bankroll": 24.421900000000196,
+        "match_id": "354495",
+        "date": "2024/06/12",
+        "teams": "Nongshim RedForce vs FEARX",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 809,
+        "bankroll": 24.421900000000196,
+        "match_id": "318855",
+        "date": "2024/04/10",
+        "teams": "Nongshim RedForce vs SLT Seongnam",
+        "score": "1-3"
+      },
+      {
+        "match_idx": 810,
+        "bankroll": 24.421900000000196,
+        "match_id": "302638",
+        "date": "2024/03/01",
+        "teams": "Nongshim RedForce vs SLT Seongnam",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 811,
+        "bankroll": 24.421900000000196,
+        "match_id": "209029",
+        "date": "2023/05/24",
+        "teams": "Nongshim RedForce vs SLT Seongnam",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 812,
+        "bankroll": 24.421900000000196,
+        "match_id": "193901",
+        "date": "2023/04/18",
+        "teams": "Nongshim RedForce vs SLT Seongnam",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 813,
+        "bankroll": 24.421900000000196,
+        "match_id": "193893",
+        "date": "2023/04/11",
+        "teams": "Nongshim RedForce vs CNJ Esports",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 814,
+        "bankroll": 24.421900000000196,
+        "match_id": "168297",
+        "date": "2023/02/09",
+        "teams": "Nongshim RedForce vs CNJ Esports",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 815,
+        "bankroll": 24.421900000000196,
+        "match_id": "475194",
+        "date": "2025/04/24",
+        "teams": "FEARX vs T1 Academy",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 816,
+        "bankroll": 24.421900000000196,
+        "match_id": "475189",
+        "date": "2025/04/23",
+        "teams": "FEARX vs Gen.G Global Academy",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 817,
+        "bankroll": 24.421900000000196,
+        "match_id": "445133",
+        "date": "2025/03/26",
+        "teams": "FEARX vs T1 Academy",
+        "score": "3-2"
+      },
+      {
+        "match_idx": 818,
+        "bankroll": 24.421900000000196,
+        "match_id": "445132",
+        "date": "2025/03/20",
+        "teams": "FEARX vs Gen.G Global Academy",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 819,
+        "bankroll": 24.421900000000196,
+        "match_id": "445125",
+        "date": "2025/03/12",
+        "teams": "FEARX vs Gen.G Global Academy",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 820,
+        "bankroll": 24.421900000000196,
+        "match_id": "440803",
+        "date": "2025/02/27",
+        "teams": "FEARX vs Gen.G Global Academy",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 821,
+        "bankroll": 24.421900000000196,
+        "match_id": "440798",
+        "date": "2025/02/26",
+        "teams": "FEARX vs SLT Seongnam",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 822,
+        "bankroll": 24.421900000000196,
+        "match_id": "440788",
+        "date": "2025/02/12",
+        "teams": "FEARX vs T1 Academy",
+        "score": "0-2"
+      },
+      {
+        "match_idx": 823,
+        "bankroll": 24.421900000000196,
+        "match_id": "354039",
+        "date": "2024/06/05",
+        "teams": "FEARX vs SLT Seongnam",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 824,
+        "bankroll": 24.421900000000196,
+        "match_id": "475190",
+        "date": "2025/04/23",
+        "teams": "T1 Academy vs SLT Seongnam",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 825,
+        "bankroll": 24.421900000000196,
+        "match_id": "440807",
+        "date": "2025/03/06",
+        "teams": "T1 Academy vs Gen.G Global Academy",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 826,
+        "bankroll": 24.421900000000196,
+        "match_id": "440801",
+        "date": "2025/02/26",
+        "teams": "T1 Academy vs SLT Seongnam",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 827,
+        "bankroll": 24.421900000000196,
+        "match_id": "475202",
+        "date": "2025/05/01",
+        "teams": "SLT Seongnam vs Gen.G Global Academy",
+        "score": "2-0"
+      },
+      {
+        "match_idx": 828,
+        "bankroll": 24.421900000000196,
+        "match_id": "445130",
+        "date": "2025/03/19",
+        "teams": "SLT Seongnam vs Gen.G Global Academy",
+        "score": "1-2"
+      },
+      {
+        "match_idx": 829,
+        "bankroll": 24.421900000000196,
+        "match_id": "440795",
+        "date": "2025/02/14",
+        "teams": "SLT Seongnam vs Gen.G Global Academy",
+        "score": "2-1"
+      },
+      {
+        "match_idx": 830,
+        "bankroll": 24.421900000000196,
+        "match_id": "201252",
+        "date": "2023/04/28",
+        "teams": "SLT Seongnam vs CNJ Esports",
+        "score": "2-0"
+      }
+    ],
+    "win_rate": 0.4104750304506699,
+    "avg_odds": 0,
+    "expected_value": 1837.50660923445,
+    "actual_value": -975.578100000007,
+    "calibration_error": 0.3295688915588685,
+    "sharpe_ratio": -0.09081521643320024,
+    "final_bankroll": 24.421900000000196,
+    "total_bets": 821,
+    "winning_bets": 337,
+    "total_wagered": 8535.650000000003,
+    "total_returns": 7560.071899999996,
+    "max_drawdown": 985.2926,
+    "max_drawdown_pct": 0.9758130639898702
+  },
+  "predictions_count": 831,
+  "bets_count": 678
+}
