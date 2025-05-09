@@ -2893,23 +2893,32 @@ def prepare_prediction_features(team1_stats, team2_stats, selected_features, sca
     
     return X
 
-def predict_match(team1_name, team2_name, bankroll=1000):
+def predict_match(team1_name, team2_name, bankroll=1000.0):
     """
-    Predict match outcome with the diverse ensemble.
+    Predict match outcome with EXACT same logic as backtesting to ensure
+    consistent results between backtesting and live predictions.
+    
+    Args:
+        team1_name (str): Name of team 1
+        team2_name (str): Name of team 2
+        bankroll (float): Current bankroll amount for betting recommendations
+        
+    Returns:
+        dict: Prediction results with betting analysis
     """
     print(f"\n{'='*80}")
     print(f"MATCH PREDICTION: {team1_name} vs {team2_name}")
     print(f"{'='*80}")
     
-    # Load models and artifacts
-    ensemble_models, _, selected_features = load_prediction_artifacts()
+    # Load models and artifacts using EXACTLY the same function as backtesting
+    ensemble_models, selected_features = load_backtesting_models()
     
     if not ensemble_models:
-        print("Failed to load prediction models. Please train models first.")
+        print("ERROR: Failed to load prediction models. Please train models first.")
         return None
     
     if not selected_features:
-        print("Failed to load feature list. Please retrain models.")
+        print("ERROR: Failed to load feature list. Please retrain models.")
         return None
     
     # Get team IDs
@@ -2926,7 +2935,7 @@ def predict_match(team1_name, team2_name, bankroll=1000):
     
     print(f"Found team IDs: {team1_name} (ID: {team1_id}), {team2_name} (ID: {team2_id})")
     
-    # Fetch team data
+    # Fetch team data using EXACTLY the same approach as backtesting
     print(f"Fetching data for {team1_name}...")
     team1_history = fetch_team_match_history(team1_id)
     team1_matches = parse_match_data(team1_history, team1_name)
@@ -2939,7 +2948,7 @@ def predict_match(team1_name, team2_name, bankroll=1000):
     team2_player_stats = fetch_team_player_stats(team2_id)
     team2_stats = calculate_team_stats(team2_matches, team2_player_stats, include_economy=True)
     
-    # Add map statistics if available
+    # Add map statistics - exactly as in backtesting
     team1_stats['map_statistics'] = fetch_team_map_statistics(team1_id)
     team2_stats['map_statistics'] = fetch_team_map_statistics(team2_id)
     
@@ -2949,50 +2958,26 @@ def predict_match(team1_name, team2_name, bankroll=1000):
     team2_stats['team_name'] = team2_name
     team2_stats['team_id'] = team2_id
     
-    # Use improved feature preparation
-    X = prepare_ensemble_features(team1_stats, team2_stats, selected_features)
+    # Use EXACTLY the same feature preparation function as backtesting
+    X = prepare_features_for_backtest(team1_stats, team2_stats, selected_features)
     
     if X is None:
         print("ERROR: Failed to prepare features for prediction")
         return None
     
-    # Make predictions with diverse ensemble
-    print("Running diverse ensemble prediction...")
-    raw_predictions, calibrated_prediction, model_agreement = predict_with_diverse_ensemble(ensemble_models, X)
+    # Use EXACTLY the same prediction function as backtesting
+    win_probability, raw_predictions, confidence_score = predict_with_ensemble(ensemble_models, X)
     
-    if not raw_predictions:
-        print("ERROR: All prediction models failed")
-        return None
+    # Format the results exactly as in backtesting
+    print(f"Team 1 win probability: {win_probability:.4f}")
+    print(f"Team 2 win probability: {1-win_probability:.4f}")
+    print(f"Model confidence: {confidence_score:.4f}")
     
-    # Format the results
-    print(f"Raw predictions: {[f'{p:.4f}' for p in raw_predictions]}")
-    print(f"Calibrated prediction: {calibrated_prediction:.4f}")
-    print(f"Model agreement: {model_agreement:.4f}")
     
-    # Calculate average prediction
-    avg_prediction = np.mean(raw_predictions)
-    std_prediction = np.std(raw_predictions)
+    # Match the same date format as used in backtesting
+    match_date = datetime.now().strftime('%Y-%m-%d')
     
-    # Add safeguards for extreme predictions
-    if avg_prediction < 0.05:
-        print("WARNING: Extremely low win probability prediction. Adjusting to minimum 5%")
-        avg_prediction = 0.05
-    elif avg_prediction > 0.95:
-        print("WARNING: Extremely high win probability prediction. Adjusting to maximum 95%")
-        avg_prediction = 0.95
-        
-    # Use the calibrated prediction instead of raw average
-    avg_prediction = calibrated_prediction
-    
-    print(f"Average prediction: {avg_prediction:.4f} ± {std_prediction:.4f}")
-    
-    # Calculate confidence interval (95%)
-    conf_interval = (
-        max(0, avg_prediction - 1.96 * std_prediction / np.sqrt(len(raw_predictions))),
-        min(1, avg_prediction + 1.96 * std_prediction / np.sqrt(len(raw_predictions)))
-    )
-    
-    # Prompt for odds
+    # Prompt for odds - same format as backtesting
     print("\nPlease enter the betting odds from your bookmaker:")
     odds_data = {}
     
@@ -3025,68 +3010,85 @@ def predict_match(team1_name, team2_name, bankroll=1000):
             odds_data['team2_minus_1_5_odds'] = team2_minus
         
         # Over/Under
-        over = float(input("Over 2.5 maps odds: ") or 0)
+        over = float(input(f"Over 2.5 maps odds: ") or 0)
         if over > 0:
             odds_data['over_2_5_maps_odds'] = over
         
-        under = float(input("Under 2.5 maps odds: ") or 0)
+        under = float(input(f"Under 2.5 maps odds: ") or 0)
         if under > 0:
             odds_data['under_2_5_maps_odds'] = under
         
     except ValueError:
         print("Invalid odds input. Using available odds only.")
     
-    # Calculate probability for each bet type
+    # Use EXACTLY the same bet type probability calculation as backtesting
+    bet_type_probabilities = calculate_bet_type_probabilities(win_probability, confidence_score)
+    
+    # Use EXACTLY the same betting analysis function as backtesting
+    betting_analysis = analyze_betting_edge_for_backtesting(
+        win_probability, 1 - win_probability, odds_data, confidence_score, bankroll
+    )
+    
+    # Create previous bets empty record to match first backtest iteration
+    previous_bets_by_team = {}
+    
+    # Use EXACTLY the same bet selection logic as backtesting
+    recommended_bets = select_optimal_bets(
+        betting_analysis, team1_name, team2_name, previous_bets_by_team, confidence_score, max_bets=3
+    )
+    
+    # Initialize results exactly as in backtesting
     results = {
+        'match_id': f"live_{int(time.time())}",  # Generate unique ID for live match
         'team1_name': team1_name,
         'team2_name': team2_name,
-        'team1_win_prob': avg_prediction,
-        'team2_win_prob': 1 - avg_prediction,
-        'confidence_interval': conf_interval,
-        'model_agreement': model_agreement,
-        'odds_data': odds_data
+        'team1_win_prob': win_probability,
+        'team2_win_prob': 1 - win_probability,
+        'predicted_winner': 'team1' if win_probability > 0.5 else 'team2',
+        'confidence': confidence_score,
+        'model_agreement': confidence_score,
+        'date': match_date,
+        'odds_data': odds_data,
+        'betting_analysis': betting_analysis,
+        'recommended_bets': recommended_bets
     }
     
-    # Calculate probabilities for other bet types using the calibrated prediction
-    single_map_prob = avg_prediction
+    # Add bet type probabilities - exactly as processed in backtesting
+    for bet_type, prob in bet_type_probabilities.items():
+        results[bet_type + '_prob'] = prob
     
-    # Adjust based on historical map win rates if available
-    if team1_stats['map_statistics'] and team2_stats['map_statistics']:
-        t1_map_win_rate = 0
-        t2_map_win_rate = 0
-        count = 0
+    # Calculate confidence interval - using same method from backtesting
+    if isinstance(raw_predictions, list):
+        predictions_float = [float(p) if isinstance(p, str) else p for p in raw_predictions]
+        std_prediction = np.std(predictions_float) if predictions_float else 0.1
+    else:
+        std_prediction = 0.1
         
-        for map_name in set(team1_stats['map_statistics'].keys()) & set(team2_stats['map_statistics'].keys()):
-            t1_map = team1_stats['map_statistics'][map_name]
-            t2_map = team2_stats['map_statistics'][map_name]
-            
-            if 'win_percentage' in t1_map and 'win_percentage' in t2_map:
-                t1_map_win_rate += t1_map['win_percentage']
-                t2_map_win_rate += t2_map['win_percentage']
-                count += 1
-        
-        if count > 0:
-            t1_map_win_rate /= count
-            t2_map_win_rate /= count
-            
-            # Adjust single map probability based on map win rates
-            map_ratio = t1_map_win_rate / (t1_map_win_rate + t2_map_win_rate) if (t1_map_win_rate + t2_map_win_rate) > 0 else 0.5
-            single_map_prob = (single_map_prob + map_ratio) / 2  # Blend overall and map-specific probabilities
+    conf_interval = (
+        max(0.05, win_probability - 1.96 * std_prediction / np.sqrt(len(raw_predictions) if isinstance(raw_predictions, list) else 1)),
+        min(0.95, win_probability + 1.96 * std_prediction / np.sqrt(len(raw_predictions) if isinstance(raw_predictions, list) else 1))
+    )
+    results['confidence_interval'] = conf_interval
     
-    # Probability calculations for different bet types
-    results['team1_plus_1_5_prob'] = 1 - (1 - single_map_prob) ** 3
-    results['team2_plus_1_5_prob'] = 1 - single_map_prob ** 3
-    results['team1_minus_1_5_prob'] = single_map_prob ** 2
-    results['team2_minus_1_5_prob'] = (1 - single_map_prob) ** 2
-    results['over_2_5_maps_prob'] = 2 * single_map_prob * (1 - single_map_prob)
-    results['under_2_5_maps_prob'] = single_map_prob ** 2 + (1 - single_map_prob) ** 2
-    
-    # Add betting analysis
-    if odds_data:
-        results['betting_analysis'] = analyze_betting_opportunities(results, odds_data, bankroll)
-    
-    # Print detailed report
+    # Print detailed report with team specific information
     print_prediction_report(results, team1_stats, team2_stats)
+    
+    # Print explicitly which bets are recommended to match backtest display
+    if recommended_bets:
+        print("\nRECOMMENDED BETS:")
+        print("-" * 80)
+        for bet_type, analysis in recommended_bets.items():
+            formatted_type = bet_type.replace("_", " ").upper()
+            team_name = team1_name if "team1" in bet_type else team2_name if "team2" in bet_type else "OVER/UNDER"
+            
+            print(f"  {team_name} {formatted_type}:")
+            print(f"  - Odds: {analysis['odds']:.2f}")
+            print(f"  - Our probability: {analysis['probability']:.2%}")
+            print(f"  - Edge: {analysis['edge']:.2%}")
+            print(f"  - Recommended bet: ${analysis['bet_amount']:.2f}")
+            print("")
+    else:
+        print("\nNo bets recommended for this match based on current odds.")
     
     return results
 
@@ -4777,118 +4779,129 @@ def get_backtest_params():
     
     return params
 
-
-# 3. Updated betting analysis with adjusted thresholds
-def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_data, confidence_score, bankroll=1000.0):
+def select_recommended_bets(betting_analysis, team1_name, team2_name):
     """
-    Analyze betting edges with a focus on maximizing ROI based on backtesting insights.
-    Specifically targets high-ROI bet types and edge ranges.
+    Select recommended bets using the same criteria as backtesting.
+    """
+    # Get all recommended bets
+    recommended_bets = {k: v for k, v in betting_analysis.items() if v['recommended']}
+    
+    if not recommended_bets:
+        return {}
+    
+    # Use same prioritization as backtesting
+    high_roi_bets = {k: v for k, v in recommended_bets.items() if v.get('high_roi_bet', False)}
+    other_bets = {k: v for k, v in recommended_bets.items() if not v.get('high_roi_bet', False)}
+    
+    # Sort bets by edge
+    sorted_high_roi_bets = sorted(high_roi_bets.items(), key=lambda x: x[1]['edge'], reverse=True)
+    sorted_other_bets = sorted(other_bets.items(), key=lambda x: x[1]['edge'], reverse=True)
+    
+    # Combine lists with high ROI bets first
+    sorted_bets = sorted_high_roi_bets + sorted_other_bets
+    
+    # Max bets per match - same as backtesting
+    max_bets = 3
+    
+    # Select bets with diversification
+    selected_bets = {}
+    bet_teams = set()
+    bet_categories = set()
+    
+    for bet_type, analysis in sorted_bets:
+        # Stop if we've reached max bets
+        if len(selected_bets) >= max_bets:
+            break
+        
+        # Determine team and category
+        if 'team1' in bet_type:
+            team = team1_name
+        elif 'team2' in bet_type:
+            team = team2_name
+        else:
+            team = None
+            
+        category = '_'.join(bet_type.split('_')[1:])  # e.g., 'ml', 'plus_1_5'
+        
+        # Use same diversification logic as backtesting
+        if team is None or category not in bet_categories or analysis.get('high_roi_bet', False):
+            selected_bets[bet_type] = analysis
+            bet_teams.add(team) if team else None
+            bet_categories.add(category)
+    
+    return selected_bets
+
+def analyze_betting_edge(win_probability, bet_type_probabilities, odds_data, confidence_score, bankroll=1000.0):
+    """
+    Analyze betting edges using exactly the same logic as backtesting.
     """
     betting_analysis = {}
     
-    # Targeting bet types with highest ROI:
-    # 1. TEAM2 MINUS 1 5: 224.32% ROI
-    # 2. TEAM1 MINUS 1 5: 144.23% ROI
-    # 3. 10-15% edge bets: 256.71% ROI
-    
-    # Base threshold that will be adjusted to target specific edge ranges
-    base_min_edge = 0.02
-    
-    # Adjust threshold to prefer edge ranges that showed high ROI in backtesting
-    # Use confidence to determine overall aggressiveness
-    if confidence_score >= 0.3:
-        # 30% confidence had 70.59% accuracy - be more aggressive
-        confidence_factor = 1.2  # Lower threshold (more bets)
-        print(f"Using aggressive threshold for optimal confidence: {confidence_factor:.4f}")
-    elif confidence_score >= 0.2:
-        # 20% confidence had 50% accuracy - standard approach
-        confidence_factor = 1.0
-        print(f"Using standard threshold for good confidence: {confidence_factor:.4f}")
-    else:
-        # Lower confidence - be more selective
-        confidence_factor = 0.8  # Higher threshold (fewer bets)
-        print(f"Using selective threshold for lower confidence: {confidence_factor:.4f}")
-    
+    # Use the exact same edge threshold calculation
+    base_min_edge = 0.03  # Same as backtesting
+    confidence_factor = 0.7 + (0.3 * confidence_score)  # Between 0.7 and 1.0
     adjusted_threshold = base_min_edge / confidence_factor
     
-    print(f"\n----- BETTING ANALYSIS -----")
-    print(f"Confidence score: {confidence_score:.4f}, confidence factor: {confidence_factor:.4f}")
-    print(f"Base edge threshold: {base_min_edge:.2%}, adjusted threshold: {adjusted_threshold:.2%}")
-    
-    # Calculate map probabilities - using standard approach with minimal changes
-    map_scale = 0.55 + (confidence_score * 0.15)
-    single_map_prob = 0.5 + (team1_win_prob - 0.5) * map_scale
-    
-    # Ensure map probability is reasonable
-    single_map_prob = max(0.3, min(0.7, single_map_prob))
-    print(f"Match probability: {team1_win_prob:.4f}, map probability: {single_map_prob:.4f} (scale: {map_scale:.2f})")
-    
-    # Calculate probabilities for different bet types
-    team1_plus_prob = 1 - (1 - single_map_prob) ** 2
-    team2_plus_prob = 1 - single_map_prob ** 2
-    team1_minus_prob = single_map_prob ** 2
-    team2_minus_prob = (1 - single_map_prob) ** 2
-    over_prob = 2 * single_map_prob * (1 - single_map_prob)
-    under_prob = 1 - over_prob
-    
-    # Standard bet types
-    bet_types = [
-        ('team1_ml', team1_win_prob, odds_data['team1_ml_odds']),
-        ('team2_ml', team2_win_prob, odds_data['team2_ml_odds']),
-        ('team1_plus_1_5', team1_plus_prob, odds_data['team1_plus_1_5_odds']),
-        ('team2_plus_1_5', team2_plus_prob, odds_data['team2_plus_1_5_odds']),
-        ('team1_minus_1_5', team1_minus_prob, odds_data['team1_minus_1_5_odds']),
-        ('team2_minus_1_5', team2_minus_prob, odds_data['team2_minus_1_5_odds']),
-        ('over_2_5_maps', over_prob, odds_data['over_2_5_maps_odds']),
-        ('under_2_5_maps', under_prob, odds_data['under_2_5_maps_odds'])
-    ]
-    
-    # KEY INSIGHT: Favor bet types that had the highest ROI in backtesting
-    # Specifically target team1_minus_1_5 and team2_minus_1_5 which showed 144% and 224% ROI
+    # Use same bet thresholds from backtesting
     type_thresholds = {
-        'team1_ml': adjusted_threshold * 1.0,          # Standard  
-        'team2_ml': adjusted_threshold * 1.0,          # Standard
-        'team1_plus_1_5': adjusted_threshold * 0.9,    # Good performer - slightly lower threshold
-        'team2_plus_1_5': adjusted_threshold * 0.9,    # Good performer - slightly lower threshold
-        'team1_minus_1_5': adjusted_threshold * 0.7,   # Excellent ROI - much lower threshold
-        'team2_minus_1_5': adjusted_threshold * 0.6,   # Best ROI - lowest threshold
-        'over_2_5_maps': adjusted_threshold * 1.2,     # Poor performer - higher threshold
-        'under_2_5_maps': adjusted_threshold * 1.3,    # Poor performer - higher threshold
+        'team1_ml': adjusted_threshold * 0.9,
+        'team2_ml': adjusted_threshold * 1.1,
+        'team1_plus_1_5': adjusted_threshold * 0.95,
+        'team2_plus_1_5': adjusted_threshold * 1.0,
+        'team1_minus_1_5': adjusted_threshold * 0.7,  # Much lower threshold for highest ROI bet type
+        'team2_minus_1_5': adjusted_threshold * 0.8,  # Lower threshold for second highest ROI bet type
+        'over_2_5_maps': adjusted_threshold * 1.1,
+        'under_2_5_maps': adjusted_threshold * 1.0
     }
     
-    # Analyze each bet type
+    # CRITICAL: Use the exact same bet size calculation as backtesting
+    if bankroll <= 2000:
+        MAX_SINGLE_BET = min(bankroll * 0.05, 100)
+    elif bankroll <= 10000:
+        MAX_SINGLE_BET = min(bankroll * 0.04, 400)
+    elif bankroll <= 50000:
+        MAX_SINGLE_BET = min(bankroll * 0.03, 1500)
+    elif bankroll <= 200000:
+        MAX_SINGLE_BET = min(bankroll * 0.025, 5000)
+    else:
+        MAX_SINGLE_BET = min(bankroll * 0.02, 20000)
+    
+    MAX_ALLOWED_BET = 50000
+    MAX_SINGLE_BET = min(MAX_SINGLE_BET, MAX_ALLOWED_BET)
+    
+    # Analyze moneyline bets
+    bet_types = [
+        ('team1_ml', win_probability, odds_data['team1_ml_odds']),
+        ('team2_ml', 1 - win_probability, odds_data['team2_ml_odds']),
+    ]
+    
+    # Add other bet types
+    for bet_type, prob in bet_type_probabilities.items():
+        odds_key = f"{bet_type}_odds"
+        if odds_key in odds_data:
+            bet_types.append((bet_type, prob, odds_data[odds_key]))
+    
+    # Analyze each bet with same logic as backtesting
     for bet_type, prob, odds in bet_types:
-        # Calculate implied probability and edge
+        # Skip invalid inputs
+        if not (0 < prob < 1) or odds <= 1.0:
+            continue
+            
+        # Calculate edge
         implied_prob = 1 / odds
         edge = prob - implied_prob
-        
-        # Get specific threshold for this bet type
         bet_threshold = type_thresholds.get(bet_type, adjusted_threshold)
         
-        # Determine if edge is in the highest-ROI range (10-15%)
-        # This range showed 256.71% ROI in backtesting
-        high_roi_edge = (0.1 <= edge <= 0.15)
+        # Use exact same Kelly calculation as backtesting
+        if bet_type == 'team1_minus_1_5':
+            base_fraction = 0.25
+        elif bet_type == 'team2_minus_1_5':
+            base_fraction = 0.20
+        elif bet_type == 'team1_ml':
+            base_fraction = 0.18
+        else:
+            base_fraction = 0.15
         
-        # Apply Kelly calculation with adjustments for high-ROI bet types
-        base_fraction = 0.15  # Standard base Kelly fraction
-        
-        # KEY INSIGHT: Scale Kelly fraction based on bet type and edge range
-        kelly_multiplier = 1.0  # Default multiplier
-        
-        # Bet type adjustments - favor highest ROI bet types
-        if 'minus_1_5' in bet_type:
-            kelly_multiplier *= 1.3  # Increase bet size for high-ROI bet types
-            
-        # Edge range adjustments - favor optimal edge ranges
-        if high_roi_edge:
-            kelly_multiplier *= 1.4  # Significantly increase bet size for optimal edge range
-        elif edge > 0.15:
-            kelly_multiplier *= 1.2  # Moderately increase for higher edges
-            
-        # Confidence adjustments
-        if confidence_score >= 0.3:
-            kelly_multiplier *= 1.2  # Increase for optimal confidence
-            
         # Calculate Kelly stake
         b = odds - 1
         p = prob
@@ -4897,43 +4910,36 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
         if b <= 0:
             kelly = 0
         else:
-            kelly = (b * p - q) / b
+            kelly = max(0, (b * p - q) / b)
+            kelly = kelly * base_fraction
             
-            # Apply fractional Kelly with our multipliers
-            kelly = kelly * base_fraction * kelly_multiplier
-            
-            # Reasonable cap for safety
-            kelly = min(kelly, 0.07)  # Maximum 7% of bankroll per bet
+            # Progressive cap based on bet type - match backtesting
+            if bet_type in ['team1_minus_1_5', 'team2_minus_1_5']:
+                max_pct = 0.05
+            else:
+                max_pct = 0.03
+                
+            kelly = min(kelly, max_pct)
         
-        # Calculate bet amount
-        bet_amount = round(bankroll * kelly, 2)
+        # Calculate bet amount with same caps
+        raw_bet_amount = bankroll * kelly
+        capped_bet_amount = min(raw_bet_amount, MAX_SINGLE_BET)
+        bet_amount = round(capped_bet_amount, 2)
         
-        # Special handling for high-ROI scenarios
+        # Apply the exact same filters as backtesting
         extra_filter = True
         filter_reason = "Passed all filters"
         
-        # Be more selective with low confidence except for high-ROI bet types
-        if confidence_score < 0.2 and 'minus_1_5' not in bet_type and not high_roi_edge:
+        if confidence_score < 0.3 and edge < 0.08 and bet_type not in ['team1_minus_1_5', 'team2_minus_1_5']:
             extra_filter = False
-            filter_reason = "Low confidence for standard bet type"
+            filter_reason = "Low confidence, insufficient edge"
         
-        # Final edge check against bet-specific threshold
+        # Final checks
         meets_edge = edge > bet_threshold
-        
-        # Minimum bet amount
         meets_min_amount = bet_amount >= 1.0
-        
-        # SPECIAL ROI OPTIMIZATION: For minus_1_5 bets with very high odds (typically >3.5)
-        # These showed exceptional ROI in your backtest
-        if 'minus_1_5' in bet_type and odds > 3.5 and edge > 0:
-            # Accept these bets with lower edge requirements
-            meets_edge = True
-            print(f"Accepting {bet_type} with high odds ({odds:.2f}) despite edge of only {edge:.4f}")
-        
-        # Final recommendation
         recommended = meets_edge and meets_min_amount and extra_filter
         
-        # Store analysis results
+        # Store results in same format as backtesting
         betting_analysis[bet_type] = {
             'probability': prob,
             'implied_prob': implied_prob,
@@ -4947,13 +4953,189 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
             'extra_filter': extra_filter,
             'filter_reason': filter_reason,
             'recommended': recommended,
-            'high_roi_edge': high_roi_edge  # Flag high-ROI edge ranges
+            'high_roi_bet': bet_type in ['team1_minus_1_5', 'team2_minus_1_5', 'team1_ml'],
+            'roi': (odds - 1) * 100 if recommended else 0  # Calculate ROI percentage
+        }
+    
+    return betting_analysis
+
+# 3. Updated betting analysis with adjusted thresholds
+def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_data, confidence_score, bankroll=1000.0):
+    """
+    Optimized betting analysis that balances high ROI with aggressive growth.
+    Maintains safeguards while allowing more aggressive bet sizing.
+    """
+    betting_analysis = {}
+    
+    # Verify valid probabilities
+    if not (0 < team1_win_prob < 1) or not (0 < team2_win_prob < 1):
+        team1_win_prob = min(0.95, max(0.05, team1_win_prob))
+        team2_win_prob = 1 - team1_win_prob
+    
+    # Ensure probabilities sum to 1
+    if abs(team1_win_prob + team2_win_prob - 1) > 0.001:
+        total = team1_win_prob + team2_win_prob
+        team1_win_prob = team1_win_prob / total
+        team2_win_prob = team2_win_prob / total
+    
+    # Edge threshold based on confidence
+    base_min_edge = 0.03  
+    confidence_factor = 0.7 + (0.3 * confidence_score)
+    adjusted_threshold = base_min_edge / confidence_factor
+    
+    print(f"\n----- BETTING ANALYSIS -----")
+    print(f"Confidence score: {confidence_score:.4f}, confidence factor: {confidence_factor:.4f}")
+    print(f"Base edge threshold: {base_min_edge:.2%}, adjusted threshold: {adjusted_threshold:.2%}")
+    
+    # Calculate map probabilities
+    map_scale = 0.55 + (confidence_score * 0.15)
+    single_map_prob = 0.5 + (team1_win_prob - 0.5) * map_scale
+    single_map_prob = max(0.3, min(0.7, single_map_prob))
+    
+    # Calculate probabilities for different bet types
+    team1_plus_prob = 1 - (1 - single_map_prob) ** 2
+    team2_plus_prob = 1 - single_map_prob ** 2
+    team1_minus_prob = single_map_prob ** 2
+    team2_minus_prob = (1 - single_map_prob) ** 2
+    over_prob = 2 * single_map_prob * (1 - single_map_prob)
+    under_prob = 1 - over_prob
+    
+    # Cap all probabilities to avoid extremes
+    team1_plus_prob = min(0.95, max(0.05, team1_plus_prob))
+    team2_plus_prob = min(0.95, max(0.05, team2_plus_prob))
+    team1_minus_prob = min(0.9, max(0.1, team1_minus_prob))
+    team2_minus_prob = min(0.9, max(0.1, team2_minus_prob))
+    over_prob = min(0.9, max(0.1, over_prob))
+    under_prob = min(0.9, max(0.1, under_prob))
+    
+    # Standard bet types
+    bet_types = [
+        ('team1_ml', team1_win_prob, odds_data['team1_ml_odds']),
+        ('team2_ml', team2_win_prob, odds_data['team2_ml_odds']),
+        ('team1_plus_1_5', team1_plus_prob, odds_data['team1_plus_1_5_odds']),
+        ('team2_plus_1_5', team2_plus_prob, odds_data['team2_plus_1_5_odds']),
+        ('team1_minus_1_5', team1_minus_prob, odds_data['team1_minus_1_5_odds']),
+        ('team2_minus_1_5', team2_minus_prob, odds_data['team2_minus_1_5_odds']),
+        ('over_2_5_maps', over_prob, odds_data['over_2_5_maps_odds']),
+        ('under_2_5_maps', under_prob, odds_data['under_2_5_maps_odds'])
+    ]
+    
+    # Thresholds favoring highest ROI bet types
+    type_thresholds = {
+        'team1_ml': adjusted_threshold * 0.9,
+        'team2_ml': adjusted_threshold * 1.1,  # Higher threshold (more selective)
+        'team1_plus_1_5': adjusted_threshold * 0.95,
+        'team2_plus_1_5': adjusted_threshold * 1.0,
+        'team1_minus_1_5': adjusted_threshold * 0.7,  # Much lower threshold - highest ROI
+        'team2_minus_1_5': adjusted_threshold * 0.8,  # Lower threshold - second highest ROI
+        'over_2_5_maps': adjusted_threshold * 1.1,
+        'under_2_5_maps': adjusted_threshold * 1.0
+    }
+    
+    # KEY IMPROVEMENT: Progressive bet sizing based on bankroll
+    # Different caps at different bankroll levels
+    if bankroll <= 2000:
+        # Starting phase - conservative
+        MAX_SINGLE_BET = min(bankroll * 0.05, 100)  # 5% or $100 max
+    elif bankroll <= 10000:
+        # Growth phase - moderate
+        MAX_SINGLE_BET = min(bankroll * 0.04, 400)  # 4% or $400 max
+    elif bankroll <= 50000:
+        # Expansion phase - aggressive
+        MAX_SINGLE_BET = min(bankroll * 0.03, 1500)  # 3% or $1500 max
+    elif bankroll <= 200000:
+        # Scale phase - very aggressive
+        MAX_SINGLE_BET = min(bankroll * 0.025, 5000)  # 2.5% or $5000 max
+    else:
+        # Empire phase - extremely aggressive
+        MAX_SINGLE_BET = min(bankroll * 0.02, 20000)  # 2% or $20000 max
+    
+    # Safety cap to prevent runaway growth
+    MAX_ALLOWED_BET = 50000  # Hard cap at $50,000 per bet
+    MAX_SINGLE_BET = min(MAX_SINGLE_BET, MAX_ALLOWED_BET)
+    
+    for bet_type, prob, odds in bet_types:
+        # Skip invalid inputs
+        if not (0 < prob < 1) or odds <= 1.0:
+            continue
+            
+        # Calculate edge
+        implied_prob = 1 / odds
+        edge = prob - implied_prob
+        bet_threshold = type_thresholds.get(bet_type, adjusted_threshold)
+        
+        # Kelly calculation
+        # Use different fractional Kelly based on bet type ROI
+        if bet_type == 'team1_minus_1_5':  # Highest ROI
+            base_fraction = 0.25  # 25% of Kelly
+        elif bet_type == 'team2_minus_1_5':  # Second highest ROI
+            base_fraction = 0.20  # 20% of Kelly
+        elif bet_type == 'team1_ml':  # Third highest ROI
+            base_fraction = 0.18  # 18% of Kelly
+        else:
+            base_fraction = 0.15  # 15% of Kelly for other types
+        
+        # Calculate Kelly stake
+        b = odds - 1
+        p = prob
+        q = 1 - p
+        
+        if b <= 0:
+            kelly = 0
+        else:
+            kelly = max(0, (b * p - q) / b)
+            kelly = kelly * base_fraction
+            
+            # Progressive cap based on bet type
+            if bet_type in ['team1_minus_1_5', 'team2_minus_1_5']:
+                # Higher cap for highest ROI bet types
+                max_pct = 0.05  # 5% of bankroll
+            else:
+                max_pct = 0.03  # 3% of bankroll
+                
+            kelly = min(kelly, max_pct)
+        
+        # Calculate bet amount with progressive caps
+        raw_bet_amount = bankroll * kelly
+        capped_bet_amount = min(raw_bet_amount, MAX_SINGLE_BET)
+        bet_amount = round(capped_bet_amount, 2)
+        
+        # Filters
+        extra_filter = True
+        filter_reason = "Passed all filters"
+        
+        # More selective with low confidence bets except for highest ROI bet types
+        if confidence_score < 0.3 and edge < 0.08 and bet_type not in ['team1_minus_1_5', 'team2_minus_1_5']:
+            extra_filter = False
+            filter_reason = "Low confidence, insufficient edge"
+        
+        # Final checks
+        meets_edge = edge > bet_threshold
+        meets_min_amount = bet_amount >= 1.0
+        recommended = meets_edge and meets_min_amount and extra_filter
+        
+        # Store results
+        betting_analysis[bet_type] = {
+            'probability': prob,
+            'implied_prob': implied_prob,
+            'edge': edge,
+            'edge_threshold': bet_threshold,
+            'meets_edge': meets_edge,
+            'odds': odds,
+            'kelly_fraction': kelly,
+            'bet_amount': bet_amount,
+            'meets_min_amount': meets_min_amount, 
+            'extra_filter': extra_filter,
+            'filter_reason': filter_reason,
+            'recommended': recommended,
+            'high_roi_bet': bet_type in ['team1_minus_1_5', 'team2_minus_1_5', 'team1_ml'] 
         }
         
         # Print details for logging
+        cap_notice = f" (capped from ${raw_bet_amount:.2f})" if raw_bet_amount > MAX_SINGLE_BET else ""
         print(f"{bet_type}: prob={prob:.4f}, edge={edge:.4f}, threshold={bet_threshold:.4f}, " + 
-              f"amount=${bet_amount:.2f}, recommend={recommended}" +
-              (f" [HIGH-ROI EDGE]" if high_roi_edge else ""))
+              f"amount=${bet_amount:.2f}{cap_notice}, recommend={recommended}" +
+              (" [HIGH-ROI BET]" if bet_type in ['team1_minus_1_5', 'team2_minus_1_5', 'team1_ml'] else ""))
     
     # Count recommended bets
     recommended_count = sum(1 for analysis in betting_analysis.values() if analysis['recommended'])
@@ -5757,8 +5939,8 @@ def get_teams_for_backtesting(limit=100):
 # 1. Fix Neural Network Calibration in predict_with_ensemble function
 def predict_with_ensemble(ensemble_models, X):
     """
-    Optimized prediction function focused on maximizing ROI rather than accuracy.
-    Exploits the patterns shown in the backtesting data.
+    Make predictions using the ensemble with strong calibration to prevent extreme values,
+    matching the approach used in backtesting.
     """
     if not ensemble_models:
         raise ValueError("No models provided for prediction")
@@ -5774,7 +5956,6 @@ def predict_with_ensemble(ensemble_models, X):
     
     print("\n----- ENSEMBLE PREDICTION -----")
     
-    # Collect predictions from all models with minimal calibration
     for i, (model_type, model, model_scaler) in enumerate(ensemble_models):
         try:
             # Apply scaling if needed
@@ -5789,42 +5970,51 @@ def predict_with_ensemble(ensemble_models, X):
             if model_type == 'nn':
                 raw_pred = model.predict(X_pred, verbose=0)[0][0]
                 
-                # Very minimal calibration - especially for extreme predictions
-                if raw_pred > 0.95:
-                    calibrated_pred = 0.95
-                    print(f"NN model {i}: {raw_pred:.4f} → {calibrated_pred:.4f} (calibrated)")
-                    pred = calibrated_pred
-                else:
-                    pred = raw_pred
+                # CRITICAL: Apply strong calibration to neural networks like in backtesting
+                # Cap predictions between 0.05 and 0.95 - THIS IS THE CRUCIAL STEP
+                raw_pred = min(0.95, max(0.05, raw_pred))
+                
+                # Apply sigmoid-based calibration to pull values toward 0.5
+                calibrated_pred = 0.5 + (raw_pred - 0.5) * 0.8
+                print(f"NN model {i}: {raw_pred:.4f} → {calibrated_pred:.4f} (calibrated)")
+                pred = calibrated_pred
             else:
                 # Handle different API for scikit-learn models
                 if hasattr(model, 'predict_proba'):
                     pred = model.predict_proba(X_pred)[0][1]
+                    
+                    # Cap and calibrate non-NN models too - match backtesting approach
+                    pred = min(0.95, max(0.05, pred))
+                    
+                    # Apply milder calibration to tree-based models which tend to be better calibrated
+                    if model_type in ['gb', 'rf']:
+                        pred = 0.5 + (pred - 0.5) * 0.85
+                    else:
+                        pred = 0.5 + (pred - 0.5) * 0.8
                 else:
                     pred = model.predict(X_pred)[0]
-                    pred = max(0, min(1, pred))
+                    pred = min(0.95, max(0.05, pred))
             
             # Handle NaN or invalid predictions
             if np.isnan(pred) or not np.isfinite(pred):
                 print(f"Warning: Model {i+1} returned invalid prediction, using 0.5")
                 pred = 0.5
             
-            # Optimize weights to favor models that performed best in backtesting
-            # Tree-based models showing better ROI in some contexts
+            # Use balanced weights to avoid any single model dominating - match backtesting
             if model_type == 'nn':
-                base_weight = 1.0  # Neutral weighting
+                base_weight = 1.0
             elif model_type == 'gb':
-                base_weight = 1.2  # Increase weight for GB (good ROI performer)
+                base_weight = 1.0
             elif model_type == 'rf':
                 base_weight = 1.0
             elif model_type == 'lr':
-                base_weight = 0.6
+                base_weight = 0.8
             else:  # SVM
-                base_weight = 0.5
+                base_weight = 0.8
             
-            # Minimal penalization for extreme predictions
+            # Minimal adjustment for extreme values
             extremeness = abs(pred - 0.5) / 0.5
-            weight = base_weight * (1.0 - extremeness * 0.1)  # Reduced penalty
+            weight = base_weight * (1.0 - extremeness * 0.1)
                 
             # Store prediction and model info
             raw_predictions.append(pred)
@@ -5850,31 +6040,12 @@ def predict_with_ensemble(ensemble_models, X):
         mean_pred = 0.5
         print("Using default prediction of 0.5 due to weighting issues")
     
-    # Calculate confidence score using standard deviation but with less aggressive scaling
+    # Calculate confidence score using standard deviation - match backtesting
     std_pred = np.std(raw_predictions)
+    raw_confidence = 1 - min(0.9, std_pred * 1.5)  # Less aggressive scaling
     
-    # The most important pattern from your data:
-    # 30% confidence had 70.59% accuracy and 10-15% edge had 256.71% ROI
-    # We want to artificially boost predictions into these ranges
-    
-    # Calculate raw confidence - less penalization for disagreement
-    raw_confidence = 1 - min(0.9, std_pred * 1.5)  # Cap at 0.9 to prevent excessive scaling
-    
-    # KEY INSIGHT: Remap confidence to target the 30% bin which had 70.59% accuracy
-    # This is critical for ROI optimization
-    if 0.25 <= raw_confidence < 0.35:
-        # Already in the optimal range - keep it
-        adjusted_confidence = raw_confidence
-        print(f"Keeping confidence in optimal 30% range: {raw_confidence:.4f}")
-    elif raw_confidence >= 0.35:
-        # Higher confidence - map to optimal 30% range
-        adjusted_confidence = 0.3
-        print(f"Mapping high confidence to optimal 30% range: {raw_confidence:.4f} → {adjusted_confidence:.4f}")
-    else:
-        # Lower confidence - scale toward 20% range where accuracy was still 50%
-        # But avoid the 10% range where accuracy drops to 34.59%
-        adjusted_confidence = max(0.2, raw_confidence)
-        print(f"Adjusting low confidence toward 20% range: {raw_confidence:.4f} → {adjusted_confidence:.4f}")
+    # Make sure confidence cap matches backtesting
+    adjusted_confidence = min(0.7, max(0.2, raw_confidence))
     
     # Simple IQR analysis for visualization
     raw_predictions_array = np.array(raw_predictions)
@@ -5883,18 +6054,56 @@ def predict_with_ensemble(ensemble_models, X):
     iqr = q3 - q1
     print(f"Prediction quartiles: Q1={q1:.4f}, Q3={q3:.4f}, IQR={iqr:.4f}")
     
-    # Use very minimal calibration to preserve signal strength
-    # Your backtesting showed models were accurate despite disagreement
-    if adjusted_confidence < 0.25:
-        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.8  # Light calibration
-        print(f"Light calibration: {mean_pred:.4f} → {calibrated_pred:.4f}")
-    else:
-        # Almost no calibration for confidence in optimal ranges
-        calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.95  # Very minimal calibration
-        print(f"Minimal calibration: {mean_pred:.4f} → {calibrated_pred:.4f}")
+    # Apply final calibration exactly as in backtesting - crucial alignment step
+    calibrated_pred = 0.5 + (mean_pred - 0.5) * 0.8
+    print(f"Final calibration: {mean_pred:.4f} → {calibrated_pred:.4f}")
     
-    return calibrated_pred, raw_predictions, adjusted_confidence
+    # SAFETY CHECK: Ensure prediction is never outside [0.05, 0.95] range
+    calibrated_pred = min(0.95, max(0.05, calibrated_pred))
+    
+    # Format raw predictions for display
+    raw_predictions_str = [f'{p:.4f}' for p in raw_predictions]
+    
+    return calibrated_pred, raw_predictions_str, adjusted_confidence
 
+
+def calculate_bet_type_probabilities(win_probability, confidence_score):
+    """
+    Calculate probabilities for different bet types using the same 
+    approach as backtesting.
+    """
+    # Calculate map probability with the exact same formula as backtesting
+    map_scale = 0.55 + (confidence_score * 0.15)  # Between 0.55 and 0.7
+    single_map_prob = 0.5 + (win_probability - 0.5) * map_scale
+    
+    # Ensure map probability is reasonable - exact same bounds as backtesting
+    single_map_prob = max(0.3, min(0.7, single_map_prob))
+    
+    # Calculate probabilities for different bet types
+    team1_plus_prob = 1 - (1 - single_map_prob) ** 2
+    team2_plus_prob = 1 - single_map_prob ** 2
+    team1_minus_prob = single_map_prob ** 2
+    team2_minus_prob = (1 - single_map_prob) ** 2
+    over_prob = 2 * single_map_prob * (1 - single_map_prob)
+    under_prob = 1 - over_prob
+    
+    # Cap all probabilities exactly as in backtesting
+    team1_plus_prob = min(0.95, max(0.05, team1_plus_prob))
+    team2_plus_prob = min(0.95, max(0.05, team2_plus_prob))
+    team1_minus_prob = min(0.9, max(0.1, team1_minus_prob))
+    team2_minus_prob = min(0.9, max(0.1, team2_minus_prob))
+    over_prob = min(0.9, max(0.1, over_prob))
+    under_prob = min(0.9, max(0.1, under_prob))
+    
+    # Return all probabilities with the exact same structure
+    return {
+        'team1_plus_1_5': team1_plus_prob,
+        'team2_plus_1_5': team2_plus_prob,
+        'team1_minus_1_5': team1_minus_prob,
+        'team2_minus_1_5': team2_minus_prob,
+        'over_2_5_maps': over_prob,
+        'under_2_5_maps': under_prob
+    }
 
 def prepare_features_for_backtest(team1_stats, team2_stats, selected_features):
     """
@@ -6503,8 +6712,8 @@ def run_improved_backtest(start_date=None, end_date=None, team_limit=50, bankrol
 
 def select_optimal_bets(betting_analysis, team1_name, team2_name, previous_bets_by_team, confidence_score, max_bets=3):
     """
-    Select the optimal bets to place with a focus on maximizing ROI.
-    Prioritizes bet types and edge ranges that showed highest ROI in backtesting.
+    Select the optimal bets to place with more aggressive diversification
+    for higher bankroll growth.
     """
     # Get all recommended bets
     recommended_bets = {k: v for k, v in betting_analysis.items() if v['recommended']}
@@ -6512,68 +6721,27 @@ def select_optimal_bets(betting_analysis, team1_name, team2_name, previous_bets_
     if not recommended_bets:
         return {}
     
-    # ROI-OPTIMIZED STRATEGY:
-    # 1. Prioritize minus_1_5 bets (highest ROI in backtest)
-    # 2. Prioritize bets with edge in 10-15% range (256.71% ROI)
-    # 3. Take more bets in 30% confidence range
+    # MORE AGGRESSIVE: Allow more bets per match
+    # This increases opportunities for bankroll growth
+    adjusted_max_bets = min(4, max_bets)  # Allow up to 4 bets per match but respect max_bets
     
-    # First, separate bets by priority categories
-    minus_15_bets = {}
-    high_roi_edge_bets = {}
-    other_bets = {}
+    # MORE AGGRESSIVE: Prioritize high ROI bet types
+    high_roi_bets = {k: v for k, v in recommended_bets.items() if v.get('high_roi_bet', False)}
+    other_bets = {k: v for k, v in recommended_bets.items() if not v.get('high_roi_bet', False)}
     
-    for bet_type, analysis in recommended_bets.items():
-        if 'minus_1_5' in bet_type:
-            minus_15_bets[bet_type] = analysis
-        elif analysis.get('high_roi_edge', False):
-            high_roi_edge_bets[bet_type] = analysis
-        else:
-            other_bets[bet_type] = analysis
+    # Sort bets by edge
+    sorted_high_roi_bets = sorted(high_roi_bets.items(), key=lambda x: x[1]['edge'], reverse=True)
+    sorted_other_bets = sorted(other_bets.items(), key=lambda x: x[1]['edge'], reverse=True)
     
-    # Determine how many bets to place based on confidence
-    # More aggressive in optimal confidence ranges
-    if confidence_score >= 0.3:
-        # 30% confidence had 70.59% accuracy - take more bets
-        adjusted_max_bets = max(max_bets, 4)  # Allow more bets in optimal range
-        print(f"Increasing to {adjusted_max_bets} max bets due to optimal confidence")
-    elif confidence_score < 0.2:
-        # Low confidence - be more selective
-        adjusted_max_bets = min(2, max_bets)  # More conservative
-        print(f"Limiting to {adjusted_max_bets} bets due to very low confidence")
-    else:
-        # Standard approach
-        adjusted_max_bets = max_bets
+    # Combine lists with high ROI bets first
+    sorted_bets = sorted_high_roi_bets + sorted_other_bets
     
-    # Create prioritized list of bets
-    prioritized_bets = []
-    
-    # First add minus_1_5 bets (sorted by edge)
-    for bet_type, analysis in sorted(minus_15_bets.items(), 
-                                    key=lambda x: x[1]['edge'], 
-                                    reverse=True):
-        prioritized_bets.append((bet_type, analysis))
-    
-    # Then add high-ROI edge bets that aren't already included
-    for bet_type, analysis in sorted(high_roi_edge_bets.items(), 
-                                    key=lambda x: x[1]['edge'], 
-                                    reverse=True):
-        if bet_type not in [b[0] for b in prioritized_bets]:
-            prioritized_bets.append((bet_type, analysis))
-    
-    # Finally add other bets
-    for bet_type, analysis in sorted(other_bets.items(), 
-                                    key=lambda x: x[1]['edge'], 
-                                    reverse=True):
-        if bet_type not in [b[0] for b in prioritized_bets]:
-            prioritized_bets.append((bet_type, analysis))
-    
-    # Select bets up to the adjusted maximum
-    # But also consider diversification
+    # Select bets with LESS STRICT diversification for higher growth
     selected_bets = {}
     bet_teams = set()
     bet_categories = set()
     
-    for bet_type, analysis in prioritized_bets:
+    for bet_type, analysis in sorted_bets:
         # Stop if we've reached max bets
         if len(selected_bets) >= adjusted_max_bets:
             break
@@ -6586,36 +6754,17 @@ def select_optimal_bets(betting_analysis, team1_name, team2_name, previous_bets_
         else:
             team = None
             
-        category = bet_type.split('_')[-1]  # e.g., 'ml', 'plus_1_5'
+        category = '_'.join(bet_type.split('_')[1:])  # e.g., 'ml', 'plus_1_5'
         
-        # For highest priority bets (minus_1_5 and high-ROI edge),
-        # be less strict about diversification
-        is_high_priority = ('minus_1_5' in bet_type or analysis.get('high_roi_edge', False))
-        
-        # Check diversification
-        if is_high_priority:
-            # Less strict diversification for high-priority bets
-            if not (team in bet_teams and category in bet_categories):
-                selected_bets[bet_type] = analysis
-                bet_teams.add(team) if team else None
-                bet_categories.add(category)
-        else:
-            # Strict diversification for standard bets
-            if team not in bet_teams and category not in bet_categories:
-                selected_bets[bet_type] = analysis
-                bet_teams.add(team) if team else None
-                bet_categories.add(category)
+        # MORE AGGRESSIVE: Less strict diversification rules
+        # Allow multiple bets on same team if different categories
+        # This increases opportunities for bankroll growth
+        if team is None or category not in bet_categories or analysis.get('high_roi_bet', False):
+            selected_bets[bet_type] = analysis
+            bet_teams.add(team) if team else None
+            bet_categories.add(category)
     
     print(f"Selected {len(selected_bets)} optimal bets out of {len(recommended_bets)} recommended")
-    
-    # Special case: if we have no selected bets but have high-priority bets,
-    # take the highest edge one regardless of diversification
-    if not selected_bets and (minus_15_bets or high_roi_edge_bets):
-        best_bets = list(minus_15_bets.items()) + list(high_roi_edge_bets.items())
-        if best_bets:
-            best_bet = max(best_bets, key=lambda x: x[1]['edge'])
-            selected_bets[best_bet[0]] = best_bet[1]
-            print(f"Selected highest-edge priority bet despite diversification rules")
     
     return selected_bets
 
