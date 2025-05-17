@@ -3310,6 +3310,7 @@ def analyze_similar_matchups(team1_stats, team2_stats):
 def print_prediction_report(results, team1_stats, team2_stats):
     """
     Print detailed prediction report with team stats and betting recommendations.
+    Handles different key naming conventions for compatibility between backtesting and prediction.
     """
     team1_name = results['team1_name']
     team2_name = results['team2_name']
@@ -3442,20 +3443,36 @@ def print_prediction_report(results, team1_stats, team2_stats):
     print("-" * 80)
     print(f"  {team1_name} Win Probability: {results['team1_win_prob']:.2%}")
     print(f"  {team2_name} Win Probability: {results['team2_win_prob']:.2%}")
-    print(f"  Confidence Interval: ({results['confidence_interval'][0]:.2%} - {results['confidence_interval'][1]:.2%})")
-    print(f"  Model Agreement: {results['model_agreement']:.2f} (Higher is better)")
     
-    # Print other bet types
-    print("\nBET TYPE PROBABILITIES:")
-    print("-" * 80)
-    print(f"  {team1_name} +1.5 Maps: {results['team1_plus_1_5_prob']:.2%}")
-    print(f"  {team2_name} +1.5 Maps: {results['team2_plus_1_5_prob']:.2%}")
-    print(f"  {team1_name} -1.5 Maps (2-0 win): {results['team1_minus_1_5_prob']:.2%}")
-    print(f"  {team2_name} -1.5 Maps (2-0 win): {results['team2_minus_1_5_prob']:.2%}")
-    print(f"  Over 2.5 Maps: {results['over_2_5_maps_prob']:.2%}")
-    print(f"  Under 2.5 Maps: {results['under_2_5_maps_prob']:.2%}")
+    # Handle confidence interval with both naming conventions
+    if 'confidence_interval' in results:
+        ci = results['confidence_interval']
+        print(f"  Confidence Interval: ({ci[0]:.2%} - {ci[1]:.2%})")
     
-    # Update the betting recommendations section:
+    # Handle model agreement/confidence with both naming conventions
+    model_agreement = results.get('model_agreement', results.get('confidence', 0))
+    print(f"  Model Agreement: {model_agreement:.2f} (Higher is better)")
+    
+    # Print bet type probabilities
+    if any(key.endswith('_prob') for key in results.keys()):
+        print("\nBET TYPE PROBABILITIES:")
+        print("-" * 80)
+        
+        # Handle all probability types with specific display order
+        prob_types = [
+            ('team1_plus_1_5_prob', f"  {team1_name} +1.5 Maps: {results.get('team1_plus_1_5_prob', 0):.2%}"),
+            ('team2_plus_1_5_prob', f"  {team2_name} +1.5 Maps: {results.get('team2_plus_1_5_prob', 0):.2%}"),
+            ('team1_minus_1_5_prob', f"  {team1_name} -1.5 Maps (2-0 win): {results.get('team1_minus_1_5_prob', 0):.2%}"),
+            ('team2_minus_1_5_prob', f"  {team2_name} -1.5 Maps (2-0 win): {results.get('team2_minus_1_5_prob', 0):.2%}"),
+            ('over_2_5_maps_prob', f"  Over 2.5 Maps: {results.get('over_2_5_maps_prob', 0):.2%}"),
+            ('under_2_5_maps_prob', f"  Under 2.5 Maps: {results.get('under_2_5_maps_prob', 0):.2%}")
+        ]
+        
+        for key, text in prob_types:
+            if key in results:
+                print(text)
+    
+    # Update the betting recommendations section with better handling of key differences
     if 'betting_analysis' in results and results['betting_analysis']:
         print("\nBETTING RECOMMENDATIONS:")
         print("-" * 80)
@@ -3464,9 +3481,9 @@ def print_prediction_report(results, team1_stats, team2_stats):
         rejected_bets = []
         
         for bet_type, analysis in results['betting_analysis'].items():
-             # Extract team name instead of generic "team1" or "team2"
+            # Extract team name instead of generic "team1" or "team2"
             if 'team1' in bet_type:
-                team_name = team1_stats['team_name']
+                team_name = team1_stats['team_name'] 
                 bet_desc = f"{team_name} {bet_type.replace('team1_', '').replace('_', ' ').upper()}"
             elif 'team2' in bet_type:
                 team_name = team2_stats['team_name']
@@ -3474,28 +3491,34 @@ def print_prediction_report(results, team1_stats, team2_stats):
             else:
                 bet_desc = bet_type.replace('_', ' ').upper()
             
-            if analysis['recommended']:
-                edge = analysis.get('expected_value', 0)
+            # Check if the bet is recommended using both possible key names
+            if analysis.get('recommended', False):
+                # Get values with fallbacks for different key naming conventions
+                our_prob = analysis.get('our_probability', analysis.get('probability', 0))
+                implied_prob = analysis.get('implied_probability', analysis.get('implied_prob', 0))
+                edge = analysis.get('expected_value', analysis.get('edge', 0))
                 roi = analysis.get('roi', 0)
-                recommended_bet = analysis.get('recommended_bet', 0)
+                recommended_bet = analysis.get('recommended_bet', analysis.get('bet_amount', 0))
+                
                 recommended_bets.append((bet_desc, edge, roi, recommended_bet))
                 
                 print(f"  RECOMMENDED BET: {bet_desc}")
-                print(f"  - Our Probability: {analysis['our_probability']:.2%}")
-                print(f"  - Implied Probability: {analysis['implied_probability']:.2%}")
+                print(f"  - Our Probability: {our_prob:.2%}")
+                print(f"  - Implied Probability: {implied_prob:.2%}")
                 print(f"  - Edge: {edge:.2%}")
                 print(f"  - ROI: {roi:.2%}")
-                print(f"  - Expected Value: {analysis.get('ev_percentage', 0):.2f}%")
-                print(f"  - Confidence: {analysis.get('confidence', 0):.2f}")
+                print(f"  - Expected Value: {analysis.get('ev_percentage', edge * 100):.2f}%")
+                print(f"  - Confidence: {model_agreement:.2f}")
                 print(f"  - Kelly Fraction: {analysis.get('kelly_fraction', 0):.4f}")
-                print(f"  - Recommended Bet Amount: ${recommended_bet}")
+                print(f"  - Recommended Bet Amount: ${recommended_bet:.1f}")
                 print("")
                 
-                # Explain the recommendation
+                # Explain the recommendation 
                 explain_bet_recommendation(bet_type, analysis, results, team1_stats['team_name'], team2_stats['team_name'])
             else:
                 # Track rejected bets
-                rejected_bets.append((bet_desc, analysis.get('reason', 'Not recommended')))
+                reason = analysis.get('reason', analysis.get('filter_reason', 'Not recommended'))
+                rejected_bets.append((bet_desc, reason))
         
         if not recommended_bets:
             print("  No profitable betting opportunities identified for this match.")
@@ -3504,7 +3527,7 @@ def print_prediction_report(results, team1_stats, team2_stats):
             recommended_bets.sort(key=lambda x: x[2], reverse=True)
             print("\nBETS RANKED BY EXPECTED ROI:")
             for i, (bet, edge, roi, amount) in enumerate(recommended_bets):
-                print(f"  {i+1}. {bet}: {edge:.2%} edge, {roi:.2%} ROI, bet ${amount}")
+                print(f"  {i+1}. {bet}: {edge:.2%} edge, {roi:.2%} ROI, bet ${amount:.1f}")
         
         # Show rejected bets
         if rejected_bets:
@@ -3513,9 +3536,10 @@ def print_prediction_report(results, team1_stats, team2_stats):
                 print(f"  {bet}: {reason}")
             # Sort by edge
             recommended_bets.sort(key=lambda x: x[1], reverse=True)
-            print("\nBETS RANKED BY EDGE:")
-            for i, (bet, edge, roi, amount) in enumerate(recommended_bets):
-                print(f"  {i+1}. {bet}: {edge:.2%} edge, bet ${amount}")
+            if recommended_bets:
+                print("\nBETS RANKED BY EDGE:")
+                for i, (bet, edge, roi, amount) in enumerate(recommended_bets):
+                    print(f"  {i+1}. {bet}: {edge:.2%} edge, bet ${amount:.1f}")
 
 def calculate_drawdown_metrics(bankroll_history):
     """
@@ -3599,10 +3623,16 @@ def explain_bet_recommendation(bet_type, analysis, results, team1_name, team2_na
     
     print("  EXPLANATION:")
     
+    # Get probability with fallback for all the key names
+    our_prob = analysis.get('our_probability', analysis.get('probability', 0))
+    implied_prob = analysis.get('implied_probability', analysis.get('implied_prob', 0))
+    edge = analysis.get('expected_value', analysis.get('edge', 0))
+    odds = analysis.get('odds', 0)
+    
     # Explain moneyline bets
     if bet_type == 'team1_ml':
         # Check which factors favor team1
-        print(f"  The model favors {team1_name} to win the match with {analysis['our_probability']:.2%} probability.")
+        print(f"  The model favors {team1_name} to win the match with {our_prob:.2%} probability.")
         
         # Explain head-to-head advantage if it exists
         if results.get('h2h_advantage_team1', 0) > 0:
@@ -3613,7 +3643,7 @@ def explain_bet_recommendation(bet_type, analysis, results, team1_name, team2_na
             print(f"  {team1_name}'s overall form and statistics indicate a significant advantage.")
             
     elif bet_type == 'team2_ml':
-        print(f"  The model favors {team2_name} to win the match with {analysis['our_probability']:.2%} probability.")
+        print(f"  The model favors {team2_name} to win the match with {our_prob:.2%} probability.")
         
         # Explain head-to-head advantage if it exists
         if results.get('h2h_advantage_team1', 0) < 0:
@@ -3625,38 +3655,38 @@ def explain_bet_recommendation(bet_type, analysis, results, team1_name, team2_na
     
     # Explain +1.5 bets
     elif bet_type == 'team1_plus_1_5':
-        print(f"  {team1_name} has a {analysis['our_probability']:.2%} probability of winning at least one map.")
-        print(f"  This is significantly higher than the {analysis['implied_probability']:.2%} implied by the odds.")
+        print(f"  {team1_name} has a {our_prob:.2%} probability of winning at least one map.")
+        print(f"  This is significantly higher than the {implied_prob:.2%} implied by the odds.")
         if results.get('team1_plus_1_5_prob', 0) > 0.8:
             print(f"  Even as an underdog in the match, {team1_name} is likely to take at least one map.")
             
     elif bet_type == 'team2_plus_1_5':
-        print(f"  {team2_name} has a {analysis['our_probability']:.2%} probability of winning at least one map.")
-        print(f"  This is significantly higher than the {analysis['implied_probability']:.2%} implied by the odds.")
+        print(f"  {team2_name} has a {our_prob:.2%} probability of winning at least one map.")
+        print(f"  This is significantly higher than the {implied_prob:.2%} implied by the odds.")
         if results.get('team2_plus_1_5_prob', 0) > 0.8:
             print(f"  Even as an underdog in the match, {team2_name} is likely to take at least one map.")
     
     # Explain -1.5 bets
     elif bet_type == 'team1_minus_1_5':
-        print(f"  {team1_name} has a {analysis['our_probability']:.2%} probability of winning 2-0.")
+        print(f"  {team1_name} has a {our_prob:.2%} probability of winning 2-0.")
         print(f"  The model suggests {team1_name} is significantly stronger than {team2_name} and can win without dropping a map.")
         
     elif bet_type == 'team2_minus_1_5':
-        print(f"  {team2_name} has a {analysis['our_probability']:.2%} probability of winning 2-0.")
+        print(f"  {team2_name} has a {our_prob:.2%} probability of winning 2-0.")
         print(f"  The model suggests {team2_name} is significantly stronger than {team1_name} and can win without dropping a map.")
     
     # Explain over/under bets
     elif bet_type == 'over_2_5_maps':
-        print(f"  The match has a {analysis['our_probability']:.2%} probability of going to 3 maps.")
+        print(f"  The match has a {our_prob:.2%} probability of going to 3 maps.")
         print(f"  The teams appear evenly matched and likely to split the first two maps.")
         
     elif bet_type == 'under_2_5_maps':
-        print(f"  The match has a {analysis['our_probability']:.2%} probability of ending in 2 maps.")
+        print(f"  The match has a {our_prob:.2%} probability of ending in 2 maps.")
         print(f"  One team appears significantly stronger and likely to win 2-0.")
     
     # Explain why the odds provide value
-    print(f"  The bookmaker's odds of {1/analysis['implied_probability']:.2f} represent value compared to our model's assessment.")
-    print(f"  Long-term expected value: ${100 * (analysis['our_probability'] - analysis['implied_probability']):.2f} per $100 wagered.")
+    print(f"  The bookmaker's odds of {odds:.2f} represent value compared to our model's assessment.")
+    print(f"  Long-term expected value: ${100 * edge:.2f} per $100 wagered.")
 
 def input_odds_data():
     """Function to manually input odds data from bookmaker"""
@@ -6061,10 +6091,8 @@ def predict_with_ensemble(ensemble_models, X):
     # SAFETY CHECK: Ensure prediction is never outside [0.05, 0.95] range
     calibrated_pred = min(0.95, max(0.05, calibrated_pred))
     
-    # Format raw predictions for display
-    raw_predictions_str = [f'{p:.4f}' for p in raw_predictions]
-    
-    return calibrated_pred, raw_predictions_str, adjusted_confidence
+    # Fixed: Return raw_predictions instead of raw_predictions_float which is undefined
+    return calibrated_pred, raw_predictions, adjusted_confidence
 
 
 def calculate_bet_type_probabilities(win_probability, confidence_score):
@@ -7219,6 +7247,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     }
     
     # Initialize tracking variables
+    starting_bankroll = bankroll
     current_bankroll = bankroll
     correct_predictions = 0
     total_predictions = 0
@@ -7274,10 +7303,27 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                     ensemble_models, X
                 )
                 
+                # Handle raw_predictions conversion from string to float if needed
+                if raw_predictions and isinstance(raw_predictions[0], str):
+                    raw_predictions_float = [float(p) for p in raw_predictions]
+                else:
+                    raw_predictions_float = raw_predictions
+                
                 # Log the prediction results for debugging
                 print(f"\nPrediction for {team1_name} vs {team2_name}:")
                 print(f"Win probability: {win_probability:.4f}, Confidence: {confidence_score:.4f}")
-                print(f"Raw predictions range: {min(raw_predictions):.4f} - {max(raw_predictions):.4f}")
+                
+                try:
+                    # Safely print raw predictions range with proper type handling
+                    if raw_predictions_float:
+                        min_pred = min(raw_predictions_float)
+                        max_pred = max(raw_predictions_float)
+                        print(f"Raw predictions range: {min_pred:.4f} - {max_pred:.4f}")
+                except (TypeError, ValueError) as e:
+                    print(f"Error processing raw predictions: {e}")
+                    print(f"Raw predictions type: {type(raw_predictions)}")
+                    if raw_predictions:
+                        print(f"First element type: {type(raw_predictions[0])}")
                 
                 # Alert if confidence is very low
                 if confidence_score < 0.3:
@@ -7336,98 +7382,112 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             
             odds_data = jittered_odds
             
-            # Use our enhanced betting analysis function with adjusted thresholds
+            # Use improved betting analysis with optimized thresholds
             betting_analysis = analyze_betting_edge_for_backtesting(
                 win_probability, 1 - win_probability, odds_data, 
-                    confidence_score, current_bankroll
-                )
-            
-                    # Use our improved optimal bet selection
-            optimal_bets = select_optimal_bets(
-                betting_analysis, 
-                team1_name, 
-                team2_name, 
-                previous_bets_by_team, 
-                confidence_score, 
-                max_bets=3
+                confidence_score, current_bankroll
             )
-            # The recommendations are now built into the analyze_betting_edge_for_backtesting function
-            # No need to apply additional filtering here
+            
+            # Get recommendations
             filtered_analysis = betting_analysis
+            
+            # Select best bets - IMPROVED: Use optimal bet selection
+            optimal_bets = select_optimal_bets(
+                filtered_analysis, team1_name, team2_name, 
+                previous_bets_by_team, confidence_score, max_bets=3
+            )
             
             # Simulate bets with better record keeping
             match_bets = []
             
-            for bet_type, analysis in filtered_analysis.items():
-                if analysis['recommended']:
-                    # Calculate bet size (respecting max bet percentage and current bankroll)
-                    max_bet = current_bankroll * bet_pct
-                    bet_amount = min(analysis['bet_amount'], max_bet)
-                    
-                    # Determine if bet won
-                    bet_won = evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score)
-                    
-                    # Calculate returns
-                    odds = analysis['odds']
-                    returns = bet_amount * odds if bet_won else 0
-                    profit = returns - bet_amount
-                    
-                    # Update bankroll
-                    current_bankroll += profit
-                    
-                    # Track bet
-                    match_bets.append({
-                        'bet_type': bet_type,
-                        'amount': bet_amount,
-                        'odds': odds,
-                        'won': bet_won,
-                        'returns': returns,
-                        'profit': profit,
-                        'edge': analysis['edge'],
-                        'predicted_prob': analysis['probability'],
-                        'implied_prob': analysis['implied_prob'],
-                        'team1': team1_name,
-                        'team2': team2_name
-                    })
-                    
-                    # Update betting metrics
-                    total_bets += 1
-                    winning_bets += 1 if bet_won else 0
-                    total_wagered += bet_amount
-                    total_returns += returns
-                    
-                    # Track by bet type
-                    if bet_type not in results['metrics']['bet_types']:
-                        results['metrics']['bet_types'][bet_type] = {
-                            'total': 0, 'won': 0, 'wagered': 0, 'returns': 0
-                        }
-                    
-                    results['metrics']['bet_types'][bet_type]['total'] += 1
-                    results['metrics']['bet_types'][bet_type]['won'] += 1 if bet_won else 0
-                    results['metrics']['bet_types'][bet_type]['wagered'] += bet_amount
-                    results['metrics']['bet_types'][bet_type]['returns'] += returns
-                    
-                    # Track by edge
-                    edge_bucket = int(analysis['edge'] * 100) // 5 * 5  # Round to nearest 5%
-                    edge_key = f"{edge_bucket}%-{edge_bucket+5}%"
-                    
-                    if edge_key not in results['metrics']['accuracy_by_edge']:
-                        results['metrics']['accuracy_by_edge'][edge_key] = {'total': 0, 'correct': 0}
-                    if edge_key not in results['metrics']['roi_by_edge']:
-                        results['metrics']['roi_by_edge'][edge_key] = {'wagered': 0, 'returns': 0}
-                    
-                    results['metrics']['accuracy_by_edge'][edge_key]['total'] += 1
-                    results['metrics']['accuracy_by_edge'][edge_key]['correct'] += 1 if bet_won else 0
-                    results['metrics']['roi_by_edge'][edge_key]['wagered'] += bet_amount
-                    results['metrics']['roi_by_edge'][edge_key]['returns'] += returns
-                    
-                    # Track team-specific betting performance
-                    team_tracked = team1_name if 'team1' in bet_type else team2_name
-                    results['team_performance'][team_tracked]['bets'] += 1
-                    results['team_performance'][team_tracked]['wagered'] += bet_amount
-                    results['team_performance'][team_tracked]['returns'] += returns
-                    if bet_won:
-                        results['team_performance'][team_tracked]['wins'] += 1
+            for bet_type, analysis in optimal_bets.items():
+                # IMPROVED: Apply dynamic bankroll management based on streaks
+                team_for_streak = team1_name if 'team1' in bet_type else team2_name
+                
+                # Apply streak-based adjustment
+                base_kelly = analysis['kelly_fraction']
+                adjusted_kelly = adjust_for_streak(bet_history, base_kelly, bet_type, team_for_streak)
+                
+                # Calculate bet size with streak adjustment
+                max_bet = current_bankroll * bet_pct
+                adjusted_amount = round(current_bankroll * adjusted_kelly, 2)
+                bet_amount = min(adjusted_amount, max_bet)
+                
+                # Track the bet by team for streak calculations
+                if team_for_streak not in previous_bets_by_team:
+                    previous_bets_by_team[team_for_streak] = []
+                
+                # Determine if bet won
+                bet_won = evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score)
+                
+                # Calculate returns
+                odds = analysis['odds']
+                returns = bet_amount * odds if bet_won else 0
+                profit = returns - bet_amount
+                
+                # Update bankroll
+                current_bankroll += profit
+                
+                # Track bet
+                match_bets.append({
+                    'bet_type': bet_type,
+                    'amount': bet_amount,
+                    'odds': odds,
+                    'won': bet_won,
+                    'returns': returns,
+                    'profit': profit,
+                    'edge': analysis['edge'],
+                    'predicted_prob': analysis['probability'],
+                    'implied_prob': analysis['implied_prob'],
+                    'team1': team1_name,
+                    'team2': team2_name
+                })
+                
+                # Update streak information
+                previous_bets_by_team[team_for_streak].append({
+                    'bet_type': bet_type,
+                    'won': bet_won,
+                    'date': match_data.get('date', '')
+                })
+                
+                # Update betting metrics
+                total_bets += 1
+                winning_bets += 1 if bet_won else 0
+                total_wagered += bet_amount
+                total_returns += returns
+                
+                # Track by bet type
+                if bet_type not in results['metrics']['bet_types']:
+                    results['metrics']['bet_types'][bet_type] = {
+                        'total': 0, 'won': 0, 'wagered': 0, 'returns': 0
+                    }
+                
+                results['metrics']['bet_types'][bet_type]['total'] += 1
+                results['metrics']['bet_types'][bet_type]['won'] += 1 if bet_won else 0
+                results['metrics']['bet_types'][bet_type]['wagered'] += bet_amount
+                results['metrics']['bet_types'][bet_type]['returns'] += returns
+                
+                # Track by edge
+                edge_bucket = int(analysis['edge'] * 100) // 5 * 5  # Round to nearest 5%
+                edge_key = f"{edge_bucket}%-{edge_bucket+5}%"
+                
+                if edge_key not in results['metrics']['accuracy_by_edge']:
+                    results['metrics']['accuracy_by_edge'][edge_key] = {'total': 0, 'correct': 0}
+                if edge_key not in results['metrics']['roi_by_edge']:
+                    results['metrics']['roi_by_edge'][edge_key] = {'wagered': 0, 'returns': 0}
+                
+                results['metrics']['accuracy_by_edge'][edge_key]['total'] += 1
+                results['metrics']['accuracy_by_edge'][edge_key]['correct'] += 1 if bet_won else 0
+                results['metrics']['roi_by_edge'][edge_key]['wagered'] += bet_amount
+                results['metrics']['roi_by_edge'][edge_key]['returns'] += returns
+                
+                # Track team-specific betting performance
+                team_tracked = team1_name if 'team1' in bet_type else team2_name
+                results['team_performance'][team_tracked]['bets'] += 1
+                results['team_performance'][team_tracked]['wagered'] += bet_amount
+                results['team_performance'][team_tracked]['returns'] += returns
+                if bet_won:
+                    results['team_performance'][team_tracked]['wins'] += 1
             
             # Track prediction results
             results['predictions'].append({
@@ -7446,13 +7506,15 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             
             # Track bets
             if match_bets:
-                results['bets'].append({
+                bet_record = {
                     'match_id': match_id,
                     'team1': team1_name,
                     'team2': team2_name,
                     'bets': match_bets,
                     'date': match_data.get('date', 'Unknown')
-                })
+                }
+                results['bets'].append(bet_record)
+                bet_history.append(bet_record)
             
             # Track bankroll history with timestamp
             results['performance']['bankroll_history'].append({
@@ -7461,6 +7523,13 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                 'match_id': match_id,
                 'date': match_data.get('date', 'Unknown')
             })
+            
+            # Check profit targets
+            target_reached, target_message = check_profit_targets(starting_bankroll, current_bankroll, target_percentage=50)
+            if target_reached:
+                print(f"\n{target_message}")
+                print("Stopping backtest early due to reaching profit target.")
+                break
             
             # Print periodic progress updates
             if (match_idx + 1) % 50 == 0 or match_idx == len(backtest_matches) - 1:
@@ -7557,11 +7626,11 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     # Create enhanced visualizations
     create_enhanced_backtest_visualizations(results)
     
-    # Add this near the end of your run_backtest function where you calculate final metrics
+    # Add drawdown metrics
     drawdown_metrics = calculate_drawdown_metrics(results['performance']['bankroll_history'])
     results['performance']['drawdown_metrics'] = drawdown_metrics
 
-    # And add this to your print statements in the results section
+    # Print drawdown metrics
     print(f"Maximum Drawdown: {drawdown_metrics['max_drawdown_pct']:.2f}% (${drawdown_metrics['max_drawdown_amount']:.2f})")
     print(f"Drawdown Periods: {drawdown_metrics['drawdown_periods']}")
     print(f"Average Drawdown: {drawdown_metrics['avg_drawdown_pct']:.2f}%")
@@ -7588,8 +7657,6 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         f.write(f"ROI,{final_roi:.4f}\n")
         f.write(f"Initial Bankroll,{bankroll:.2f}\n")
         f.write(f"Final Bankroll,{current_bankroll:.2f}\n")
-
-
     
     print(f"\nBacktest results saved to {save_path}")
     print(f"Summary statistics saved to {csv_path}")

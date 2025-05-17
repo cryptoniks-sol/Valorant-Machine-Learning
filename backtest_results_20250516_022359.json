@@ -1,0 +1,193 @@
+{
+  "predictions": [
+    {
+      "match_id": "482507",
+      "team1": "Team Heretics",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3945822731572301,
+      "team2_prob": 0.6054177268427698,
+      "confidence": 0.5650629296458465,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/05/10"
+    },
+    {
+      "match_id": "459857",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3935773040170483,
+      "team2_prob": 0.6064226959829517,
+      "confidence": 0.5645498753173404,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/05/02"
+    }
+  ],
+  "bets": [
+    {
+      "match_id": "482507",
+      "team1": "Team Heretics",
+      "team2": "BBL Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 25.76,
+          "odds": 10.61,
+          "won": true,
+          "returns": 273.3136,
+          "profit": 247.55360000000002,
+          "edge": 0.09331199938830097,
+          "predicted_prob": 0.18756270626860258,
+          "implied_prob": 0.09425070688030161,
+          "team1": "Team Heretics",
+          "team2": "BBL Esports"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 15.91,
+          "odds": 2.87,
+          "won": true,
+          "returns": 45.6617,
+          "profit": 29.751700000000003,
+          "edge": 0.04615021740810121,
+          "predicted_prob": 0.3945822731572301,
+          "implied_prob": 0.3484320557491289,
+          "team1": "Team Heretics",
+          "team2": "BBL Esports"
+        }
+      ],
+      "date": "2025/05/10"
+    },
+    {
+      "match_id": "459857",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 35.02,
+          "odds": 10.31,
+          "won": true,
+          "returns": 361.05620000000005,
+          "profit": 326.03620000000006,
+          "edge": 0.09002444456453824,
+          "predicted_prob": 0.18701765503980497,
+          "implied_prob": 0.09699321047526673,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2025/05/02"
+    }
+  ],
+  "performance": {
+    "accuracy": 0.0,
+    "roi": 7.8672773503716265,
+    "profit": 603.3415,
+    "bankroll_history": [
+      {
+        "match_idx": 0,
+        "bankroll": 1277.3053,
+        "match_id": "482507",
+        "date": "2025/05/10"
+      },
+      {
+        "match_idx": 1,
+        "bankroll": 1603.3415,
+        "match_id": "459857",
+        "date": "2025/05/02"
+      }
+    ],
+    "win_rate": 1.0,
+    "final_bankroll": 1603.3415,
+    "total_bets": 3,
+    "winning_bets": 3,
+    "total_wagered": 76.69,
+    "total_returns": 680.0315,
+    "drawdown_metrics": {
+      "max_drawdown_pct": 0,
+      "max_drawdown_amount": 0,
+      "drawdown_periods": 1,
+      "avg_drawdown_pct": 0,
+      "max_drawdown_duration": 1
+    }
+  },
+  "metrics": {
+    "accuracy_by_edge": {
+      "5%-10%": {
+        "total": 2,
+        "correct": 2
+      },
+      "0%-5%": {
+        "total": 1,
+        "correct": 1
+      }
+    },
+    "roi_by_edge": {
+      "5%-10%": {
+        "wagered": 60.78,
+        "returns": 634.3698
+      },
+      "0%-5%": {
+        "wagered": 15.91,
+        "returns": 45.6617
+      }
+    },
+    "bet_types": {
+      "team1_minus_1_5": {
+        "total": 2,
+        "won": 2,
+        "wagered": 60.78,
+        "returns": 634.3698
+      },
+      "team1_ml": {
+        "total": 1,
+        "won": 1,
+        "wagered": 15.91,
+        "returns": 45.6617
+      }
+    },
+    "confidence_bins": {
+      "50%": {
+        "total": 2,
+        "correct": 0
+      }
+    }
+  },
+  "team_performance": {
+    "Team Heretics": {
+      "predictions": 2,
+      "correct": 0,
+      "bets": 3,
+      "wins": 3,
+      "wagered": 76.69,
+      "returns": 680.0315,
+      "accuracy": 0.0,
+      "win_rate": 1.0,
+      "roi": 7.8672773503716265,
+      "profit": 603.3415
+    },
+    "BBL Esports": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0,
+      "accuracy": 0.0
+    },
+    "FNATIC": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0,
+      "accuracy": 0.0
+    }
+  }
+}

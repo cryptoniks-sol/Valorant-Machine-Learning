@@ -1,4 +1,4 @@
-Backtest Run: 2025-05-08 21:42:26
+Backtest Run: 2025-05-16 15:18:35
 Min edge: 8.0%
 Min confidence: 40.0%
 
@@ -23,5 +23,6 @@ Features loaded:
   11. total_matches
   12. avg_opponent_score_diff
   13. pistol_win_rate_diff
-  14. avg_defense_metric
-  15. player_rating_diff
+  14. player_rating_diff
+  15. rating_x_win_rate
+  16. avg_player_rating

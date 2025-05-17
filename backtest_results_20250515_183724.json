@@ -1,0 +1,399 @@
+{
+  "predictions": [],
+  "bets": [],
+  "performance": {
+    "accuracy": 0,
+    "roi": 0,
+    "profit": 0,
+    "bankroll_history": [],
+    "win_rate": 0,
+    "final_bankroll": 1000,
+    "total_bets": 0,
+    "winning_bets": 0,
+    "total_wagered": 0,
+    "total_returns": 0,
+    "drawdown_metrics": {
+      "max_drawdown_pct": 0,
+      "max_drawdown_amount": 0,
+      "drawdown_periods": 0,
+      "avg_drawdown_pct": 0,
+      "max_drawdown_duration": 0
+    }
+  },
+  "metrics": {
+    "accuracy_by_edge": {},
+    "roi_by_edge": {},
+    "bet_types": {},
+    "confidence_bins": {}
+  },
+  "team_performance": {
+    "Team Heretics": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "BBL Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "FNATIC": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Team Vitality": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Team Liquid": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "LEVIAT\u00c1N": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Sentinels": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "DRX": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Gen.G": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "FUT Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "G2 Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "100 Thieves": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Paper Rex": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Evil Geniuses": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Rex Regum Qeon": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "LOUD": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "NRG": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "FURIA": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "BBL PCIFIC": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Enterprise Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "CGN Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "MOUZ": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "T1": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "TALON": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "MIBR": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "M80": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "2Game Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "TSM": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "ENVY": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "T1 Academy": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Burger Boyz": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "RED Canids": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Los Grandes": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Corinthians Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Stellae Gaming": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "FULL SENSE": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Motiv Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Alter Ego": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "BOOM Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Velocity Gaming": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Nongshim RedForce": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Revenant XSpark": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "Team Flash": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "CNJ Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "SLT Seongnam": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "FEARX": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    }
+  }
+}

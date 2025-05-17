@@ -1,0 +1,71 @@
+{
+  "predictions": [],
+  "bets": [],
+  "performance": {
+    "accuracy": 0,
+    "roi": 0,
+    "profit": 0,
+    "bankroll_history": [],
+    "win_rate": 0,
+    "final_bankroll": 1000,
+    "total_bets": 0,
+    "winning_bets": 0,
+    "total_wagered": 0,
+    "total_returns": 0,
+    "drawdown_metrics": {
+      "max_drawdown_pct": 0,
+      "max_drawdown_amount": 0,
+      "drawdown_periods": 0,
+      "avg_drawdown_pct": 0,
+      "max_drawdown_duration": 0
+    }
+  },
+  "metrics": {
+    "accuracy_by_edge": {},
+    "roi_by_edge": {},
+    "bet_types": {},
+    "confidence_bins": {}
+  },
+  "team_performance": {
+    "Team Heretics": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "FNATIC": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "BBL PCIFIC": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "CGN Esports": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    },
+    "MOUZ": {
+      "predictions": 0,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0
+    }
+  }
+}
