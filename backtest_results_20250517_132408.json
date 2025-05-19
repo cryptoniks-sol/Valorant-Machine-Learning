@@ -1,0 +1,18 @@
+{
+  "predictions": [
+    {
+      "match_id": "482512",
+      "team1": "Team Heretics",
+      "team2": "Team Liquid",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.7189496049108872,
+      "team2_prob": 0.2810503950891128,
+      "confidence": 0.7,
+      "correct": true,
+      "score": "3-0",
+      "date": "2025/05/17",
+      "raw_predictions": [
+        0.845,
+        0.8374999999999999,
+        

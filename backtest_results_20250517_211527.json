@@ -1,0 +1,1509 @@
+{
+  "predictions": [
+    {
+      "match_id": "1462",
+      "team1": "BBL Esports",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.33137619302685706,
+      "team2_prob": 0.6686238069731429,
+      "confidence": 0.2634765904459967,
+      "correct": true,
+      "score": "0-2",
+      "date": "2020/08/01",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "1629",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": false,
+      "score": "2-1",
+      "date": "2020/08/08",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "1728",
+      "team1": "BBL Esports",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.33137619302685706,
+      "team2_prob": 0.6686238069731429,
+      "confidence": 0.2634765904459967,
+      "correct": true,
+      "score": "0-2",
+      "date": "2020/08/11",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "1740",
+      "team1": "Team Liquid",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3968694795806104,
+      "team2_prob": 0.6031305204193895,
+      "confidence": 0.2081544755429458,
+      "correct": false,
+      "score": "2-0",
+      "date": "2020/08/13",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "1747",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": true,
+      "score": "1-1",
+      "date": "2020/08/15",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "1751",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": true,
+      "score": "0-1",
+      "date": "2020/08/16",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "2062",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": false,
+      "score": "2-0",
+      "date": "2020/08/26",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "2170",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": false,
+      "score": "3-0",
+      "date": "2020/08/30",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "4389",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": false,
+      "score": "2-0",
+      "date": "2020/10/28",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "4868",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": false,
+      "score": "2-0",
+      "date": "2020/11/06",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "6869",
+      "team1": "Team Heretics",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.39844902839489205,
+      "team2_prob": 0.601550971605108,
+      "confidence": 0.20855320184934695,
+      "correct": false,
+      "score": "2-1",
+      "date": "2020/12/03",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "7099",
+      "team1": "Team Heretics",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3364837847308254,
+      "team2_prob": 0.6635162152691746,
+      "confidence": 0.26550013567727804,
+      "correct": false,
+      "score": "2-1",
+      "date": "2020/12/05",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "7163",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": true,
+      "score": "0-2",
+      "date": "2020/12/05",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "7166",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": true,
+      "score": "0-3",
+      "date": "2020/12/06",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "8396",
+      "team1": "Sentinels",
+      "team2": "NRG",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3500670711865512,
+      "team2_prob": 0.6499329288134488,
+      "confidence": 0.2717171276176645,
+      "correct": true,
+      "score": "1-2",
+      "date": "2021/01/15",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "8408",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/01/16",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "9233",
+      "team1": "ENVY",
+      "team2": "NRG",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.21757034125023617,
+      "team2_prob": 0.7824296587497639,
+      "confidence": 0.4075187435165669,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/01/30",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "9312",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": true,
+      "score": "2-3",
+      "date": "2021/01/31",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "10251",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": true,
+      "score": "1-2",
+      "date": "2021/02/21",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "10258",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": true,
+      "score": "0-3",
+      "date": "2021/02/23",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "12936",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/03/18",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "12940",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": false,
+      "score": "3-0",
+      "date": "2021/03/21",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "15178",
+      "team1": "Team Vitality",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.32093798390542205,
+      "team2_prob": 0.679062016094578,
+      "confidence": 0.2573580691448403,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/03/31",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16328",
+      "team1": "Team Heretics",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3364837847308254,
+      "team2_prob": 0.6635162152691746,
+      "confidence": 0.26550013567727804,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/04/12",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16335",
+      "team1": "Team Vitality",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.32093798390542205,
+      "team2_prob": 0.679062016094578,
+      "confidence": 0.2573580691448403,
+      "correct": true,
+      "score": "1-2",
+      "date": "2021/04/12",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16478",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3179080089884052,
+      "team2_prob": 0.6820919910115948,
+      "confidence": 0.2554472929585395,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/04/15",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16481",
+      "team1": "FNATIC",
+      "team2": "Team Vitality",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.31901065513799076,
+      "team2_prob": 0.6809893448620092,
+      "confidence": 0.25153905254975817,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/04/17",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16483",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3859503240240678,
+      "team2_prob": 0.6140496759759322,
+      "confidence": 0.2068518437090115,
+      "correct": false,
+      "score": "3-1",
+      "date": "2021/04/18",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16829",
+      "team1": "Team Liquid",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3968694795806104,
+      "team2_prob": 0.6031305204193895,
+      "confidence": 0.2081544755429458,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/04/23",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16996",
+      "team1": "Sentinels",
+      "team2": "NRG",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3500670711865512,
+      "team2_prob": 0.6499329288134488,
+      "confidence": 0.2717171276176645,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/04/24",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "16836",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3859503240240678,
+      "team2_prob": 0.6140496759759322,
+      "confidence": 0.2068518437090115,
+      "correct": true,
+      "score": "2-3",
+      "date": "2021/05/02",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "19073",
+      "team1": "FNATIC",
+      "team2": "Sentinels",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.2139389878836985,
+      "team2_prob": 0.7860610121163015,
+      "confidence": 0.41158329494812,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/05/25",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "19087",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3859503240240678,
+      "team2_prob": 0.6140496759759322,
+      "confidence": 0.2068518437090115,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/05/29",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "19089",
+      "team1": "FNATIC",
+      "team2": "Sentinels",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.2139389878836985,
+      "team2_prob": 0.7860610121163015,
+      "confidence": 0.41158329494812,
+      "correct": true,
+      "score": "0-3",
+      "date": "2021/05/30",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "24104",
+      "team1": "Team Vitality",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.32093798390542205,
+      "team2_prob": 0.679062016094578,
+      "confidence": 0.2573580691448403,
+      "correct": true,
+      "score": "1-2",
+      "date": "2021/06/30",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "24109",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3179080089884052,
+      "team2_prob": 0.6820919910115948,
+      "confidence": 0.2554472929585395,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/07/01",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "24949",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3859503240240678,
+      "team2_prob": 0.6140496759759322,
+      "confidence": 0.2068518437090115,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/07/07",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "24983",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/07/07",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "24959",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3179080089884052,
+      "team2_prob": 0.6820919910115948,
+      "confidence": 0.2554472929585395,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/07/08",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "25205",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/07/10",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "28216",
+      "team1": "Team Heretics",
+      "team2": "Team Vitality",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3997819284435397,
+      "team2_prob": 0.6002180715564602,
+      "confidence": 0.20988096892439762,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/07/24",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "28907",
+      "team1": "Team Liquid",
+      "team2": "Team Vitality",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3215679373471547,
+      "team2_prob": 0.6784320626528453,
+      "confidence": 0.25077607059208257,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/07/28",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "28919",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3859503240240678,
+      "team2_prob": 0.6140496759759322,
+      "confidence": 0.2068518437090115,
+      "correct": true,
+      "score": "2-3",
+      "date": "2021/07/31",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "29395",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": false,
+      "score": "2-0",
+      "date": "2021/08/11",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "35939",
+      "team1": "Sentinels",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3189538266787139,
+      "team2_prob": 0.681046173321286,
+      "confidence": 0.2536433109626619,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/09/12",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "35942",
+      "team1": "Sentinels",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3189538266787139,
+      "team2_prob": 0.681046173321286,
+      "confidence": 0.2536433109626619,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/09/15",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "34974",
+      "team1": "Sentinels",
+      "team2": "ENVY",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.34532503321866803,
+      "team2_prob": 0.654674966781332,
+      "confidence": 0.2684211905645866,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/09/17",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "42202",
+      "team1": "FUT Esports",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.4053678633144018,
+      "team2_prob": 0.5946321366855982,
+      "confidence": 0.21882288706717168,
+      "correct": true,
+      "score": "1-2",
+      "date": "2021/10/13",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "42204",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/10/16",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "49171",
+      "team1": "FUT Esports",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.4053678633144018,
+      "team2_prob": 0.5946321366855982,
+      "confidence": 0.21882288706717168,
+      "correct": false,
+      "score": "1-0",
+      "date": "2021/11/04",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "49162",
+      "team1": "FUT Esports",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.30574988373421824,
+      "team2_prob": 0.6942501162657817,
+      "confidence": 0.28759582883586104,
+      "correct": true,
+      "score": "0-1",
+      "date": "2021/11/04",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "49178",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": false,
+      "score": "1-0",
+      "date": "2021/11/04",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "49276",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3859503240240678,
+      "team2_prob": 0.6140496759759322,
+      "confidence": 0.2068518437090115,
+      "correct": true,
+      "score": "0-2",
+      "date": "2021/11/05",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "51274",
+      "team1": "Team Liquid",
+      "team2": "Sentinels",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.21836092153873748,
+      "team2_prob": 0.7816390784612626,
+      "confidence": 0.39547291691199943,
+      "correct": false,
+      "score": "2-1",
+      "date": "2021/12/04",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "63616",
+      "team1": "Team Vitality",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.32093798390542205,
+      "team2_prob": 0.679062016094578,
+      "confidence": 0.2573580691448403,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/01/13",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "65302",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/01/21",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "65310",
+      "team1": "FUT Esports",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3185157194878756,
+      "team2_prob": 0.6814842805121244,
+      "confidence": 0.2556548554743538,
+      "correct": true,
+      "score": "1-3",
+      "date": "2022/01/23",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "68990",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3179080089884052,
+      "team2_prob": 0.6820919910115948,
+      "confidence": 0.2554472929585395,
+      "correct": false,
+      "score": "2-1",
+      "date": "2022/02/11",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "69879",
+      "team1": "Sentinels",
+      "team2": "NRG",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3500670711865512,
+      "team2_prob": 0.6499329288134488,
+      "confidence": 0.2717171276176645,
+      "correct": false,
+      "score": "2-1",
+      "date": "2022/02/12",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "68998",
+      "team1": "FNATIC",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3170396462450463,
+      "team2_prob": 0.6829603537549537,
+      "confidence": 0.25341994825365755,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/02/19",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "69824",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.20655037537539767,
+      "team2_prob": 0.7934496246246023,
+      "confidence": 0.4348240112822281,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/02/28",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "69004",
+      "team1": "BBL Esports",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.33137619302685706,
+      "team2_prob": 0.6686238069731429,
+      "confidence": 0.2634765904459967,
+      "correct": true,
+      "score": "0-2",
+      "date": "2022/03/11",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "79074",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": false,
+      "score": "2-1",
+      "date": "2022/03/22",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "79081",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": true,
+      "score": "0-2",
+      "date": "2022/03/25",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "79082",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3179080089884052,
+      "team2_prob": 0.6820919910115948,
+      "confidence": 0.2554472929585395,
+      "correct": true,
+      "score": "0-3",
+      "date": "2022/03/26",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "99580",
+      "team1": "Team Liquid",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3968694795806104,
+      "team2_prob": 0.6031305204193895,
+      "confidence": 0.2081544755429458,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/05/20",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "99603",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3179080089884052,
+      "team2_prob": 0.6820919910115948,
+      "confidence": 0.2554472929585395,
+      "correct": false,
+      "score": "2-1",
+      "date": "2022/06/12",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "95466",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.20655037537539767,
+      "team2_prob": 0.7934496246246023,
+      "confidence": 0.4348240112822281,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/06/14",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "121827",
+      "team1": "FUT Esports",
+      "team2": "Team Vitality",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.4284420121790904,
+      "team2_prob": 0.5715579878209096,
+      "confidence": 0.2221475346678265,
+      "correct": true,
+      "score": "0-2",
+      "date": "2022/08/02",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "121829",
+      "team1": "FUT Esports",
+      "team2": "Team Vitality",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.4284420121790904,
+      "team2_prob": 0.5715579878209096,
+      "confidence": 0.2221475346678265,
+      "correct": false,
+      "score": "3-2",
+      "date": "2022/08/05",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "112602",
+      "team1": "Team Liquid",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3968694795806104,
+      "team2_prob": 0.6031305204193895,
+      "confidence": 0.2081544755429458,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/08/08",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "112613",
+      "team1": "Team Liquid",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3261903038140579,
+      "team2_prob": 0.6738096961859421,
+      "confidence": 0.2636598542175231,
+      "correct": false,
+      "score": "2-1",
+      "date": "2022/08/13",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "130687",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3859503240240678,
+      "team2_prob": 0.6140496759759322,
+      "confidence": 0.2068518437090115,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/09/11",
+      "context": {
+        "tournament_importance": 1.3,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "152695",
+      "team1": "MOUZ",
+      "team2": "CGN Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.20655037537539767,
+      "team2_prob": 0.7934496246246023,
+      "confidence": 0.4348240112822281,
+      "correct": false,
+      "score": "2-0",
+      "date": "2022/10/25",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "161212",
+      "team1": "Team Heretics",
+      "team2": "Team Liquid",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.39844902839489205,
+      "team2_prob": 0.601550971605108,
+      "confidence": 0.20855320184934695,
+      "correct": true,
+      "score": "0-2",
+      "date": "2022/12/09",
+      "context": {
+        "tournament_importance": 1.0,
+        "map_advantage": 0,
+        "travel_impact": 0,
+        "roster_changes": false,
+        "context_confidence": 0.5
+      }
+    },
+    {
+      "match_id": "161208",
+      "team1": "Team Heretics",
+      "team2": "FUT Esports",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 

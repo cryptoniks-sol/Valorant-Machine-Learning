@@ -1,0 +1,323 @@
+{
+  "predictions": [
+    {
+      "match_id": "482515",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.3950312556650724,
+      "team2_prob": 0.6049687443349276,
+      "confidence": 0.5654536644442079,
+      "correct": true,
+      "score": "0-2",
+      "date": "2025/05/16"
+    },
+    {
+      "match_id": "482507",
+      "team1": "Team Heretics",
+      "team2": "BBL Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3948878505278827,
+      "team2_prob": 0.6051121494721172,
+      "confidence": 0.5653542964892496,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/05/10"
+    },
+    {
+      "match_id": "459857",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3950312556650724,
+      "team2_prob": 0.6049687443349276,
+      "confidence": 0.5654536644442079,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/05/02"
+    },
+    {
+      "match_id": "459842",
+      "team1": "Team Heretics",
+      "team2": "Team Vitality",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.3933884626676192,
+      "team2_prob": 0.6066115373323808,
+      "confidence": 0.5647698477913075,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/04/10"
+    }
+  ],
+  "bets": [
+    {
+      "match_id": "482515",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 25.44,
+          "odds": 10.44,
+          "won": false,
+          "returns": 0,
+          "profit": -25.44,
+          "edge": 0.09201886946565793,
+          "predicted_prob": 0.18780431007868476,
+          "implied_prob": 0.09578544061302682,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team1_plus_1_5",
+          "amount": 17.34,
+          "odds": 1.57,
+          "won": false,
+          "returns": 0,
+          "profit": -17.34,
+          "edge": 0.041980907652771626,
+          "predicted_prob": 0.6789235828120073,
+          "implied_prob": 0.6369426751592356,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 13.79,
+          "odds": 1.77,
+          "won": true,
+          "returns": 24.408299999999997,
+          "profit": 10.618299999999998,
+          "edge": 0.03999699292249825,
+          "predicted_prob": 0.6049687443349276,
+          "implied_prob": 0.5649717514124294,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2025/05/16"
+    },
+    {
+      "match_id": "482507",
+      "team1": "Team Heretics",
+      "team2": "BBL Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 23.66,
+          "odds": 10.03,
+          "won": true,
+          "returns": 237.3098,
+          "profit": 213.6498,
+          "edge": 0.0880258751052594,
+          "predicted_prob": 0.18772677241333519,
+          "implied_prob": 0.09970089730807578,
+          "team1": "Team Heretics",
+          "team2": "BBL Esports"
+        }
+      ],
+      "date": "2025/05/10"
+    },
+    {
+      "match_id": "459857",
+      "team1": "Team Heretics",
+      "team2": "FNATIC",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 30.14,
+          "odds": 10.47,
+          "won": true,
+          "returns": 315.5658,
+          "profit": 285.42580000000004,
+          "edge": 0.092293326315552,
+          "predicted_prob": 0.18780431007868476,
+          "implied_prob": 0.09551098376313276,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 12.53,
+          "odds": 2.8,
+          "won": true,
+          "returns": 35.083999999999996,
+          "profit": 22.553999999999995,
+          "edge": 0.03788839852221526,
+          "predicted_prob": 0.3950312556650724,
+          "implied_prob": 0.35714285714285715,
+          "team1": "Team Heretics",
+          "team2": "FNATIC"
+        }
+      ],
+      "date": "2025/05/02"
+    },
+    {
+      "match_id": "459842",
+      "team1": "Team Heretics",
+      "team2": "Team Vitality",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 38.26,
+          "odds": 10.66,
+          "won": true,
+          "returns": 407.85159999999996,
+          "profit": 369.59159999999997,
+          "edge": 0.09310233406456818,
+          "predicted_prob": 0.18691096445856442,
+          "implied_prob": 0.09380863039399624,
+          "team1": "Team Heretics",
+          "team2": "Team Vitality"
+        }
+      ],
+      "date": "2025/04/10"
+    }
+  ],
+  "performance": {
+    "accuracy": 0.25,
+    "roi": 5.3304759245470335,
+    "profit": 859.0595,
+    "bankroll_history": [
+      {
+        "match_idx": 0,
+        "bankroll": 967.8382999999999,
+        "match_id": "482515",
+        "date": "2025/05/16"
+      },
+      {
+        "match_idx": 1,
+        "bankroll": 1181.4880999999998,
+        "match_id": "482507",
+        "date": "2025/05/10"
+      },
+      {
+        "match_idx": 2,
+        "bankroll": 1489.4678999999999,
+        "match_id": "459857",
+        "date": "2025/05/02"
+      },
+      {
+        "match_idx": 3,
+        "bankroll": 1859.0594999999998,
+        "match_id": "459842",
+        "date": "2025/04/10"
+      }
+    ],
+    "win_rate": 0.7142857142857143,
+    "final_bankroll": 1859.0594999999998,
+    "total_bets": 7,
+    "winning_bets": 5,
+    "total_wagered": 161.16,
+    "total_returns": 1020.2194999999999,
+    "drawdown_metrics": {
+      "max_drawdown_pct": 0,
+      "max_drawdown_amount": 0,
+      "drawdown_periods": 1,
+      "avg_drawdown_pct": 0,
+      "max_drawdown_duration": 1
+    }
+  },
+  "metrics": {
+    "accuracy_by_edge": {
+      "5%-10%": {
+        "total": 4,
+        "correct": 3
+      },
+      "0%-5%": {
+        "total": 3,
+        "correct": 2
+      }
+    },
+    "roi_by_edge": {
+      "5%-10%": {
+        "wagered": 117.5,
+        "returns": 960.7272
+      },
+      "0%-5%": {
+        "wagered": 43.66,
+        "returns": 59.49229999999999
+      }
+    },
+    "bet_types": {
+      "team1_minus_1_5": {
+        "total": 4,
+        "won": 3,
+        "wagered": 117.5,
+        "returns": 960.7272
+      },
+      "team1_plus_1_5": {
+        "total": 1,
+        "won": 0,
+        "wagered": 17.34,
+        "returns": 0
+      },
+      "team2_ml": {
+        "total": 1,
+        "won": 1,
+        "wagered": 13.79,
+        "returns": 24.408299999999997
+      },
+      "team1_ml": {
+        "total": 1,
+        "won": 1,
+        "wagered": 12.53,
+        "returns": 35.083999999999996
+      }
+    },
+    "confidence_bins": {
+      "50%": {
+        "total": 4,
+        "correct": 1
+      }
+    }
+  },
+  "team_performance": {
+    "Team Heretics": {
+      "predictions": 4,
+      "correct": 0,
+      "bets": 6,
+      "wins": 4,
+      "wagered": 147.37,
+      "returns": 995.8112,
+      "accuracy": 0.0,
+      "win_rate": 0.6666666666666666,
+      "roi": 5.757217886951211,
+      "profit": 848.4412
+    },
+    "FNATIC": {
+      "predictions": 2,
+      "correct": 1,
+      "bets": 1,
+      "wins": 1,
+      "wagered": 13.79,
+      "returns": 24.408299999999997,
+      "accuracy": 0.5,
+      "win_rate": 1.0,
+      "roi": 0.7699999999999999,
+      "profit": 10.618299999999998
+    },
+    "BBL Esports": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0,
+      "accuracy": 0.0
+    },
+    "Team Vitality": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 0,
+      "wins": 0,
+      "wagered": 0,
+      "returns": 0,
+      "accuracy": 0.0
+    }
+  }
+}
