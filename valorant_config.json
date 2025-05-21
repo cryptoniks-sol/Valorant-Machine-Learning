@@ -1,0 +1,44 @@
+{
+    "model": {
+        "version": "2.0.0",
+        "team_ordering": "ranking_based",
+        "use_consistent_team_ordering": true,
+        "enable_time_based_validation": true,
+        "minimum_matches_for_prediction": 5
+    },
+    "prediction": {
+        "confidence_threshold": 0.4,
+        "calibration_strength": 0.8,
+        "debug_level": 1
+    },
+    "betting": {
+        "kelly_fraction": 0.2,
+        "max_bet_percentage": 0.05,
+        "min_edge": 0.03,
+        "min_confidence": 0.4,
+        "enable_progressive_sizing": false,
+        "max_single_bet": 10000,
+        "enable_diversification": true,
+        "max_bets_per_match": 3,
+        "prioritize_high_roi_bets": true
+    },
+    "forward_testing": {
+        "enabled": true,
+        "record_all_predictions": true,
+        "dashboard_update_frequency": "real-time",
+        "compare_with_backtest": true
+    },
+    "data": {
+        "include_player_stats": true,
+        "include_economy_data": true,
+        "include_map_statistics": true,
+        "prevent_data_leakage": true,
+        "clean_invalid_features": true
+    },
+    "paths": {
+        "model_directory": "models",
+        "backtest_results": "backtest_results",
+        "forward_testing": "forward_testing",
+        "logs": "logs"
+    }
+}
