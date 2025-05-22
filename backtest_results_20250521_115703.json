@@ -1,0 +1,1974 @@
+{
+  "predictions": [
+    {
+      "match_id": "482513",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5231656250277432,
+      "team2_prob": 0.4768343749722568,
+      "confidence": 0.5225182113347443,
+      "correct": true,
+      "score": "3-0",
+      "date": "2025/05/18"
+    },
+    {
+      "match_id": "482515",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5231656250277432,
+      "team2_prob": 0.4768343749722568,
+      "confidence": 0.5225182113347443,
+      "correct": true,
+      "score": "2-0",
+      "date": "2025/05/16"
+    },
+    {
+      "match_id": "482508",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5184722999454281,
+      "team2_prob": 0.4815277000545719,
+      "confidence": 0.5322629032235786,
+      "correct": true,
+      "score": "2-1",
+      "date": "2025/05/10"
+    },
+    {
+      "match_id": "482504",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.45301184423101665,
+      "team2_prob": 0.5469881557689833,
+      "confidence": 0.5400444382974234,
+      "correct": false,
+      "score": "2-0",
+      "date": "2025/05/08"
+    },
+    {
+      "match_id": "459857",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "predicted_winner": "team1",
+      "actual_winner": "team2",
+      "team1_prob": 0.5231656250277432,
+      "team2_prob": 0.4768343749722568,
+      "confidence": 0.5225182113347443,
+      "correct": false,
+      "score": "0-2",
+      "date": "2025/05/02"
+    },
+    {
+      "match_id": "429397",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.45301184423101665,
+      "team2_prob": 0.5469881557689833,
+      "confidence": 0.5400444382974234,
+      "correct": true,
+      "score": "0-2",
+      "date": "2025/01/31"
+    },
+    {
+      "match_id": "429385",
+      "team1": "FNATIC",
+      "team2": "BBL Esports",
+      "predicted_winner": "team1",
+      "actual_winner": "team2",
+      "team1_prob": 0.5168056677964058,
+      "team2_prob": 0.4831943322035942,
+      "confidence": 0.5359000798294851,
+      "correct": false,
+      "score": "1-2",
+      "date": "2025/01/17"
+    },
+    {
+      "match_id": "423496",
+      "team1": "FNATIC",
+      "team2": "DetonatioN FocusMe",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5114378270846486,
+      "team2_prob": 0.4885621729153514,
+      "confidence": 0.5474783999587045,
+      "correct": true,
+      "score": "1-0",
+      "date": "2024/12/15"
+    },
+    {
+      "match_id": "423494",
+      "team1": "FNATIC",
+      "team2": "ZETA DIVISION",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5194136791567409,
+      "team2_prob": 0.48058632084325914,
+      "confidence": 0.5305412329034539,
+      "correct": true,
+      "score": "1-0",
+      "date": "2024/12/14"
+    },
+    {
+      "match_id": "424022",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.4921428315781854,
+      "team2_prob": 0.5078571684218146,
+      "confidence": 0.5532221844551414,
+      "correct": true,
+      "score": "0-2",
+      "date": "2024/11/22"
+    },
+    {
+      "match_id": "423974",
+      "team1": "FNATIC",
+      "team2": "FOKUS",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5100911926730954,
+      "team2_prob": 0.48990880732690456,
+      "confidence": 0.5469647128375573,
+      "correct": true,
+      "score": "1-0",
+      "date": "2024/11/21"
+    },
+    {
+      "match_id": "378834",
+      "team1": "FNATIC",
+      "team2": "Sentinels",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.47847399878428076,
+      "team2_prob": 0.5215260012157192,
+      "confidence": 0.5431555333396603,
+      "correct": true,
+      "score": "1-2",
+      "date": "2024/08/18"
+    },
+    {
+      "match_id": "378832",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.4921428315781854,
+      "team2_prob": 0.5078571684218146,
+      "confidence": 0.5532221844551414,
+      "correct": false,
+      "score": "2-0",
+      "date": "2024/08/16"
+    },
+    {
+      "match_id": "378825",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "predicted_winner": "team1",
+      "actual_winner": "team2",
+      "team1_prob": 0.5231656250277432,
+      "team2_prob": 0.4768343749722568,
+      "confidence": 0.5225182113347443,
+      "correct": false,
+      "score": "0-2",
+      "date": "2024/08/15"
+    },
+    {
+      "match_id": "378660",
+      "team1": "FNATIC",
+      "team2": "KR\u00dc Esports",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5057957783492946,
+      "team2_prob": 0.49420422165070543,
+      "confidence": 0.5545928654110288,
+      "correct": true,
+      "score": "2-1",
+      "date": "2024/08/10"
+    },
+    {
+      "match_id": "378658",
+      "team1": "FNATIC",
+      "team2": "DRX",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.4836157270471094,
+      "team2_prob": 0.5163842729528906,
+      "confidence": 0.5760169209347603,
+      "correct": true,
+      "score": "0-2",
+      "date": "2024/08/06"
+    },
+    {
+      "match_id": "378656",
+      "team1": "FNATIC",
+      "team2": "Bilibili Gaming",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5066900004402342,
+      "team2_prob": 0.49330999955976584,
+      "confidence": 0.546852854739391,
+      "correct": true,
+      "score": "2-0",
+      "date": "2024/08/02"
+    },
+    {
+      "match_id": "371281",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.45301184423101665,
+      "team2_prob": 0.5469881557689833,
+      "confidence": 0.5400444382974234,
+      "correct": false,
+      "score": "2-0",
+      "date": "2024/07/16"
+    },
+    {
+      "match_id": "353174",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5184722999454281,
+      "team2_prob": 0.4815277000545719,
+      "confidence": 0.5322629032235786,
+      "correct": true,
+      "score": "2-0",
+      "date": "2024/07/10"
+    },
+    {
+      "match_id": "353154",
+      "team1": "FNATIC",
+      "team2": "BBL Esports",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5168056677964058,
+      "team2_prob": 0.4831943322035942,
+      "confidence": 0.5359000798294851,
+      "correct": true,
+      "score": "2-1",
+      "date": "2024/06/19"
+    },
+    {
+      "match_id": "348468",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.45301184423101665,
+      "team2_prob": 0.5469881557689833,
+      "confidence": 0.5400444382974234,
+      "correct": true,
+      "score": "1-2",
+      "date": "2024/06/01"
+    },
+    {
+      "match_id": "348466",
+      "team1": "FNATIC",
+      "team2": "Gen.G",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.411946102363041,
+      "team2_prob": 0.5880538976369589,
+      "confidence": 0.5674789484702087,
+      "correct": true,
+      "score": "1-2",
+      "date": "2024/05/30"
+    },
+    {
+      "match_id": "341821",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5231656250277432,
+      "team2_prob": 0.4768343749722568,
+      "confidence": 0.5225182113347443,
+      "correct": true,
+      "score": "3-2",
+      "date": "2024/05/12"
+    },
+    {
+      "match_id": "341823",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team1",
+      "team1_prob": 0.45301184423101665,
+      "team2_prob": 0.5469881557689833,
+      "confidence": 0.5400444382974234,
+      "correct": false,
+      "score": "3-1",
+      "date": "2024/05/11"
+    },
+    {
+      "match_id": "341820",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "predicted_winner": "team1",
+      "actual_winner": "team2",
+      "team1_prob": 0.5231656250277432,
+      "team2_prob": 0.4768343749722568,
+      "confidence": 0.5225182113347443,
+      "correct": false,
+      "score": "0-2",
+      "date": "2024/05/10"
+    },
+    {
+      "match_id": "341816",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "predicted_winner": "team1",
+      "actual_winner": "team1",
+      "team1_prob": 0.5184722999454281,
+      "team2_prob": 0.4815277000545719,
+      "confidence": 0.5322629032235786,
+      "correct": true,
+      "score": "2-1",
+      "date": "2024/05/08"
+    },
+    {
+      "match_id": "318932",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "predicted_winner": "team2",
+      "actual_winner": "team2",
+      "team1_prob": 0.45301184423101665,
+      "team2_prob": 0.5469881557689833,
+      "confidence": 0.5400444382974234,
+      "correct": true,
+      "score": "0-2",
+      "date": "2024/04/25"
+    },
+    {
+      "match_id": "318915",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "predicted_winner": "team1",
+      "actual_winner": "team2",
+      "team1_prob": 0.5231656250277432,
+      "team2_prob": 0.4768343749722568,
+      "confidence": 0.5225182113347443,
+      "correct": false,
+      "score": "0-2",
+      "date": "2024/04/04"
+    }
+  ],
+  "bets": [
+    {
+      "match_id": "482513",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.39,
+          "odds": 5.53,
+          "won": false,
+          "returns": 0,
+          "profit": -13.39,
+          "edge": 0.05482331003657234,
+          "predicted_prob": 0.235655136438019,
+          "implied_prob": 0.18083182640144665,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 14.27,
+          "odds": 4.54,
+          "won": true,
+          "returns": 64.7858,
+          "profit": 50.5158,
+          "edge": 0.04450434507410417,
+          "predicted_prob": 0.2647686622547209,
+          "implied_prob": 0.22026431718061673,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 11.64,
+          "odds": 2.04,
+          "won": true,
+          "returns": 23.745600000000003,
+          "profit": 12.105600000000003,
+          "edge": 0.03296954659637069,
+          "predicted_prob": 0.5231656250277432,
+          "implied_prob": 0.49019607843137253,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        }
+      ],
+      "date": "2025/05/18"
+    },
+    {
+      "match_id": "482515",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 16.45,
+          "odds": 5.86,
+          "won": false,
+          "returns": 0,
+          "profit": -16.45,
+          "edge": 0.06500667227419649,
+          "predicted_prob": 0.235655136438019,
+          "implied_prob": 0.1706484641638225,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 12.89,
+          "odds": 4.41,
+          "won": true,
+          "returns": 56.8449,
+          "profit": 43.9549,
+          "edge": 0.038011292640208444,
+          "predicted_prob": 0.2647686622547209,
+          "implied_prob": 0.22675736961451246,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team2_plus_1_5",
+          "amount": 18.81,
+          "odds": 1.43,
+          "won": false,
+          "returns": 0,
+          "profit": -18.81,
+          "edge": 0.035930638444579666,
+          "predicted_prob": 0.735231337745279,
+          "implied_prob": 0.6993006993006994,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        }
+      ],
+      "date": "2025/05/16"
+    },
+    {
+      "match_id": "482508",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 17.58,
+          "odds": 4.78,
+          "won": false,
+          "returns": 0,
+          "profit": -17.58,
+          "edge": 0.05256492557008796,
+          "predicted_prob": 0.26176994649059004,
+          "implied_prob": 0.20920502092050208,
+          "team1": "FNATIC",
+          "team2": "Team Liquid"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.42,
+          "odds": 5.35,
+          "won": false,
+          "returns": 0,
+          "profit": -13.42,
+          "edge": 0.051584892700700796,
+          "predicted_prob": 0.2385007805511681,
+          "implied_prob": 0.1869158878504673,
+          "team1": "FNATIC",
+          "team2": "Team Liquid"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 12.23,
+          "odds": 2.06,
+          "won": true,
+          "returns": 25.193800000000003,
+          "profit": 12.963800000000003,
+          "edge": 0.03303540674154459,
+          "predicted_prob": 0.5184722999454281,
+          "implied_prob": 0.4854368932038835,
+          "team1": "FNATIC",
+          "team2": "Team Liquid"
+        }
+      ],
+      "date": "2025/05/10"
+    },
+    {
+      "match_id": "482504",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 20.16,
+          "odds": 6.42,
+          "won": true,
+          "returns": 129.4272,
+          "profit": 109.2672,
+          "edge": 0.06546603360578726,
+          "predicted_prob": 0.22122927348117666,
+          "implied_prob": 0.1557632398753894,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 14.67,
+          "odds": 2.46,
+          "won": true,
+          "returns": 36.0882,
+          "profit": 21.4182,
+          "edge": 0.04650777919036625,
+          "predicted_prob": 0.45301184423101665,
+          "implied_prob": 0.4065040650406504,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 10.84,
+          "odds": 4.15,
+          "won": false,
+          "returns": 0,
+          "profit": -10.84,
+          "edge": 0.039565097062039395,
+          "predicted_prob": 0.2805289524837261,
+          "implied_prob": 0.24096385542168672,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        }
+      ],
+      "date": "2025/05/08"
+    },
+    {
+      "match_id": "459857",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 15.78,
+          "odds": 5.56,
+          "won": true,
+          "returns": 87.73679999999999,
+          "profit": 71.95679999999999,
+          "edge": 0.05579902133010531,
+          "predicted_prob": 0.235655136438019,
+          "implied_prob": 0.1798561151079137,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 16.21,
+          "odds": 4.52,
+          "won": false,
+          "returns": 0,
+          "profit": -16.21,
+          "edge": 0.04352972420162354,
+          "predicted_prob": 0.2647686622547209,
+          "implied_prob": 0.22123893805309736,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        }
+      ],
+      "date": "2025/05/02"
+    },
+    {
+      "match_id": "429397",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 26.14,
+          "odds": 6.76,
+          "won": false,
+          "returns": 0,
+          "profit": -26.14,
+          "edge": 0.07330027939833642,
+          "predicted_prob": 0.22122927348117666,
+          "implied_prob": 0.14792899408284024,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 13.63,
+          "odds": 2.4,
+          "won": false,
+          "returns": 0,
+          "profit": -13.63,
+          "edge": 0.03634517756434996,
+          "predicted_prob": 0.45301184423101665,
+          "implied_prob": 0.4166666666666667,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 9.5,
+          "odds": 3.98,
+          "won": true,
+          "returns": 37.81,
+          "profit": 28.310000000000002,
+          "edge": 0.02927267107669096,
+          "predicted_prob": 0.2805289524837261,
+          "implied_prob": 0.25125628140703515,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        }
+      ],
+      "date": "2025/01/31"
+    },
+    {
+      "match_id": "429385",
+      "team1": "FNATIC",
+      "team2": "BBL Esports",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 18.12,
+          "odds": 5.63,
+          "won": false,
+          "returns": 0,
+          "profit": -18.12,
+          "edge": 0.06189829918358475,
+          "predicted_prob": 0.2395181926116487,
+          "implied_prob": 0.17761989342806395,
+          "team1": "FNATIC",
+          "team2": "BBL Esports"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 19.91,
+          "odds": 4.8,
+          "won": false,
+          "returns": 0,
+          "profit": -19.91,
+          "edge": 0.052372941468466244,
+          "predicted_prob": 0.2607062748017996,
+          "implied_prob": 0.20833333333333334,
+          "team1": "FNATIC",
+          "team2": "BBL Esports"
+        },
+        {
+          "bet_type": "team2_plus_1_5",
+          "amount": 21.41,
+          "odds": 1.42,
+          "won": true,
+          "returns": 30.402199999999997,
+          "profit": 8.992199999999997,
+          "edge": 0.03506837308552424,
+          "predicted_prob": 0.7392937251982004,
+          "implied_prob": 0.7042253521126761,
+          "team1": "FNATIC",
+          "team2": "BBL Esports"
+        }
+      ],
+      "date": "2025/01/17"
+    },
+    {
+      "match_id": "423496",
+      "team1": "FNATIC",
+      "team2": "DetonatioN FocusMe",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 17.78,
+          "odds": 5.53,
+          "won": false,
+          "returns": 0,
+          "profit": -17.78,
+          "edge": 0.061990348548450064,
+          "predicted_prob": 0.24282217494989672,
+          "implied_prob": 0.18083182640144665,
+          "team1": "FNATIC",
+          "team2": "DetonatioN FocusMe"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 18.61,
+          "odds": 4.83,
+          "won": false,
+          "returns": 0,
+          "profit": -18.61,
+          "edge": 0.050243036250282314,
+          "predicted_prob": 0.2572823737244024,
+          "implied_prob": 0.20703933747412007,
+          "team1": "FNATIC",
+          "team2": "DetonatioN FocusMe"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 16.73,
+          "odds": 2.13,
+          "won": true,
+          "returns": 35.6349,
+          "profit": 18.9049,
+          "edge": 0.0419542590095312,
+          "predicted_prob": 0.5114378270846486,
+          "implied_prob": 0.4694835680751174,
+          "team1": "FNATIC",
+          "team2": "DetonatioN FocusMe"
+        }
+      ],
+      "date": "2024/12/15"
+    },
+    {
+      "match_id": "423494",
+      "team1": "FNATIC",
+      "team2": "ZETA DIVISION",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 18.02,
+          "odds": 5.76,
+          "won": false,
+          "returns": 0,
+          "profit": -18.02,
+          "edge": 0.0643157909530109,
+          "predicted_prob": 0.237926902064122,
+          "implied_prob": 0.1736111111111111,
+          "team1": "FNATIC",
+          "team2": "ZETA DIVISION"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 13.87,
+          "odds": 4.44,
+          "won": false,
+          "returns": 0,
+          "profit": -13.87,
+          "edge": 0.0371466510938146,
+          "predicted_prob": 0.2623718763190398,
+          "implied_prob": 0.2252252252252252,
+          "team1": "FNATIC",
+          "team2": "ZETA DIVISION"
+        }
+      ],
+      "date": "2024/12/14"
+    },
+    {
+      "match_id": "424022",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 17.77,
+          "odds": 5.15,
+          "won": false,
+          "returns": 0,
+          "profit": -17.77,
+          "edge": 0.0508765213754446,
+          "predicted_prob": 0.245051278656998,
+          "implied_prob": 0.1941747572815534,
+          "team1": "FNATIC",
+          "team2": "G2 Esports"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.96,
+          "odds": 4.86,
+          "won": true,
+          "returns": 67.8456,
+          "profit": 53.885600000000004,
+          "edge": 0.04923687501195059,
+          "predicted_prob": 0.25499819188437856,
+          "implied_prob": 0.20576131687242796,
+          "team1": "FNATIC",
+          "team2": "G2 Esports"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 11.77,
+          "odds": 2.17,
+          "won": false,
+          "returns": 0,
+          "profit": -11.77,
+          "edge": 0.031313338490627785,
+          "predicted_prob": 0.4921428315781854,
+          "implied_prob": 0.4608294930875576,
+          "team1": "FNATIC",
+          "team2": "G2 Esports"
+        }
+      ],
+      "date": "2024/11/22"
+    },
+    {
+      "match_id": "423974",
+      "team1": "FNATIC",
+      "team2": "FOKUS",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 15.77,
+          "odds": 5.32,
+          "won": false,
+          "returns": 0,
+          "profit": -15.77,
+          "edge": 0.05569267023956384,
+          "predicted_prob": 0.2436625950515939,
+          "implied_prob": 0.18796992481203006,
+          "team1": "FNATIC",
+          "team2": "FOKUS"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 15.63,
+          "odds": 4.68,
+          "won": false,
+          "returns": 0,
+          "profit": -15.63,
+          "edge": 0.042743551207573505,
+          "predicted_prob": 0.2564187648827872,
+          "implied_prob": 0.2136752136752137,
+          "team1": "FNATIC",
+          "team2": "FOKUS"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 14.23,
+          "odds": 2.11,
+          "won": true,
+          "returns": 30.025299999999998,
+          "profit": 15.795299999999997,
+          "edge": 0.036157543383995905,
+          "predicted_prob": 0.5100911926730954,
+          "implied_prob": 0.47393364928909953,
+          "team1": "FNATIC",
+          "team2": "FOKUS"
+        }
+      ],
+      "date": "2024/11/21"
+    },
+    {
+      "match_id": "378834",
+      "team1": "FNATIC",
+      "team2": "Sentinels",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 18.88,
+          "odds": 5.49,
+          "won": false,
+          "returns": 0,
+          "profit": -18.88,
+          "edge": 0.054442314103348544,
+          "predicted_prob": 0.23659167658057986,
+          "implied_prob": 0.18214936247723132,
+          "team1": "FNATIC",
+          "team2": "Sentinels"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 9.38,
+          "odds": 4.31,
+          "won": false,
+          "returns": 0,
+          "profit": -9.38,
+          "edge": 0.031759306434250484,
+          "predicted_prob": 0.2637778679191693,
+          "implied_prob": 0.2320185614849188,
+          "team1": "FNATIC",
+          "team2": "Sentinels"
+        }
+      ],
+      "date": "2024/08/18"
+    },
+    {
+      "match_id": "378832",
+      "team1": "FNATIC",
+      "team2": "G2 Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 19.88,
+          "odds": 5.36,
+          "won": true,
+          "returns": 106.5568,
+          "profit": 86.6768,
+          "edge": 0.058484114477893534,
+          "predicted_prob": 0.245051278656998,
+          "implied_prob": 0.18656716417910446,
+          "team1": "FNATIC",
+          "team2": "G2 Esports"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.15,
+          "odds": 4.81,
+          "won": false,
+          "returns": 0,
+          "profit": -13.15,
+          "edge": 0.047097983984170644,
+          "predicted_prob": 0.25499819188437856,
+          "implied_prob": 0.2079002079002079,
+          "team1": "FNATIC",
+          "team2": "G2 Esports"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 13.02,
+          "odds": 2.19,
+          "won": true,
+          "returns": 28.5138,
+          "profit": 15.4938,
+          "edge": 0.035521827011975315,
+          "predicted_prob": 0.4921428315781854,
+          "implied_prob": 0.4566210045662101,
+          "team1": "FNATIC",
+          "team2": "G2 Esports"
+        }
+      ],
+      "date": "2024/08/16"
+    },
+    {
+      "match_id": "378825",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 15.55,
+          "odds": 5.48,
+          "won": true,
+          "returns": 85.21400000000001,
+          "profit": 69.66400000000002,
+          "edge": 0.05317338461320148,
+          "predicted_prob": 0.235655136438019,
+          "implied_prob": 0.18248175182481752,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 18.44,
+          "odds": 2.09,
+          "won": false,
+          "returns": 0,
+          "profit": -18.44,
+          "edge": 0.044696725506212065,
+          "predicted_prob": 0.5231656250277432,
+          "implied_prob": 0.47846889952153115,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 15.43,
+          "odds": 4.45,
+          "won": false,
+          "returns": 0,
+          "profit": -15.43,
+          "edge": 0.0400495611311254,
+          "predicted_prob": 0.2647686622547209,
+          "implied_prob": 0.2247191011235955,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        }
+      ],
+      "date": "2024/08/15"
+    },
+    {
+      "match_id": "378660",
+      "team1": "FNATIC",
+      "team2": "KR\u00dc Esports",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.79,
+          "odds": 4.96,
+          "won": false,
+          "returns": 0,
+          "profit": -13.79,
+          "edge": 0.044730741682357245,
+          "predicted_prob": 0.2463436449081637,
+          "implied_prob": 0.20161290322580647,
+          "team1": "FNATIC",
+          "team2": "KR\u00dc Esports"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 15.99,
+          "odds": 4.7,
+          "won": false,
+          "returns": 0,
+          "profit": -15.99,
+          "edge": 0.04091733284218593,
+          "predicted_prob": 0.25368329028899445,
+          "implied_prob": 0.2127659574468085,
+          "team1": "FNATIC",
+          "team2": "KR\u00dc Esports"
+        }
+      ],
+      "date": "2024/08/10"
+    },
+    {
+      "match_id": "378658",
+      "team1": "FNATIC",
+      "team2": "DRX",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 20.2,
+          "odds": 5.41,
+          "won": false,
+          "returns": 0,
+          "profit": -20.2,
+          "edge": 0.054838845739001524,
+          "predicted_prob": 0.2396817292879849,
+          "implied_prob": 0.18484288354898337,
+          "team1": "FNATIC",
+          "team2": "DRX"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.92,
+          "odds": 4.65,
+          "won": true,
+          "returns": 64.72800000000001,
+          "profit": 50.80800000000001,
+          "edge": 0.045481951632727946,
+          "predicted_prob": 0.26053571507358814,
+          "implied_prob": 0.2150537634408602,
+          "team1": "FNATIC",
+          "team2": "DRX"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 13.79,
+          "odds": 2.23,
+          "won": false,
+          "returns": 0,
+          "profit": -13.79,
+          "edge": 0.035185233773566804,
+          "predicted_prob": 0.4836157270471094,
+          "implied_prob": 0.4484304932735426,
+          "team1": "FNATIC",
+          "team2": "DRX"
+        }
+      ],
+      "date": "2024/08/06"
+    },
+    {
+      "match_id": "378656",
+      "team1": "FNATIC",
+      "team2": "Bilibili Gaming",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.6,
+          "odds": 4.97,
+          "won": false,
+          "returns": 0,
+          "profit": -13.6,
+          "edge": 0.04458236766408502,
+          "predicted_prob": 0.24578961112484962,
+          "implied_prob": 0.2012072434607646,
+          "team1": "FNATIC",
+          "team2": "Bilibili Gaming"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 15.71,
+          "odds": 4.68,
+          "won": true,
+          "returns": 73.5228,
+          "profit": 57.8128,
+          "edge": 0.040570931685578515,
+          "predicted_prob": 0.2542461453607922,
+          "implied_prob": 0.2136752136752137,
+          "team1": "FNATIC",
+          "team2": "Bilibili Gaming"
+        }
+      ],
+      "date": "2024/08/02"
+    },
+    {
+      "match_id": "371281",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 25.45,
+          "odds": 6.54,
+          "won": true,
+          "returns": 166.44299999999998,
+          "profit": 140.993,
+          "edge": 0.06832407470441826,
+          "predicted_prob": 0.22122927348117666,
+          "implied_prob": 0.1529051987767584,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 10.87,
+          "odds": 4.03,
+          "won": false,
+          "returns": 0,
+          "profit": -10.87,
+          "edge": 0.03238999466734896,
+          "predicted_prob": 0.2805289524837261,
+          "implied_prob": 0.24813895781637715,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 16.93,
+          "odds": 1.99,
+          "won": false,
+          "returns": 0,
+          "profit": -16.93,
+          "edge": 0.04447559295491299,
+          "predicted_prob": 0.5469881557689833,
+          "implied_prob": 0.5025125628140703,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        }
+      ],
+      "date": "2024/07/16"
+    },
+    {
+      "match_id": "353174",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 17.45,
+          "odds": 5.35,
+          "won": false,
+          "returns": 0,
+          "profit": -17.45,
+          "edge": 0.051584892700700796,
+          "predicted_prob": 0.2385007805511681,
+          "implied_prob": 0.1869158878504673,
+          "team1": "FNATIC",
+          "team2": "Team Liquid"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 17.48,
+          "odds": 4.5,
+          "won": true,
+          "returns": 78.66,
+          "profit": 61.17999999999999,
+          "edge": 0.039547724268367834,
+          "predicted_prob": 0.26176994649059004,
+          "implied_prob": 0.2222222222222222,
+          "team1": "FNATIC",
+          "team2": "Team Liquid"
+        }
+      ],
+      "date": "2024/07/10"
+    },
+    {
+      "match_id": "353154",
+      "team1": "FNATIC",
+      "team2": "BBL Esports",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 22.15,
+          "odds": 5.71,
+          "won": false,
+          "returns": 0,
+          "profit": -22.15,
+          "edge": 0.06438684410026516,
+          "predicted_prob": 0.2395181926116487,
+          "implied_prob": 0.17513134851138354,
+          "team1": "FNATIC",
+          "team2": "BBL Esports"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 20.24,
+          "odds": 4.63,
+          "won": false,
+          "returns": 0,
+          "profit": -20.24,
+          "edge": 0.044723553419510176,
+          "predicted_prob": 0.2607062748017996,
+          "implied_prob": 0.2159827213822894,
+          "team1": "FNATIC",
+          "team2": "BBL Esports"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 15.57,
+          "odds": 2.06,
+          "won": true,
+          "returns": 32.074200000000005,
+          "profit": 16.504200000000004,
+          "edge": 0.0313687745925223,
+          "predicted_prob": 0.5168056677964058,
+          "implied_prob": 0.4854368932038835,
+          "team1": "FNATIC",
+          "team2": "BBL Esports"
+        }
+      ],
+      "date": "2024/06/19"
+    },
+    {
+      "match_id": "348468",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 30.21,
+          "odds": 6.79,
+          "won": false,
+          "returns": 0,
+          "profit": -30.21,
+          "edge": 0.07395386847381288,
+          "predicted_prob": 0.22122927348117666,
+          "implied_prob": 0.14727540500736377,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 18.68,
+          "odds": 1.99,
+          "won": true,
+          "returns": 37.1732,
+          "profit": 18.4932,
+          "edge": 0.04447559295491299,
+          "predicted_prob": 0.5469881557689833,
+          "implied_prob": 0.5025125628140703,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        }
+      ],
+      "date": "2024/06/01"
+    },
+    {
+      "match_id": "348466",
+      "team1": "FNATIC",
+      "team2": "Gen.G",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 31.91,
+          "odds": 8.66,
+          "won": false,
+          "returns": 0,
+          "profit": -31.91,
+          "edge": 0.08172920564998203,
+          "predicted_prob": 0.19720264675852706,
+          "implied_prob": 0.11547344110854503,
+          "team1": "FNATIC",
+          "team2": "Gen.G"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 13.81,
+          "odds": 2.65,
+          "won": false,
+          "returns": 0,
+          "profit": -13.81,
+          "edge": 0.03458761179700326,
+          "predicted_prob": 0.411946102363041,
+          "implied_prob": 0.37735849056603776,
+          "team1": "FNATIC",
+          "team2": "Gen.G"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 11.11,
+          "odds": 3.57,
+          "won": false,
+          "returns": 0,
+          "profit": -11.11,
+          "edge": 0.028940509313172325,
+          "predicted_prob": 0.3090525541310995,
+          "implied_prob": 0.2801120448179272,
+          "team1": "FNATIC",
+          "team2": "Gen.G"
+        }
+      ],
+      "date": "2024/05/30"
+    },
+    {
+      "match_id": "341821",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 20.51,
+          "odds": 5.83,
+          "won": false,
+          "returns": 0,
+          "profit": -20.51,
+          "edge": 0.06412854981709276,
+          "predicted_prob": 0.235655136438019,
+          "implied_prob": 0.17152658662092624,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 15.0,
+          "odds": 4.35,
+          "won": false,
+          "returns": 0,
+          "profit": -15.0,
+          "edge": 0.03488360478345651,
+          "predicted_prob": 0.2647686622547209,
+          "implied_prob": 0.2298850574712644,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team2_ml",
+          "amount": 15.39,
+          "odds": 2.31,
+          "won": false,
+          "returns": 0,
+          "profit": -15.39,
+          "edge": 0.043933942071823884,
+          "predicted_prob": 0.4768343749722568,
+          "implied_prob": 0.4329004329004329,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        }
+      ],
+      "date": "2024/05/12"
+    },
+    {
+      "match_id": "341823",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 25.36,
+          "odds": 6.5,
+          "won": true,
+          "returns": 164.84,
+          "profit": 139.48000000000002,
+          "edge": 0.0673831196350228,
+          "predicted_prob": 0.22122927348117666,
+          "implied_prob": 0.15384615384615385,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 17.37,
+          "odds": 2.45,
+          "won": true,
+          "returns": 42.55650000000001,
+          "profit": 25.186500000000006,
+          "edge": 0.044848578924894245,
+          "predicted_prob": 0.45301184423101665,
+          "implied_prob": 0.4081632653061224,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 9.54,
+          "odds": 3.96,
+          "won": false,
+          "returns": 0,
+          "profit": -9.54,
+          "edge": 0.02800369995847357,
+          "predicted_prob": 0.2805289524837261,
+          "implied_prob": 0.25252525252525254,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        }
+      ],
+      "date": "2024/05/11"
+    },
+    {
+      "match_id": "341820",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 20.57,
+          "odds": 5.67,
+          "won": true,
+          "returns": 116.6319,
+          "profit": 96.06190000000001,
+          "edge": 0.05928829340450931,
+          "predicted_prob": 0.235655136438019,
+          "implied_prob": 0.1763668430335097,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_ml",
+          "amount": 18.86,
+          "odds": 2.06,
+          "won": false,
+          "returns": 0,
+          "profit": -18.86,
+          "edge": 0.03772873182385972,
+          "predicted_prob": 0.5231656250277432,
+          "implied_prob": 0.4854368932038835,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 14.02,
+          "odds": 4.26,
+          "won": false,
+          "returns": 0,
+          "profit": -14.02,
+          "edge": 0.03002687821716221,
+          "predicted_prob": 0.2647686622547209,
+          "implied_prob": 0.2347417840375587,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        }
+      ],
+      "date": "2024/05/10"
+    },
+    {
+      "match_id": "341816",
+      "team1": "FNATIC",
+      "team2": "Team Liquid",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 24.79,
+          "odds": 4.78,
+          "won": false,
+          "returns": 0,
+          "profit": -24.79,
+          "edge": 0.05256492557008796,
+          "predicted_prob": 0.26176994649059004,
+          "implied_prob": 0.20920502092050208,
+          "team1": "FNATIC",
+          "team2": "Team Liquid"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 18.08,
+          "odds": 5.28,
+          "won": false,
+          "returns": 0,
+          "profit": -18.08,
+          "edge": 0.049106841157228714,
+          "predicted_prob": 0.2385007805511681,
+          "implied_prob": 0.1893939393939394,
+          "team1": "FNATIC",
+          "team2": "Team Liquid"
+        }
+      ],
+      "date": "2024/05/08"
+    },
+    {
+      "match_id": "318932",
+      "team1": "FNATIC",
+      "team2": "FUT Esports",
+      "bets": [
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 29.59,
+          "odds": 6.58,
+          "won": false,
+          "returns": 0,
+          "profit": -29.59,
+          "edge": 0.06925358959059916,
+          "predicted_prob": 0.22122927348117666,
+          "implied_prob": 0.1519756838905775,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        },
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 13.6,
+          "odds": 4.08,
+          "won": true,
+          "returns": 55.488,
+          "profit": 41.888,
+          "edge": 0.03543091326803985,
+          "predicted_prob": 0.2805289524837261,
+          "implied_prob": 0.24509803921568626,
+          "team1": "FNATIC",
+          "team2": "FUT Esports"
+        }
+      ],
+      "date": "2024/04/25"
+    },
+    {
+      "match_id": "318915",
+      "team1": "FNATIC",
+      "team2": "Team Heretics",
+      "bets": [
+        {
+          "bet_type": "team2_minus_1_5",
+          "amount": 20.1,
+          "odds": 5.58,
+          "won": true,
+          "returns": 112.15800000000002,
+          "profit": 92.05800000000002,
+          "edge": 0.05644366690396882,
+          "predicted_prob": 0.235655136438019,
+          "implied_prob": 0.17921146953405018,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        },
+        {
+          "bet_type": "team1_minus_1_5",
+          "amount": 17.26,
+          "odds": 4.38,
+          "won": false,
+          "returns": 0,
+          "profit": -17.26,
+          "edge": 0.03645815997161586,
+          "predicted_prob": 0.2647686622547209,
+          "implied_prob": 0.22831050228310504,
+          "team1": "FNATIC",
+          "team2": "Team Heretics"
+        }
+      ],
+      "date": "2024/04/04"
+    }
+  ],
+  "performance": {
+    "accuracy": 0.6785714285714286,
+    "roi": 0.42771729594359725,
+    "profit": 536.2805000000008,
+    "bankroll_history": [
+      {
+        "match_idx": 0,
+        "bankroll": 1049.2314000000001,
+        "match_id": "482513",
+        "date": "2025/05/18"
+      },
+      {
+        "match_idx": 1,
+        "bankroll": 1057.9263,
+        "match_id": "482515",
+        "date": "2025/05/16"
+      },
+      {
+        "match_idx": 2,
+        "bankroll": 1039.8901,
+        "match_id": "482508",
+        "date": "2025/05/10"
+      },
+      {
+        "match_idx": 3,
+        "bankroll": 1159.7355000000002,
+        "match_id": "482504",
+        "date": "2025/05/08"
+      },
+      {
+        "match_idx": 4,
+        "bankroll": 1215.4823000000001,
+        "match_id": "459857",
+        "date": "2025/05/02"
+      },
+      {
+        "match_idx": 5,
+        "bankroll": 1204.0222999999999,
+        "match_id": "429397",
+        "date": "2025/01/31"
+      },
+      {
+        "match_idx": 6,
+        "bankroll": 1174.9844999999998,
+        "match_id": "429385",
+        "date": "2025/01/17"
+      },
+      {
+        "match_idx": 7,
+        "bankroll": 1157.4994,
+        "match_id": "423496",
+        "date": "2024/12/15"
+      },
+      {
+        "match_idx": 8,
+        "bankroll": 1125.6094,
+        "match_id": "423494",
+        "date": "2024/12/14"
+      },
+      {
+        "match_idx": 9,
+        "bankroll": 1149.9550000000002,
+        "match_id": "424022",
+        "date": "2024/11/22"
+      },
+      {
+        "match_idx": 10,
+        "bankroll": 1134.3503,
+        "match_id": "423974",
+        "date": "2024/11/21"
+      },
+      {
+        "match_idx": 11,
+        "bankroll": 1106.0902999999998,
+        "match_id": "378834",
+        "date": "2024/08/18"
+      },
+      {
+        "match_idx": 12,
+        "bankroll": 1195.1108999999997,
+        "match_id": "378832",
+        "date": "2024/08/16"
+      },
+      {
+        "match_idx": 13,
+        "bankroll": 1230.9048999999995,
+        "match_id": "378825",
+        "date": "2024/08/15"
+      },
+      {
+        "match_idx": 14,
+        "bankroll": 1201.1248999999996,
+        "match_id": "378660",
+        "date": "2024/08/10"
+      },
+      {
+        "match_idx": 15,
+        "bankroll": 1217.9428999999996,
+        "match_id": "378658",
+        "date": "2024/08/06"
+      },
+      {
+        "match_idx": 16,
+        "bankroll": 1262.1556999999996,
+        "match_id": "378656",
+        "date": "2024/08/02"
+      },
+      {
+        "match_idx": 17,
+        "bankroll": 1375.3486999999996,
+        "match_id": "371281",
+        "date": "2024/07/16"
+      },
+      {
+        "match_idx": 18,
+        "bankroll": 1419.0786999999996,
+        "match_id": "353174",
+        "date": "2024/07/10"
+      },
+      {
+        "match_idx": 19,
+        "bankroll": 1393.1928999999996,
+        "match_id": "353154",
+        "date": "2024/06/19"
+      },
+      {
+        "match_idx": 20,
+        "bankroll": 1381.4760999999994,
+        "match_id": "348468",
+        "date": "2024/06/01"
+      },
+      {
+        "match_idx": 21,
+        "bankroll": 1324.6460999999995,
+        "match_id": "348466",
+        "date": "2024/05/30"
+      },
+      {
+        "match_idx": 22,
+        "bankroll": 1273.7460999999994,
+        "match_id": "341821",
+        "date": "2024/05/12"
+      },
+      {
+        "match_idx": 23,
+        "bankroll": 1428.8725999999995,
+        "match_id": "341823",
+        "date": "2024/05/11"
+      },
+      {
+        "match_idx": 24,
+        "bankroll": 1492.0544999999995,
+        "match_id": "341820",
+        "date": "2024/05/10"
+      },
+      {
+        "match_idx": 25,
+        "bankroll": 1449.1844999999996,
+        "match_id": "341816",
+        "date": "2024/05/08"
+      },
+      {
+        "match_idx": 26,
+        "bankroll": 1461.4824999999996,
+        "match_id": "318932",
+        "date": "2024/04/25"
+      },
+      {
+        "match_idx": 27,
+        "bankroll": 1536.2804999999996,
+        "match_id": "318915",
+        "date": "2024/04/04"
+      }
+    ],
+    "win_rate": 0.35135135135135137,
+    "final_bankroll": 1536.2804999999996,
+    "total_bets": 74,
+    "winning_bets": 26,
+    "total_wagered": 1253.8199999999993,
+    "total_returns": 1790.1005,
+    "drawdown_metrics": {
+      "max_drawdown_pct": 10.24133474767821,
+      "max_drawdown_amount": 145.33260000000018,
+      "drawdown_periods": 6,
+      "avg_drawdown_pct": 4.155886876574547,
+      "max_drawdown_duration": 8
+    }
+  },
+  "metrics": {
+    "accuracy_by_edge": {
+      "5%-10%": {
+        "total": 29,
+        "correct": 8
+      },
+      "0%-5%": {
+        "total": 45,
+        "correct": 18
+      }
+    },
+    "roi_by_edge": {
+      "5%-10%": {
+        "wagered": 591.5,
+        "returns": 969.0077
+      },
+      "0%-5%": {
+        "wagered": 662.32,
+        "returns": 821.0927999999999
+      }
+    },
+    "bet_types": {
+      "team2_minus_1_5": {
+        "total": 27,
+        "won": 8,
+        "wagered": 406.40000000000003,
+        "returns": 627.6123000000001
+      },
+      "team1_minus_1_5": {
+        "total": 28,
+        "won": 8,
+        "wagered": 550.4399999999999,
+        "returns": 841.0805
+      },
+      "team1_ml": {
+        "total": 14,
+        "won": 8,
+        "wagered": 205.76,
+        "returns": 253.8323
+      },
+      "team2_plus_1_5": {
+        "total": 2,
+        "won": 1,
+        "wagered": 40.22,
+        "returns": 30.402199999999997
+      },
+      "team2_ml": {
+        "total": 3,
+        "won": 1,
+        "wagered": 51.0,
+        "returns": 37.1732
+      }
+    },
+    "confidence_bins": {
+      "50%": {
+        "total": 28,
+        "correct": 19
+      }
+    }
+  },
+  "team_performance": {
+    "FNATIC": {
+      "predictions": 28,
+      "correct": 12,
+      "bets": 42,
+      "wins": 16,
+      "wagered": 756.1999999999999,
+      "returns": 1094.9127999999998,
+      "accuracy": 0.42857142857142855,
+      "win_rate": 0.38095238095238093,
+      "roi": 0.4479143083840253,
+      "profit": 338.7127999999999
+    },
+    "Team Heretics": {
+      "predictions": 7,
+      "correct": 0,
+      "bets": 9,
+      "wins": 4,
+      "wagered": 156.54999999999998,
+      "returns": 401.74070000000006,
+      "accuracy": 0.0,
+      "win_rate": 0.4444444444444444,
+      "roi": 1.5662133503672955,
+      "profit": 245.19070000000008
+    },
+    "Team Liquid": {
+      "predictions": 3,
+      "correct": 0,
+      "bets": 3,
+      "wins": 0,
+      "wagered": 48.949999999999996,
+      "returns": 0,
+      "accuracy": 0.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -48.949999999999996
+    },
+    "FUT Esports": {
+      "predictions": 6,
+      "correct": 3,
+      "bets": 7,
+      "wins": 3,
+      "wagered": 89.95999999999998,
+      "returns": 130.4712,
+      "accuracy": 0.5,
+      "win_rate": 0.42857142857142855,
+      "roi": 0.45032458870609204,
+      "profit": 40.51120000000003
+    },
+    "BBL Esports": {
+      "predictions": 2,
+      "correct": 0,
+      "bets": 3,
+      "wins": 1,
+      "wagered": 61.68,
+      "returns": 30.402199999999997,
+      "accuracy": 0.0,
+      "win_rate": 0.3333333333333333,
+      "roi": -0.5070979247730221,
+      "profit": -31.277800000000003
+    },
+    "DetonatioN FocusMe": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 1,
+      "wins": 0,
+      "wagered": 17.78,
+      "returns": 0,
+      "accuracy": 0.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -17.78
+    },
+    "ZETA DIVISION": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 1,
+      "wins": 0,
+      "wagered": 18.02,
+      "returns": 0,
+      "accuracy": 0.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -18.02
+    },
+    "G2 Esports": {
+      "predictions": 2,
+      "correct": 1,
+      "bets": 2,
+      "wins": 1,
+      "wagered": 27.11,
+      "returns": 67.8456,
+      "accuracy": 0.5,
+      "win_rate": 0.5,
+      "roi": 1.5026042050903727,
+      "profit": 40.735600000000005
+    },
+    "FOKUS": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 1,
+      "wins": 0,
+      "wagered": 15.77,
+      "returns": 0,
+      "accuracy": 0.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -15.77
+    },
+    "Sentinels": {
+      "predictions": 1,
+      "correct": 1,
+      "bets": 1,
+      "wins": 0,
+      "wagered": 9.38,
+      "returns": 0,
+      "accuracy": 1.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -9.38
+    },
+    "KR\u00dc Esports": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 1,
+      "wins": 0,
+      "wagered": 13.79,
+      "returns": 0,
+      "accuracy": 0.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -13.79
+    },
+    "DRX": {
+      "predictions": 1,
+      "correct": 1,
+      "bets": 1,
+      "wins": 1,
+      "wagered": 13.92,
+      "returns": 64.72800000000001,
+      "accuracy": 1.0,
+      "win_rate": 1.0,
+      "roi": 3.6500000000000004,
+      "profit": 50.80800000000001
+    },
+    "Bilibili Gaming": {
+      "predictions": 1,
+      "correct": 0,
+      "bets": 1,
+      "wins": 0,
+      "wagered": 13.6,
+      "returns": 0,
+      "accuracy": 0.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -13.6
+    },
+    "Gen.G": {
+      "predictions": 1,
+      "correct": 1,
+      "bets": 1,
+      "wins": 0,
+      "wagered": 11.11,
+      "returns": 0,
+      "accuracy": 1.0,
+      "win_rate": 0.0,
+      "roi": -1.0,
+      "profit": -11.11
+    }
+  }
+}

@@ -1,6 +1,6 @@
-Backtest Run: 2025-05-16 15:18:35
-Min edge: 8.0%
-Min confidence: 40.0%
+Backtest Run: 2025-05-21 15:30:31
+Min edge: 3.0%
+Min confidence: 20.0%
 
 Models loaded:
   - NN: 5 models
@@ -16,13 +16,13 @@ Features loaded:
   4. h2h_x_win_rate
   5. h2h_x_form
   6. avg_score_diff
-  7. score_diff_differential
-  8. win_rate_diff
+  7. win_rate_diff
+  8. score_diff_differential
   9. win_loss_ratio_diff
-  10. h2h_matches
+  10. avg_opponent_score_diff
   11. total_matches
-  12. avg_opponent_score_diff
-  13. pistol_win_rate_diff
-  14. player_rating_diff
+  12. h2h_matches
+  13. player_rating_diff
+  14. wins_diff
   15. rating_x_win_rate
-  16. avg_player_rating
+  16. avg_defense_metric
