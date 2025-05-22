@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-05-22 05:58:39",
+  "teams_count": 100,
+  "total_matches": 9049,
+  "total_teams_found": 397,
+  "viable_teams_found": 150,
+  "parameters": {
+    "all_teams_limit": 500,
+    "random_sample_size": 100,
+    "include_player_stats": true,
+    "include_economy": true,
+    "include_maps": true
+  }
+}
