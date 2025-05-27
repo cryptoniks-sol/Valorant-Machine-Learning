@@ -1,4 +1,4 @@
-Backtest Run: 2025-05-21 15:30:31
+Backtest Run: 2025-05-22 19:21:19
 Min edge: 3.0%
 Min confidence: 20.0%
 
