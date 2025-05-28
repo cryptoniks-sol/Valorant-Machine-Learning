@@ -4,6 +4,7 @@ This script downloads and caches team data from the API to reduce internet usage
 training, retraining, and backtesting. It should be run periodically (e.g., once a week)
 to update the cached data.
 """
+
 import requests
 import json
 import os
@@ -14,6 +15,8 @@ import argparse
 import traceback
 import tqdm
 from tqdm import tqdm
+import numpy as np  # Added missing import
+import re 
 API_URL = "http://localhost:5000/api/v1"
 def fetch_api_data(endpoint, params=None):
     """Generic function to fetch data from API with error handling"""
@@ -707,52 +710,65 @@ def collect_team_data_for_cache(team_limit=150, include_player_stats=True, inclu
     print(f"Including player stats: {include_player_stats}")
     print(f"Including economy data: {include_economy}")
     print(f"Including map data: {include_maps}")
+    
     teams_list = get_teams_for_caching(limit=team_limit)
     if not teams_list:
         print("Error: No teams retrieved for caching. Check API connection.")
         return {}
+    
     top_teams = teams_list[:min(team_limit, len(teams_list))]
     print(f"Selected {len(top_teams)} teams for data collection.")
+    
     team_data_collection = {}
     economy_data_count = 0
     player_stats_count = 0
     map_stats_count = 0
+    
     for team in tqdm(top_teams, desc="Collecting team data"):
         team_id = team.get('id')
         team_name = team.get('name')
         if not team_id or not team_name:
             print(f"Skipping team with missing id or name: {team}")
             continue
+        
         print(f"\nProcessing team: {team_name} (ID: {team_id})")
+        
         team_details, team_tag = fetch_team_details(team_id)
         team_history = fetch_team_match_history(team_id)
         if not team_history:
             print(f"No match history for team {team_name}, skipping.")
             continue
+        
         team_matches = parse_match_data(team_history, team_name)
         if not team_matches:
             print(f"No parsed match data for team {team_name}, skipping.")
             continue
+        
         for match in team_matches:
             match['team_tag'] = team_tag
             match['team_id'] = team_id
             match['team_name'] = team_name
+        
         team_player_stats = None
         if include_player_stats:
             team_player_stats = fetch_team_player_stats(team_id)
             if team_player_stats:
                 player_stats_count += 1
+        
         team_stats = calculate_team_stats(team_matches, team_player_stats, include_economy=include_economy)
         if include_economy and 'pistol_win_rate' in team_stats and team_stats['pistol_win_rate'] > 0:
             economy_data_count += 1
+        
         team_stats['team_tag'] = team_tag
         team_stats['team_name'] = team_name
         team_stats['team_id'] = team_id
+        
         if include_maps:
             map_stats = fetch_team_map_statistics(team_id)
             if map_stats:
                 team_stats['map_statistics'] = map_stats
                 map_stats_count += 1
+        
         team_data_collection[team_name] = {
             'team_id': team_id,
             'team_tag': team_tag,
@@ -761,11 +777,18 @@ def collect_team_data_for_cache(team_limit=150, include_player_stats=True, inclu
             'player_stats': team_player_stats,
             'ranking': team.get('ranking', None)
         }
+        
         print(f"Successfully collected data for {team_name} with {len(team_matches)} matches")
+    
     print(f"\nCollected data for {len(team_data_collection)} teams:")
     print(f"  - Teams with economy data: {economy_data_count}")
     print(f"  - Teams with player stats: {player_stats_count}")
     print(f"  - Teams with map stats: {map_stats_count}")
+    
+    # ADD DATA QUALITY ASSESSMENT HERE
+    print("\nAssessing data quality...")
+    team_data_collection, quality_summary = display_data_quality_summary(team_data_collection)
+    
     return team_data_collection
 
 
@@ -831,6 +854,26 @@ def add_data_quality_scores(team_data):
         }
     
     return team_data
+
+
+
+def implement_incremental_update_system():
+    """Implement incremental update system for cache versioning."""
+    version_info = {
+        'version': '2.1.0',
+        'last_full_update': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'update_type': 'full',
+        'features_enabled': {
+            'advanced_features': True,
+            'lstm_features': True,
+            'gradient_boosting': True,
+            'market_timing': True,
+            'bankroll_management': True,
+            'correlation_analysis': True,
+            'market_intelligence': True
+        }
+    }
+    return version_info
 
 def create_canonical_team_database():
     canonical_db = {
@@ -1153,51 +1196,78 @@ def implement_market_timing_features(matches):
     
     return market_features
 
-def advanced_bankroll_management_features(team_stats):
+def advanced_bankroll_management_features(team_stats, matches=None):
+    """Calculate advanced bankroll management features for a team."""
     bankroll_features = {}
     
-    if 'matches' in team_stats:
-        matches = team_stats['matches']
-        if len(matches) >= 10:
-            win_rate = team_stats.get('win_rate', 0.5)
-            volatility = team_stats.get('volatility', 0.1)
-            
-            kelly_optimal = max(0, 2 * win_rate - 1) if win_rate > 0.5 else 0
-            kelly_adjusted = kelly_optimal * (1 - volatility)
-            bankroll_features['optimal_kelly'] = kelly_adjusted
-            
+    # Use the passed matches parameter if provided, otherwise try to get from team_stats
+    if matches is None:
+        matches = team_stats.get('matches', []) if isinstance(team_stats, dict) else []
+    
+    # Ensure we have a valid list of matches
+    if not isinstance(matches, list) or len(matches) < 10:
+        return bankroll_features
+    
+    # Get win rate from team stats or calculate from matches
+    if isinstance(team_stats, dict) and 'win_rate' in team_stats:
+        win_rate = team_stats.get('win_rate', 0.5)
+    else:
+        # Calculate win rate from matches
+        wins = sum(1 for match in matches if match.get('team_won', False))
+        win_rate = wins / len(matches) if len(matches) > 0 else 0.5
+    
+    # Calculate volatility (standard deviation of performance)
+    performance_scores = []
+    for match in matches:
+        team_score = match.get('team_score', 0)
+        opp_score = match.get('opponent_score', 0)
+        if team_score + opp_score > 0:
+            performance = team_score / (team_score + opp_score)
+        else:
+            performance = 0.5
+        performance_scores.append(performance)
+    
+    volatility = np.std(performance_scores) if performance_scores else 0.1
+    
+    # Kelly Criterion calculation
+    kelly_optimal = max(0, 2 * win_rate - 1) if win_rate > 0.5 else 0
+    kelly_adjusted = kelly_optimal * (1 - volatility)
+    bankroll_features['optimal_kelly'] = kelly_adjusted
+    
+    # Consecutive losses analysis
+    consecutive_losses = 0
+    max_consecutive_losses = 0
+    current_streak = 0
+    
+    sorted_matches = sorted(matches, key=lambda x: x.get('date', ''))
+    for match in sorted_matches:
+        if match.get('team_won', False):
             consecutive_losses = 0
-            max_consecutive_losses = 0
+            current_streak += 1
+        else:
+            consecutive_losses += 1
+            max_consecutive_losses = max(max_consecutive_losses, consecutive_losses)
             current_streak = 0
-            
-            sorted_matches = sorted(matches, key=lambda x: x.get('date', ''))
-            for match in sorted_matches:
-                if match.get('team_won', False):
-                    consecutive_losses = 0
-                    current_streak += 1
-                else:
-                    consecutive_losses += 1
-                    max_consecutive_losses = max(max_consecutive_losses, consecutive_losses)
-                    current_streak = 0
-            
-            bankroll_features['max_drawdown_periods'] = max_consecutive_losses
-            bankroll_features['current_streak'] = current_streak
-            
-            win_sizes = []
-            loss_sizes = []
-            for match in sorted_matches:
-                team_score = match.get('team_score', 0)
-                opp_score = match.get('opponent_score', 0)
-                if match.get('team_won', False):
-                    win_sizes.append(team_score - opp_score)
-                else:
-                    loss_sizes.append(opp_score - team_score)
-            
-            if win_sizes and loss_sizes:
-                avg_win = np.mean(win_sizes)
-                avg_loss = np.mean(loss_sizes)
-                bankroll_features['win_loss_ratio'] = avg_win / avg_loss if avg_loss > 0 else 1
-                bankroll_features['expectancy'] = (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
+    
+    bankroll_features['max_drawdown_periods'] = max_consecutive_losses
+    bankroll_features['current_streak'] = current_streak
+    
+    # Win/Loss size analysis
+    win_sizes = []
+    loss_sizes = []
+    for match in sorted_matches:
+        team_score = match.get('team_score', 0)
+        opp_score = match.get('opponent_score', 0)
+        if match.get('team_won', False):
+            win_sizes.append(team_score - opp_score)
+        else:
+            loss_sizes.append(opp_score - team_score)
+    
+    if win_sizes and loss_sizes:
+        avg_win = np.mean(win_sizes)
+        avg_loss = np.mean(loss_sizes)
+        bankroll_features['win_loss_ratio'] = avg_win / avg_loss if avg_loss > 0 else 1
+        bankroll_features['expectancy'] = (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
     
     return bankroll_features
 
@@ -1276,6 +1346,7 @@ def market_intelligence_features():
     return market_intel
 
 def save_cache(team_data, filename="valorant_data_cache.pkl"):
+    """Save enhanced team data cache with comprehensive metadata."""
     print(f"\nSaving enhanced team data cache to {filename}...")
     cache_dir = "cache"
     os.makedirs(cache_dir, exist_ok=True)
@@ -1284,17 +1355,29 @@ def save_cache(team_data, filename="valorant_data_cache.pkl"):
     if cache_corruption_detected:
         print("Cache corruption detected, rebuilding...")
     
-    team_data = add_data_quality_scores(team_data)
+    # Data quality scores should already be calculated by now, but ensure they exist
+    if not any('data_quality' in data for data in team_data.values()):
+        print("Adding data quality scores...")
+        team_data = add_data_quality_scores(team_data)
+    
     canonical_db = create_canonical_team_database()
     team_data = detect_roster_changes(team_data, canonical_db)
     
+    # Generate advanced features for each team
+    print("Generating advanced features...")
+    advanced_features_count = 0
+    
     for team_name, data in team_data.items():
         if 'stats' in data and 'matches' in data:
-            advanced_features = implement_advanced_feature_engineering(data['stats'], data['matches'])
-            lstm_features = implement_lstm_time_series_features(data['matches'])
-            gb_features = add_gradient_boosting_features(data['stats'], data['matches'])
-            market_features = implement_market_timing_features(data['matches'])
-            bankroll_features = advanced_bankroll_management_features(data['stats'])
+            matches = data['matches']
+            stats = data['stats']
+            
+            # Generate all feature sets with proper parameter passing
+            advanced_features = implement_advanced_feature_engineering(stats, matches)
+            lstm_features = implement_lstm_time_series_features(matches)
+            gb_features = add_gradient_boosting_features(stats, matches)
+            market_features = implement_market_timing_features(matches)
+            bankroll_features = advanced_bankroll_management_features(stats, matches)
             
             data['advanced_features'] = {
                 **advanced_features,
@@ -1303,8 +1386,17 @@ def save_cache(team_data, filename="valorant_data_cache.pkl"):
                 **market_features,
                 **bankroll_features
             }
+            
+            if data['advanced_features']:
+                advanced_features_count += 1
     
+    print(f"Advanced features generated for {advanced_features_count} teams")
+    
+    # Generate correlation and market intelligence data
+    print("Calculating correlation adjustments...")
     correlation_data = implement_correlation_adjusted_sizing(team_data)
+    
+    print("Generating market intelligence...")
     market_intelligence = market_intelligence_features()
     
     cache_version_info = implement_incremental_update_system()
@@ -1321,27 +1413,153 @@ def save_cache(team_data, filename="valorant_data_cache.pkl"):
     with open(cache_path, 'wb') as f:
         pickle.dump(enhanced_cache, f)
     
+    # Generate comprehensive metadata
+    quality_scores = {
+        team: data.get('data_quality', {}).get('overall_quality', 0) 
+        for team, data in team_data.items()
+    }
+    
     meta_data = {
         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "teams_count": len(team_data),
         "team_names": list(team_data.keys()),
         "total_matches": sum(len(team_data[team].get('matches', [])) for team in team_data),
         "cache_version": cache_version_info['version'],
-        "quality_scores": {team: data.get('data_quality', {}).get('overall_quality', 0) for team, data in team_data.items()},
+        "quality_scores": quality_scores,
+        "average_quality": sum(quality_scores.values()) / len(quality_scores) if quality_scores else 0,
+        "high_quality_teams": sum(1 for score in quality_scores.values() if score >= 0.8),
         "advanced_features_enabled": True,
-        "market_intelligence_enabled": True
+        "market_intelligence_enabled": True,
+        "features_summary": {
+            "advanced_features": advanced_features_count,
+            "correlation_data": len(correlation_data),
+            "market_intelligence_modules": len(market_intelligence)
+        }
     }
     
     meta_path = os.path.join(cache_dir, "cache_metadata.json")
     with open(meta_path, 'w') as f:
         json.dump(meta_data, f, indent=2)
     
-    print(f"Enhanced cache saved successfully with {meta_data['teams_count']} teams and {meta_data['total_matches']} total matches.")
+    # Final summary with quality insights
+    print(f"\n" + "="*60)
+    print("CACHE SAVE SUMMARY")
+    print("="*60)
+    print(f"Enhanced cache saved successfully!")
+    print(f"Teams cached: {meta_data['teams_count']}")
+    print(f"Total matches: {meta_data['total_matches']:,}")
     print(f"Cache version: {cache_version_info['version']}")
-    print(f"Advanced features: {len([t for t in team_data.values() if 'advanced_features' in t])} teams")
-    print(f"Cache metadata saved to {meta_path}")
+    print(f"Average data quality: {meta_data['average_quality']:.3f}")
+    print(f"High-quality teams: {meta_data['high_quality_teams']}/{meta_data['teams_count']} ({(meta_data['high_quality_teams']/meta_data['teams_count']*100):.1f}%)")
+    print(f"Advanced features: {advanced_features_count} teams")
+    print(f"Cache file: {cache_path}")
+    print(f"Metadata: {meta_path}")
     
     return cache_path
+
+def display_data_quality_summary(team_data_collection):
+    """Display a comprehensive summary of data quality scores for collected teams."""
+    print("\n" + "="*70)
+    print("DATA QUALITY ASSESSMENT")
+    print("="*70)
+    
+    # First, ensure all teams have quality scores
+    team_data_collection = add_data_quality_scores(team_data_collection)
+    
+    quality_grades = []
+    
+    for team_name, data in team_data_collection.items():
+        if 'data_quality' in data:
+            quality = data['data_quality']
+            overall_score = quality.get('overall_quality', 0)
+            completeness = quality.get('completeness_score', 0)
+            consistency = quality.get('consistency_score', 0)
+            sample_size = quality.get('sample_size', 0)
+            
+            # Convert to letter grade
+            if overall_score >= 0.9:
+                grade = "A+"
+            elif overall_score >= 0.8:
+                grade = "A"
+            elif overall_score >= 0.7:
+                grade = "B+"
+            elif overall_score >= 0.6:
+                grade = "B"
+            elif overall_score >= 0.5:
+                grade = "C+"
+            elif overall_score >= 0.4:
+                grade = "C"
+            else:
+                grade = "D"
+            
+            quality_grades.append({
+                'team_name': team_name,
+                'grade': grade,
+                'overall_score': overall_score,
+                'completeness': completeness,
+                'consistency': consistency,
+                'sample_size': sample_size
+            })
+    
+    # Sort by quality score (highest first)
+    quality_grades.sort(key=lambda x: x['overall_score'], reverse=True)
+    
+    # Display detailed table
+    print(f"{'Team Name':<25} {'Grade':<6} {'Overall':<8} {'Complete':<9} {'Consist':<8} {'Matches':<8}")
+    print("-" * 70)
+    
+    grade_counts = {'A+': 0, 'A': 0, 'B+': 0, 'B': 0, 'C+': 0, 'C': 0, 'D': 0}
+    
+    for team_info in quality_grades:
+        team_name = team_info['team_name'][:24]  # Truncate long names
+        grade = team_info['grade']
+        overall = team_info['overall_score']
+        completeness = team_info['completeness']
+        consistency = team_info['consistency']
+        matches = team_info['sample_size']
+        
+        print(f"{team_name:<25} {grade:<6} {overall:.3f}    {completeness:.3f}     {consistency:.3f}    {matches:<8}")
+        grade_counts[grade] += 1
+    
+    # Grade distribution summary
+    print("\n" + "="*40)
+    print("GRADE DISTRIBUTION SUMMARY:")
+    print("="*40)
+    total_teams = len(quality_grades)
+    for grade, count in grade_counts.items():
+        if count > 0:
+            percentage = (count / total_teams) * 100
+            bar = "█" * (count * 20 // total_teams) if total_teams > 0 else ""
+            print(f"{grade:<3}: {count:>2} teams ({percentage:>5.1f}%) {bar}")
+    
+    # Overall statistics
+    if quality_grades:
+        avg_overall = sum(team['overall_score'] for team in quality_grades) / len(quality_grades)
+        avg_completeness = sum(team['completeness'] for team in quality_grades) / len(quality_grades)
+        avg_consistency = sum(team['consistency'] for team in quality_grades) / len(quality_grades)
+        total_matches = sum(team['sample_size'] for team in quality_grades)
+        
+        print(f"\nOVERALL STATISTICS:")
+        print(f"Average Quality Score: {avg_overall:.3f}")
+        print(f"Average Completeness:  {avg_completeness:.3f}")
+        print(f"Average Consistency:   {avg_consistency:.3f}")
+        print(f"Total Matches Cached:  {total_matches:,}")
+        
+        # Quality recommendations
+        high_quality_teams = sum(1 for team in quality_grades if team['overall_score'] >= 0.8)
+        low_quality_teams = sum(1 for team in quality_grades if team['overall_score'] < 0.5)
+        
+        print(f"\nQUALITY INSIGHTS:")
+        print(f"High Quality Teams (A/A+): {high_quality_teams} ({(high_quality_teams/total_teams)*100:.1f}%)")
+        print(f"Low Quality Teams (C-/D):  {low_quality_teams} ({(low_quality_teams/total_teams)*100:.1f}%)")
+        
+        if low_quality_teams > 0:
+            print(f"\n⚠️  {low_quality_teams} teams have low data quality - consider updating cache more frequently")
+        if high_quality_teams >= total_teams * 0.7:
+            print(f"\n✅ Good cache quality: {(high_quality_teams/total_teams)*100:.1f}% of teams have high-quality data")
+    
+    return team_data_collection, quality_grades
+
 def main():
     """Main function to handle command-line arguments and run the script."""
     parser = argparse.ArgumentParser(description="Cache Valorant team data for the match prediction system")
@@ -1350,20 +1568,32 @@ def main():
     parser.add_argument("--no-economy", action="store_true", help="Skip economy data")
     parser.add_argument("--no-maps", action="store_true", help="Skip map statistics")
     parser.add_argument("--filename", type=str, default="valorant_data_cache.pkl", help="Output filename (default: valorant_data_cache.pkl)")
+    
     args = parser.parse_args()
+    
     print("=== Valorant Match Predictor Data Caching Tool ===")
     print(f"Starting data collection for up to {args.teams} teams")
-    team_data = collect_team_data_for_cache(
-        team_limit=args.teams,
-        include_player_stats=not args.no_player_stats,
-        include_economy=not args.no_economy,
-        include_maps=not args.no_maps
-    )
-    if not team_data:
-        print("Error: No team data collected. Check API connection and try again.")
-        return
-    cache_path = save_cache(team_data, args.filename)
-    print(f"Cache saved to {cache_path}")
-    print("You can now use the cached data with the main Valorant Match Predictor script.")
+    
+    try:
+        # The data quality assessment now happens inside collect_team_data_for_cache()
+        team_data = collect_team_data_for_cache(
+            team_limit=args.teams,
+            include_player_stats=not args.no_player_stats,
+            include_economy=not args.no_economy,
+            include_maps=not args.no_maps
+        )
+        
+        if not team_data:
+            print("Error: No team data collected. Check API connection and try again.")
+            return
+        
+        cache_path = save_cache(team_data, args.filename)
+        print(f"\n✅ Process completed successfully!")
+        print(f"You can now use the cached data with the main Valorant Match Predictor script.")
+        
+    except Exception as e:
+        print(f"❌ Error during caching process: {e}")
+        traceback.print_exc()
+
 if __name__ == "__main__":
     main()

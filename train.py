@@ -992,6 +992,18 @@ def extract_economy_metrics(match_economy_data, team_identifier=None, fallback_n
     else:
         metrics['economy_efficiency'] = 0
     return metrics
+
+def prepare_data_for_model_safe(team1_stats, team2_stats):
+    """
+    Safe wrapper for prepare_data_for_model that handles errors gracefully.
+    This function was missing from your codebase.
+    """
+    try:
+        return prepare_data_for_model(team1_stats, team2_stats)
+    except Exception as e:
+        print(f"Error in prepare_data_for_model: {e}")
+        return None
+
 def calculate_team_player_stats(player_stats_list):
     """Calculate team-level statistics from individual player stats."""
     if not player_stats_list:
@@ -1241,33 +1253,74 @@ def collect_team_data(team_limit=300, include_player_stats=True, include_economy
     print("\n========================================================")
     print("COLLECTING TEAM DATA")
     print("========================================================")
+    
     team_data_collection = {}
+    
     if use_cache:
         print("Checking for cached data...")
         if os.path.exists(cache_path):
             team_data = load_cache_enhanced(cache_path)
             if team_data:
                 print("Using cached team data for training/backtesting")
-                if team_limit < len(team_data):
-                    ranked_teams = {team: data for team, data in team_data.items()
-                                   if data.get('ranking') is not None}
-                    if ranked_teams:
+                
+                # Handle enhanced cache structure properly
+                if isinstance(team_data, dict) and 'teams' in team_data:
+                    # Enhanced cache structure
+                    actual_teams = team_data['teams']
+                    print(f"Enhanced cache structure detected with {len(actual_teams)} teams")
+                    team_data_collection = actual_teams.copy()
+                else:
+                    # Simple cache structure
+                    print(f"Simple cache structure detected with {len(team_data)} teams")
+                    team_data_collection = team_data.copy()
+                
+                # Apply team limit ONLY if specified and we have more teams than requested
+                if team_limit and team_limit > 0 and len(team_data_collection) > team_limit:
+                    print(f"Applying team limit: {team_limit} from {len(team_data_collection)} available teams")
+                    
+                    # Try to get teams with rankings first
+                    ranked_teams = {}
+                    for team_name, team_info in team_data_collection.items():
+                        if isinstance(team_info, dict) and team_info.get('ranking') is not None:
+                            ranked_teams[team_name] = team_info
+                    
+                    if ranked_teams and len(ranked_teams) >= team_limit:
+                        # Sort by ranking (lower number = better ranking)
                         sorted_teams = sorted(ranked_teams.items(),
                                              key=lambda x: x[1]['ranking'] if x[1]['ranking'] else float('inf'))
                         team_data_collection = {team: data for team, data in sorted_teams[:team_limit]}
                         print(f"Selected top {len(team_data_collection)} teams by ranking")
                     else:
-                        team_names = list(team_data.keys())[:team_limit]
-                        team_data_collection = {name: team_data[name] for name in team_names}
-                        print(f"Selected first {len(team_data_collection)} teams from cache")
+                        # No rankings available or not enough ranked teams, just take first N teams
+                        team_names = list(team_data_collection.keys())[:team_limit]
+                        team_data_collection = {name: team_data_collection[name] for name in team_names}
+                        print(f"Selected first {len(team_data_collection)} teams (insufficient ranking data)")
                 else:
-                    team_data_collection = team_data.copy()
-                economy_data_count = sum(1 for team in team_data_collection.values()
-                                       if 'stats' in team and 'pistol_win_rate' in team['stats'])
-                player_stats_count = sum(1 for team in team_data_collection.values()
-                                        if team.get('player_stats'))
-                map_stats_count = sum(1 for team in team_data_collection.values()
-                                     if 'stats' in team and 'map_statistics' in team['stats'])
+                    print(f"Using all {len(team_data_collection)} teams from cache (no limit applied)")
+                
+                # Count data quality metrics
+                economy_data_count = 0
+                player_stats_count = 0
+                map_stats_count = 0
+                
+                for team_name, team_info in team_data_collection.items():
+                    if isinstance(team_info, dict):
+                        # Check for economy data
+                        if 'stats' in team_info and isinstance(team_info['stats'], dict):
+                            stats = team_info['stats']
+                            if 'pistol_win_rate' in stats:
+                                economy_data_count += 1
+                        
+                        # Check for player stats
+                        if team_info.get('player_stats'):
+                            player_stats_count += 1
+                        
+                        # Check for map stats
+                        if 'stats' in team_info and isinstance(team_info['stats'], dict):
+                            stats = team_info['stats']
+                            if 'map_statistics' in stats:
+                                map_stats_count += 1
+
                 print(f"\nUsing data for {len(team_data_collection)} teams from cache:")
                 print(f"  - Teams with economy data: {economy_data_count}")
                 print(f"  - Teams with player stats: {player_stats_count}")
@@ -1276,6 +1329,8 @@ def collect_team_data(team_limit=300, include_player_stats=True, include_economy
                 print("Cache loading failed. Falling back to API data collection.")
         else:
             print(f"Cache file not found at {cache_path}. Falling back to API data collection.")
+    
+    # Handle missing teams (fetch from API if needed)
     missing_team_names = []
     if missing_teams:
         for team_name in missing_teams:
@@ -1293,47 +1348,64 @@ def collect_team_data(team_limit=300, include_player_stats=True, include_economy
                 if not found_in_cache:
                     missing_team_names.append(clean_team_name)
                     print(f"Team '{clean_team_name}' not found in cache, will fetch from API")
+
+    # Fetch missing teams from API
     if missing_team_names:
         print(f"\nFetching {len(missing_team_names)} missing teams from API...")
         for team_name in missing_team_names:
             try:
                 print(f"\nFetching data for: {team_name}")
-                team_id = get_team_id(team_name)
+                team_id = get_team_id_exact_only(team_name)
                 if not team_id:
                     print(f"Could not find team ID for '{team_name}' in API")
                     continue
+
                 print(f"Found team ID {team_id} for {team_name}")
                 team_details, team_tag = fetch_team_details(team_id)
                 if not team_details:
                     print(f"Could not fetch team details for {team_name}")
                     continue
+
                 team_history = fetch_team_match_history(team_id)
                 if not team_history:
                     print(f"No match history for team {team_name}")
                     continue
+
                 team_matches = parse_match_data(team_history, team_name)
                 if not team_matches:
                     print(f"No parsed match data for team {team_name}")
                     continue
+
+                # Set team metadata for matches
                 for match in team_matches:
                     match['team_tag'] = team_tag
                     match['team_id'] = team_id
                     match['team_name'] = team_name
+
+                # Get player stats if requested
                 team_player_stats = None
                 if include_player_stats:
                     team_player_stats = fetch_team_player_stats(team_id)
+
+                # Calculate team stats
                 team_stats = calculate_team_stats(team_matches, team_player_stats, include_economy=include_economy)
                 team_stats['team_tag'] = team_tag
                 team_stats['team_name'] = team_name
                 team_stats['team_id'] = team_id
+
+                # Get map statistics if requested
                 if include_maps:
                     map_stats = fetch_team_map_statistics(team_id)
                     if map_stats:
                         team_stats['map_statistics'] = map_stats
+
+                # Add additional analysis
                 team_stats['map_performance'] = extract_map_performance(team_matches)
                 team_stats['tournament_performance'] = extract_tournament_performance(team_matches)
                 team_stats['performance_trends'] = analyze_performance_trends(team_matches)
                 team_stats['opponent_quality'] = analyze_opponent_quality(team_matches, team_id)
+
+                # Add to collection
                 team_data_collection[team_name] = {
                     'team_id': team_id,
                     'team_tag': team_tag,
@@ -1343,19 +1415,24 @@ def collect_team_data(team_limit=300, include_player_stats=True, include_economy
                     'ranking': None  # Not available from individual team fetch
                 }
                 print(f"Successfully fetched and added {team_name} with {len(team_matches)} matches")
+                
             except Exception as e:
                 print(f"Error fetching data for team '{team_name}': {e}")
                 traceback.print_exc()
                 continue
+
+    # Fallback: collect from API if no cache data
     if not team_data_collection and not use_cache:
         print("Collecting team data directly from API...")
         print(f"Including player stats: {include_player_stats}")
         print(f"Including economy data: {include_economy}")
         print(f"Including map data: {include_maps}")
         print(f"Fetching teams from API: {API_URL}/teams?limit={team_limit}")
+        
         try:
             teams_response = requests.get(f"{API_URL}/teams?limit={team_limit}")
             print(f"API response status code: {teams_response.status_code}")
+            
             if teams_response.status_code != 200:
                 print(f"Error fetching teams: {teams_response.status_code}")
                 try:
@@ -1363,8 +1440,10 @@ def collect_team_data(team_limit=300, include_player_stats=True, include_economy
                 except:
                     pass
                 return {}
+
             teams_data = teams_response.json()
             print(f"Teams data keys: {list(teams_data.keys())}")
+            
             if 'data' not in teams_data:
                 print("No 'data' field found in the response")
                 try:
@@ -1372,12 +1451,73 @@ def collect_team_data(team_limit=300, include_player_stats=True, include_economy
                 except:
                     pass
                 return {}
+
             print(f"Number of teams in response: {len(teams_data['data'])}")
+            
+            # Process teams from API response
+            for team_info in teams_data['data']:
+                try:
+                    team_name = team_info.get('name', '')
+                    team_id = team_info.get('id', '')
+                    
+                    if not team_name or not team_id:
+                        continue
+                    
+                    print(f"Processing API team: {team_name}")
+                    
+                    # Get detailed team data
+                    team_details, team_tag = fetch_team_details(team_id)
+                    team_history = fetch_team_match_history(team_id)
+                    
+                    if not team_history:
+                        continue
+                    
+                    team_matches = parse_match_data(team_history, team_name)
+                    if not team_matches:
+                        continue
+                    
+                    # Get additional data if requested
+                    team_player_stats = None
+                    if include_player_stats:
+                        team_player_stats = fetch_team_player_stats(team_id)
+                    
+                    # Calculate stats
+                    team_stats = calculate_team_stats(team_matches, team_player_stats, include_economy=include_economy)
+                    team_stats['team_tag'] = team_tag
+                    team_stats['team_name'] = team_name
+                    team_stats['team_id'] = team_id
+                    
+                    if include_maps:
+                        map_stats = fetch_team_map_statistics(team_id)
+                        if map_stats:
+                            team_stats['map_statistics'] = map_stats
+                    
+                    # Additional analysis
+                    team_stats['map_performance'] = extract_map_performance(team_matches)
+                    team_stats['tournament_performance'] = extract_tournament_performance(team_matches)
+                    team_stats['performance_trends'] = analyze_performance_trends(team_matches)
+                    team_stats['opponent_quality'] = analyze_opponent_quality(team_matches, team_id)
+                    
+                    # Add to collection
+                    team_data_collection[team_name] = {
+                        'team_id': team_id,
+                        'team_tag': team_tag,
+                        'stats': team_stats,
+                        'matches': team_matches,
+                        'player_stats': team_player_stats,
+                        'ranking': team_info.get('ranking')
+                    }
+                    
+                except Exception as e:
+                    print(f"Error processing team from API: {e}")
+                    continue
+                    
         except Exception as e:
-            print(f"Error in collect_team_data: {e}")
+            print(f"Error in collect_team_data API fallback: {e}")
             import traceback
             traceback.print_exc()
             return {}
+
     print(f"\nFinal collection: {len(team_data_collection)} teams available")
     return team_data_collection
 def validate_team_data(team_name, team_data, min_matches=5):
@@ -2255,38 +2395,179 @@ def generate_performance_warning(backtest_results):
     return warning
 @debug_func
 def build_training_dataset(team_data_collection):
-    print(f"[{datetime.now()}] Building training dataset from {len(team_data_collection)} teams...")
-    sys.stdout.flush()
     """
-    Build a dataset for model training from team data collection.
-    Works with both API-fetched and cached data.
+    Enhanced training dataset builder with better opponent matching.
+    REPLACE your existing build_training_dataset function with this code.
     """
+    print(f"[{datetime.now()}] Building training dataset from teams...")
+    
+    # Handle enhanced cache structure (your cache has 'teams' nested inside)
+    if isinstance(team_data_collection, dict) and 'teams' in team_data_collection:
+        print("Detected enhanced cache structure - extracting teams data")
+        actual_teams = team_data_collection['teams']
+    else:
+        print("Using direct team collection structure")
+        actual_teams = team_data_collection
+    
+    print(f"Working with {len(actual_teams)} teams")
+    
     X = []  # Feature vectors
-    y = []  # Labels (1 if team1 won, 0 if team2 won)
-    print(f"Building training dataset from {len(team_data_collection)} teams...")
-    for team_name, team_data in team_data_collection.items():
-        if 'matches' in team_data:
-            matches = team_data['matches']
-            stats = team_data.get('stats', {})
-        else:
-            matches = team_data.get('matches', [])
-            stats = team_data
-        if not matches:
-            continue
-        for match in matches:
-            opponent_name = match.get('opponent_name')
-            if opponent_name not in team_data_collection:
-                continue
-            team1_stats = stats
-            team2_data = team_data_collection[opponent_name]
-            if 'stats' in team2_data:
-                team2_stats = team2_data['stats']
+    y = []  # Labels
+    
+    debug_stats = {
+        'teams_processed': 0,
+        'total_matches': 0,
+        'opponents_found': 0,
+        'opponents_missing': 0,
+        'features_created': 0,
+        'features_failed': 0
+    }
+    
+    # Create better lookup tables for opponent matching
+    team_names_exact = {name: name for name in actual_teams.keys()}
+    team_names_lower = {name.lower(): name for name in actual_teams.keys()}
+    
+    # Process each team
+    for team_name, team_data in actual_teams.items():
+        debug_stats['teams_processed'] += 1
+        
+        # Extract team stats and matches (handle your cache structure)
+        if isinstance(team_data, dict):
+            if 'stats' in team_data:
+                team_stats = team_data['stats']
+                matches = team_data.get('matches', [])
             else:
-                team2_stats = team2_data
-            features = prepare_data_for_model(team1_stats, team2_stats)
-            if features:
-                X.append(features)
-                y.append(1 if match.get('team_won', False) else 0)
+                team_stats = team_data
+                matches = team_data.get('matches', [])
+        else:
+            print(f"Warning: Unexpected team data structure for {team_name}")
+            continue
+        
+        if not isinstance(matches, list):
+            print(f"Warning: No matches list found for {team_name}")
+            continue
+        
+        debug_stats['total_matches'] += len(matches)
+        
+        if debug_stats['teams_processed'] <= 3:
+            print(f"Processing {team_name}: {len(matches)} matches, stats keys: {list(team_stats.keys())[:5]}")
+        
+        # Process each match
+        for match in matches:
+            try:
+                opponent_name = match.get('opponent_name', '')
+                if not opponent_name:
+                    continue
+                
+                # Enhanced opponent matching (multiple strategies)
+                matched_opponent = None
+                
+                # Strategy 1: Exact match
+                if opponent_name in team_names_exact:
+                    matched_opponent = opponent_name
+                    debug_stats['opponents_found'] += 1
+                # Strategy 2: Case-insensitive match
+                elif opponent_name.lower() in team_names_lower:
+                    matched_opponent = team_names_lower[opponent_name.lower()]
+                    debug_stats['opponents_found'] += 1
+                # Strategy 3: Partial match (contains)
+                else:
+                    opponent_lower = opponent_name.lower()
+                    found_partial = False
+                    for team_key, team_name_actual in team_names_lower.items():
+                        if (opponent_lower in team_key or team_key in opponent_lower) and len(opponent_lower) > 2:
+                            matched_opponent = team_name_actual
+                            debug_stats['opponents_found'] += 1
+                            found_partial = True
+                            break
+                    
+                    # Strategy 4: Fuzzy match as last resort
+                    if not found_partial:
+                        try:
+                            import difflib
+                            best_match = None
+                            best_score = 0
+                            for team_key, team_name_actual in team_names_lower.items():
+                                score = difflib.SequenceMatcher(None, opponent_lower, team_key).ratio()
+                                if score > best_score and score > 0.7:  # 70% similarity
+                                    best_match = team_name_actual
+                                    best_score = score
+                            if best_match:
+                                matched_opponent = best_match
+                                debug_stats['opponents_found'] += 1
+                            else:
+                                debug_stats['opponents_missing'] += 1
+                                continue
+                        except ImportError:
+                            debug_stats['opponents_missing'] += 1
+                            continue
+                
+                if not matched_opponent or matched_opponent not in actual_teams:
+                    debug_stats['opponents_missing'] += 1
+                    continue
+                
+                # Get opponent data
+                opponent_team_data = actual_teams[matched_opponent]
+                if isinstance(opponent_team_data, dict):
+                    if 'stats' in opponent_team_data:
+                        opponent_stats = opponent_team_data['stats']
+                    else:
+                        opponent_stats = opponent_team_data
+                else:
+                    debug_stats['opponents_missing'] += 1
+                    continue
+                
+                # Prepare features using the SAFE function
+                try:
+                    features = prepare_data_for_model_safe(team_stats, opponent_stats)
+                    if features and len(features) > 0:
+                        X.append(features)
+                        y.append(1 if match.get('team_won', False) else 0)
+                        debug_stats['features_created'] += 1
+                    else:
+                        debug_stats['features_failed'] += 1
+                except Exception as e:
+                    debug_stats['features_failed'] += 1
+                    if debug_stats['features_failed'] <= 5:
+                        print(f"Feature preparation error: {e}")
+                    continue
+                    
+            except Exception as e:
+                print(f"Error processing match for {team_name}: {e}")
+                continue
+    
+    # Print results with better formatting
+    print(f"\nTraining Dataset Build Results:")
+    print(f"  Teams processed: {debug_stats['teams_processed']}")
+    print(f"  Total matches found: {debug_stats['total_matches']}")
+    print(f"  Opponents found: {debug_stats['opponents_found']}")
+    print(f"  Opponents missing: {debug_stats['opponents_missing']}")
+    print(f"  Features created: {debug_stats['features_created']}")
+    print(f"  Features failed: {debug_stats['features_failed']}")
+    
+    # Enhanced debugging when no samples created
+    if debug_stats['features_created'] == 0:
+        print(f"\n❌ NO TRAINING SAMPLES CREATED!")
+        print(f"Debugging suggestions:")
+        print(f"  1. Check if opponent names match team names in cache")
+        print(f"  2. Verify team data structure has 'stats' and 'matches'")
+        print(f"  3. Ensure prepare_data_for_model function works correctly")
+        
+        # Show sample data for debugging
+        if actual_teams:
+            sample_team_name = list(actual_teams.keys())[0]
+            sample_team_data = actual_teams[sample_team_name]
+            print(f"\nSample team: {sample_team_name}")
+            print(f"Sample team data keys: {list(sample_team_data.keys()) if isinstance(sample_team_data, dict) else 'Not a dict'}")
+            
+            if isinstance(sample_team_data, dict) and 'matches' in sample_team_data:
+                matches = sample_team_data['matches']
+                if matches:
+                    sample_match = matches[0]
+                    opponent_name = sample_match.get('opponent_name', 'NO_OPPONENT_NAME')
+                    print(f"Sample opponent name: '{opponent_name}'")
+                    print(f"Available team names: {list(actual_teams.keys())[:5]}...")
+    
     print(f"Created {len(X)} training samples from match data")
     return X, y
 def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
@@ -2294,46 +2575,145 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                 cache_path="cache/valorant_data_cache.pkl"):
     """
     Enhanced backtest with strict profitability focus and realistic market simulation.
+    FIXED: No longer artificially limits teams from cache.
     """
     print(f"\n=== ENHANCED PROFITABILITY-FOCUSED BACKTEST ===")
     print(f"Enhanced parameters: min_edge={min_edge:.1%}, confidence_threshold={confidence_threshold:.1%}")
+    
     ensemble_models, selected_features = load_backtesting_models()
     if not ensemble_models or not selected_features:
         print("Failed to load models or features")
         return None
+
+    # FIXED: Load team data properly without artificial limiting
     team_data = {}
     if use_cache:
         cache_data = load_cache_enhanced(cache_path)
         if cache_data:
-            team_data = cache_data
-            print(f"Loaded {len(team_data)} teams from cache")
+            # Handle enhanced cache structure
+            if isinstance(cache_data, dict) and 'teams' in cache_data:
+                team_data = cache_data['teams']
+                print(f"Loaded {len(team_data)} teams from enhanced cache")
+            else:
+                team_data = cache_data
+                print(f"Loaded {len(team_data)} teams from simple cache")
+            
+            # Apply team limit only if specified and we have more teams
+            if team_limit and team_limit > 0 and len(team_data) > team_limit:
+                print(f"Applying team limit: {team_limit} from {len(team_data)} available teams")
+                # Get teams with good data quality
+                quality_teams = {}
+                for team_name, team_info in team_data.items():
+                    if isinstance(team_info, dict):
+                        matches = team_info.get('matches', [])
+                        if isinstance(matches, list) and len(matches) >= 10:  # At least 10 matches
+                            quality_teams[team_name] = team_info
+                
+                if len(quality_teams) >= team_limit:
+                    # Sort by ranking if available
+                    ranked_teams = {name: info for name, info in quality_teams.items() 
+                                   if isinstance(info, dict) and info.get('ranking')}
+                    if ranked_teams:
+                        sorted_teams = sorted(ranked_teams.items(), 
+                                            key=lambda x: x[1]['ranking'] if x[1]['ranking'] else float('inf'))
+                        team_data = {team: data for team, data in sorted_teams[:team_limit]}
+                        print(f"Selected top {len(team_data)} teams by ranking")
+                    else:
+                        # No rankings, just take first N quality teams
+                        team_names = list(quality_teams.keys())[:team_limit]
+                        team_data = {name: quality_teams[name] for name in team_names}
+                        print(f"Selected first {len(team_data)} quality teams")
+                else:
+                    print(f"Using all {len(quality_teams)} quality teams (less than limit)")
+                    team_data = quality_teams
+            else:
+                print(f"Using all {len(team_data)} teams from cache (no limit applied)")
+        else:
+            print("Failed to load cache data")
+            return None
+
     if not team_data:
         print("No team data available")
         return None
+
+    # Build backtest matches from team data
     backtest_matches = []
     seen_match_ids = set()
     match_quality_threshold = 10  # Minimum matches per team for inclusion
+
+    print(f"Building backtest dataset from {len(team_data)} teams...")
+    
     for team_name, team_info in team_data.items():
+        if not isinstance(team_info, dict):
+            continue
+            
         team_matches = team_info.get('matches', [])
-        if len(team_matches) < match_quality_threshold:
+        if not isinstance(team_matches, list) or len(team_matches) < match_quality_threshold:
             continue  # Skip teams with insufficient data
+
         for match in team_matches:
+            if not isinstance(match, dict):
+                continue
+                
             match_id = match.get('match_id', '')
             opponent_name = match.get('opponent_name')
-            if not opponent_name or opponent_name not in team_data:
+            match_date = match.get('date', '')
+            
+            if not opponent_name or not match_date:
                 continue
-            if match_id in seen_match_ids:
+                
+            # Check if opponent exists in our dataset
+            if opponent_name not in team_data:
+                # Try fuzzy matching for opponent
+                found_opponent = None
+                opponent_lower = opponent_name.lower()
+                for cached_name in team_data.keys():
+                    if (opponent_lower == cached_name.lower() or
+                        opponent_lower in cached_name.lower() or
+                        cached_name.lower() in opponent_lower):
+                        found_opponent = cached_name
+                        break
+                
+                if not found_opponent:
+                    continue  # Skip if opponent not found
+                opponent_name = found_opponent
+
+            # Check opponent data quality
+            opponent_info = team_data[opponent_name]
+            if not isinstance(opponent_info, dict):
                 continue
-            if len(team_data[opponent_name].get('matches', [])) < match_quality_threshold:
+                
+            opponent_matches = opponent_info.get('matches', [])
+            if not isinstance(opponent_matches, list) or len(opponent_matches) < match_quality_threshold:
                 continue
-            seen_match_ids.add(match_id)
+
+            # Avoid duplicate matches
+            if match_id and match_id in seen_match_ids:
+                continue
+            if match_id:
+                seen_match_ids.add(match_id)
+
+            # Apply date filters if specified
+            if start_date and match_date < start_date:
+                continue
+            if end_date and match_date > end_date:
+                continue
+
             backtest_matches.append({
                 'team1_name': team_name,
                 'team2_name': opponent_name,
                 'match_data': match,
-                'match_id': match_id
+                'match_id': match_id,
+                'date': match_date
             })
+
     print(f"Quality-filtered matches: {len(backtest_matches)}")
+    
+    if len(backtest_matches) == 0:
+        print("No valid matches found for backtesting")
+        return None
+
+    # Initialize results tracking
     results = {
         'predictions': [],
         'bets': [],
@@ -2356,6 +2736,8 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         },
         'enhanced_analysis': True
     }
+
+    # Backtest execution
     current_bankroll = bankroll
     starting_bankroll = bankroll
     peak_bankroll = bankroll
@@ -2369,50 +2751,95 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     bet_returns = []
     consecutive_losses = 0
     max_consecutive_losses = 0
-    sample_size = min(500, len(backtest_matches))  # Limit for performance
-    selected_matches = np.random.choice(len(backtest_matches), sample_size, replace=False)
-    print(f"Processing {sample_size} matches for enhanced backtest")
+
+    # Limit sample size for performance if needed
+    sample_size = min(1000, len(backtest_matches))  # Process up to 1000 matches
+    if len(backtest_matches) > sample_size:
+        selected_matches = np.random.choice(len(backtest_matches), sample_size, replace=False)
+        print(f"Sampling {sample_size} matches from {len(backtest_matches)} for performance")
+    else:
+        selected_matches = range(len(backtest_matches))
+        print(f"Processing all {len(backtest_matches)} matches")
+
+    from tqdm import tqdm
+    
     for i, match_idx in enumerate(tqdm(selected_matches, desc="Enhanced backtesting")):
-        match = backtest_matches[match_idx]
+        if isinstance(match_idx, (int, np.integer)):
+            match = backtest_matches[match_idx]
+        else:
+            match = backtest_matches[i]
+            
         try:
             team1_name = match['team1_name']
             team2_name = match['team2_name']
             match_data = match['match_data']
             match_date = match_data.get('date', '')
-            team1_stats = team_data[team1_name].get('stats', {})
-            team2_stats = team_data[team2_name].get('stats', {})
+
+            # Get team stats (need to be from the team_data we loaded)
+            if team1_name not in team_data or team2_name not in team_data:
+                continue
+                
+            team1_info = team_data[team1_name]
+            team2_info = team_data[team2_name]
+            
+            if not isinstance(team1_info, dict) or not isinstance(team2_info, dict):
+                continue
+                
+            team1_stats = team1_info.get('stats', {})
+            team2_stats = team2_info.get('stats', {})
+            
+            if not team1_stats or not team2_stats:
+                continue
+
+            # Prepare features for prediction
             X = prepare_features_for_backtest(team1_stats, team2_stats, selected_features)
             if X is None:
                 continue
+
+            # Make prediction
             win_probability, raw_predictions, confidence_score = predict_with_ensemble(
                 ensemble_models, X
             )
+
+            # Get actual result
             team1_score, team2_score = extract_match_score(match_data)
             actual_winner = 'team1' if team1_score > team2_score else 'team2'
             predicted_winner = 'team1' if win_probability > 0.5 else 'team2'
             prediction_correct = predicted_winner == actual_winner
+
             correct_predictions += 1 if prediction_correct else 0
             total_predictions += 1
+
+            # Simulate betting odds
             base_odds = simulate_odds(win_probability, vig=0.045, market_efficiency=0.92)
+
+            # Analyze betting opportunities
             betting_analysis = analyze_betting_edge_for_backtesting(
                 win_probability, 1 - win_probability, base_odds,
                 confidence_score, current_bankroll
             )
+
+            # Select optimal bets
             optimal_bets = select_optimal_bets_conservative(
                 betting_analysis, team1_name, team2_name, current_bankroll,
-                max_bets=2, max_total_risk=0.03, config=None  # Max 3% total risk
+                max_bets=2, max_total_risk=0.03, config=None
             )
+
+            # Process bets
             match_profit = 0
             match_bets = []
+
             for bet_type, analysis in optimal_bets.items():
                 bet_amount = analysis['bet_amount']
                 odds = analysis['odds']
                 bet_won = evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score)
                 returns = bet_amount * odds if bet_won else 0
                 profit = returns - bet_amount
+
                 match_profit += profit
                 current_bankroll += profit
                 peak_bankroll = max(peak_bankroll, current_bankroll)
+
                 match_bets.append({
                     'bet_type': bet_type,
                     'amount': bet_amount,
@@ -2423,42 +2850,87 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                     'edge': analysis['edge'],
                     'confidence': confidence_score
                 })
+
                 total_bets += 1
                 winning_bets += 1 if bet_won else 0
                 total_wagered += bet_amount
                 total_returns += returns
+
                 if bet_won:
                     consecutive_losses = 0
                 else:
                     consecutive_losses += 1
                     max_consecutive_losses = max(max_consecutive_losses, consecutive_losses)
-                bet_returns.append(profit / bet_amount)  # Return rate
+
+                bet_returns.append(profit / bet_amount if bet_amount > 0 else 0)
+
             if match_bets:
                 daily_returns.append(match_profit / starting_bankroll)
+
+            # Track bankroll history
             results['performance']['bankroll_history'].append({
                 'match_idx': i,
                 'bankroll': current_bankroll,
                 'profit': current_bankroll - starting_bankroll,
-                'drawdown': (peak_bankroll - current_bankroll) / peak_bankroll,
+                'drawdown': (peak_bankroll - current_bankroll) / peak_bankroll if peak_bankroll > 0 else 0,
                 'date': match_date
             })
+
+            # Store prediction results
+            results['predictions'].append({
+                'match_id': match.get('match_id', f'match_{i}'),
+                'team1': team1_name,
+                'team2': team2_name,
+                'predicted_winner': predicted_winner,
+                'actual_winner': actual_winner,
+                'team1_prob': win_probability,
+                'team2_prob': 1 - win_probability,
+                'confidence': confidence_score,
+                'correct': prediction_correct,
+                'score': f"{team1_score}-{team2_score}",
+                'date': match_date
+            })
+
+            if match_bets:
+                results['bets'].append({
+                    'match_id': match.get('match_id', f'match_{i}'),
+                    'team1': team1_name,
+                    'team2': team2_name,
+                    'bets': match_bets,
+                    'date': match_date
+                })
+
+            # Early stopping if bankroll drops too low
             if current_bankroll < starting_bankroll * 0.5:
                 print(f"Stopping backtest - bankroll dropped below 50% at match {i}")
                 break
+
         except Exception as e:
             print(f"Error processing match {i}: {e}")
             continue
+
+    # Calculate final metrics
     final_profit = current_bankroll - starting_bankroll
     final_roi = final_profit / starting_bankroll if starting_bankroll > 0 else 0
     final_accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
     bet_win_rate = winning_bets / total_bets if total_bets > 0 else 0
-    max_drawdown = (peak_bankroll - min(entry['bankroll'] for entry in results['performance']['bankroll_history'])) / peak_bankroll if results['performance']['bankroll_history'] else 0
+
+    # Calculate max drawdown
+    if results['performance']['bankroll_history']:
+        min_bankroll = min(entry['bankroll'] for entry in results['performance']['bankroll_history'])
+        max_drawdown = (peak_bankroll - min_bankroll) / peak_bankroll if peak_bankroll > 0 else 0
+    else:
+        max_drawdown = 0
+
+    # Calculate Sharpe ratio
     if daily_returns and len(daily_returns) > 1:
         avg_daily_return = np.mean(daily_returns)
         daily_volatility = np.std(daily_returns)
         sharpe_ratio = (avg_daily_return * 252) / (daily_volatility * np.sqrt(252)) if daily_volatility > 0 else 0
     else:
         sharpe_ratio = 0
+
+    # Calculate profit factor
     winning_trades = [r for r in bet_returns if r > 0]
     losing_trades = [r for r in bet_returns if r < 0]
     if winning_trades and losing_trades:
@@ -2467,6 +2939,8 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf')
     else:
         profit_factor = 0
+
+    # Update results
     results['performance'].update({
         'accuracy': final_accuracy,
         'roi': final_roi,
@@ -2482,9 +2956,13 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         'max_consecutive_losses': max_consecutive_losses,
         'avg_bet_size': total_wagered / total_bets if total_bets > 0 else 0
     })
+
+    # Print results
     print(f"\n{'='*60}")
     print(f"ENHANCED BACKTEST RESULTS")
     print(f"{'='*60}")
+    print(f"Teams used: {len(team_data)}")
+    print(f"Matches processed: {total_predictions}")
     print(f"Prediction Accuracy: {final_accuracy:.2%}")
     print(f"Total Bets Placed: {total_bets}")
     print(f"Bet Win Rate: {bet_win_rate:.2%}")
@@ -2496,6 +2974,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     print(f"Sharpe Ratio: {sharpe_ratio:.2f}")
     print(f"Profit Factor: {profit_factor:.2f}")
     print(f"Max Consecutive Losses: {max_consecutive_losses}")
+
     if total_bets == 0:
         print("\n" + "="*60)
         print("EXCELLENT: No bets placed - model is being appropriately conservative!")
@@ -2508,6 +2987,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         print(f"\n⚠️  MARGINAL: {final_roi:.1%} ROI - proceed with extreme caution")
     else:
         print(f"\n❌ UNPROFITABLE: {final_roi:.1%} ROI - strategy needs major revision")
+
     return results
 def create_improved_model(input_dim, regularization_strength=0.01, dropout_rate=0.4):
     inputs = Input(shape=(input_dim,))
@@ -5410,12 +5890,7 @@ def calculate_win_rate_stability(team_matches, window_size=5):
 def get_teams_for_backtesting(limit=100, use_cache=True, cache_path="cache/valorant_data_cache.pkl"):
     """
     Get a list of teams for backtesting, optionally using cached data.
-    Args:
-        limit (int): Maximum number of teams to return
-        use_cache (bool): Whether to use cached data if available
-        cache_path (str): Path to the cache file
-    Returns:
-        list: Teams for backtesting
+    FIXED: Properly handles enhanced cache structure and doesn't artificially limit teams.
     """
     if use_cache:
         print(f"Checking for cached team data for backtesting...")
@@ -5423,38 +5898,62 @@ def get_teams_for_backtesting(limit=100, use_cache=True, cache_path="cache/valor
             team_data = load_cache_enhanced(cache_path)
             if team_data:
                 teams_list = []
-                for team_name, team_info in team_data.items():
-                    team_dict = {
-                        'id': team_info.get('team_id', ''),
-                        'name': team_name,
-                        'ranking': team_info.get('ranking')
-                    }
-                    teams_list.append(team_dict)
-                teams_list = sorted(teams_list,
-                                   key=lambda x: x['ranking'] if x['ranking'] else float('inf'))
-                teams_list = teams_list[:limit]
+                
+                # Handle enhanced cache structure
+                if isinstance(team_data, dict) and 'teams' in team_data:
+                    actual_teams = team_data['teams']
+                    print(f"Enhanced cache structure detected with {len(actual_teams)} teams")
+                else:
+                    actual_teams = team_data
+                    print(f"Simple cache structure with {len(actual_teams)} teams")
+                
+                for team_name, team_info in actual_teams.items():
+                    if isinstance(team_info, dict):
+                        team_dict = {
+                            'id': team_info.get('team_id', ''),
+                            'name': team_name,
+                            'ranking': team_info.get('ranking')
+                        }
+                        teams_list.append(team_dict)
+                
+                # Apply limit only if specified and we have more teams
+                if limit and limit > 0 and len(teams_list) > limit:
+                    print(f"Applying team limit: {limit} from {len(teams_list)} available teams")
+                    teams_list = sorted(teams_list,
+                                       key=lambda x: x['ranking'] if x['ranking'] else float('inf'))
+                    teams_list = teams_list[:limit]
+                else:
+                    print(f"Using all {len(teams_list)} teams from cache")
+                
                 print(f"Using {len(teams_list)} teams from cache for backtesting")
                 return teams_list
+    
+    # Fallback to API
     print(f"Fetching teams from API: {API_URL}/teams?limit={limit}")
     try:
         teams_response = requests.get(f"{API_URL}/teams?limit={limit}")
         if teams_response.status_code != 200:
             print(f"Error fetching teams: {teams_response.status_code}")
             return []
+        
         teams_data = teams_response.json()
         if 'data' not in teams_data:
             print("No 'data' field found in the response")
             return []
+        
         teams_list = []
         for team in teams_data['data']:
             if 'ranking' in team and team['ranking'] and team['ranking'] <= 100:
                 teams_list.append(team)
+        
         if not teams_list:
             print(f"No teams with rankings found. Using the first {min(100, limit)} teams instead.")
             if len(teams_data['data']) > 0:
                 teams_list = teams_data['data'][:min(100, limit)]
+        
         print(f"Selected {len(teams_list)} teams for backtesting from API")
         return teams_list
+        
     except Exception as e:
         print(f"Error in get_teams_for_backtesting: {e}")
         return []
@@ -7299,24 +7798,27 @@ def calculate_ot_win_rate(map_statistics):
 def run_backtest_with_safeguards(params):
     """
     Run backtesting with enhanced safeguards.
-    Args:
-        params (dict): Backtest parameters
-    Returns:
-        dict: Backtest results
+    FIXED: Uses proper team data loading without artificial limits.
     """
     logging.info(f"Starting backtest with parameters: {params}")
+    
     ensemble_models, selected_features = load_backtesting_models()
     if not ensemble_models or not selected_features:
         logging.error("Failed to load models or features")
         return None
-    start_date = params.get('start_date', Config.BACKTEST.DEFAULT_START_DATE)
-    end_date = params.get('end_date', Config.BACKTEST.DEFAULT_END_DATE)
-    team_limit = params.get('team_limit', Config.BACKTEST.DEFAULT_TEAM_LIMIT)
-    bankroll = params.get('bankroll', Config.BACKTEST.DEFAULT_STARTING_BANKROLL)
-    bet_pct = params.get('bet_pct', Config.BACKTEST.DEFAULT_BET_PCT)
-    min_edge = params.get('min_edge', Config.BACKTEST.DEFAULT_MIN_EDGE)
-    confidence_threshold = params.get('confidence_threshold', Config.BACKTEST.DEFAULT_CONFIDENCE_THRESHOLD)
-    use_cache = params.get('use_cache', Config.BACKTEST.USE_CACHE)
+
+    # Extract parameters
+    start_date = params.get('start_date', None)
+    end_date = params.get('end_date', None)
+    team_limit = params.get('team_limit', 50)
+    bankroll = params.get('bankroll', 1000.0)
+    bet_pct = params.get('bet_pct', 0.05)
+    min_edge = params.get('min_edge', 0.08)
+    confidence_threshold = params.get('confidence_threshold', 0.4)
+    use_cache = params.get('use_cache', True)
+    cache_path = params.get('cache_path', "cache/valorant_data_cache.pkl")
+
+    # Run the enhanced backtest
     results = run_backtest(
         start_date=start_date,
         end_date=end_date,
@@ -7326,16 +7828,21 @@ def run_backtest_with_safeguards(params):
         min_edge=min_edge,
         confidence_threshold=confidence_threshold,
         use_cache=use_cache,
-        cache_path=Config.BACKTEST.CACHE_PATH
+        cache_path=cache_path
     )
+
     if not results:
         logging.error("Backtest failed or no results generated")
         return None
+
+    # Add realistic expectations
     warning = generate_performance_warning(results)
     results['realistic_expectations'] = warning
+
+    # Add long-term simulation if configured
     if Config.BACKTEST.SIMULATE_LONG_TERM_VARIANCE:
         win_rate = results['performance']['win_rate']
-        avg_odds = 2.0  # Estimate - could be calculated from results
+        avg_odds = 2.0  # Estimate
         kelly_fraction = Config.BETTING.KELLY_FRACTION
         simulation = simulate_long_term_performance(
             win_rate,
@@ -7346,6 +7853,7 @@ def run_backtest_with_safeguards(params):
             num_simulations=Config.BACKTEST.SIMULATION_RUNS
         )
         results['long_term_simulation'] = simulation
+
     logging.info(f"Backtest completed: {results['performance']['accuracy']:.2%} accuracy, {results['performance']['roi']:.2%} ROI")
     return results
 def init_forward_testing():
