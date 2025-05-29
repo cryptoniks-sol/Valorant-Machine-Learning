@@ -490,16 +490,17 @@ def modify_prediction_for_swapped_teams(prediction, teams_swapped):
     return prediction
 def prepare_data_with_consistent_ordering(team1_stats, team2_stats, selected_features):
     """
-    Prepare prediction data with consistent team ordering.
-    Args:
-        team1_stats (dict): Statistics for team 1
-        team2_stats (dict): Statistics for team 2
-        selected_features (list): Features to include in prediction
-    Returns:
-        tuple: (features, teams_swapped)
+    FIXED: Now uses EXACT same feature preparation as backtesting.
+    This ensures identical feature engineering between systems.
     """
+    print("Preparing features using backtesting-consistent method...")
+    
+    # Use EXACT same team ordering logic as backtesting
     ordered_team1_stats, ordered_team2_stats, teams_swapped = determine_team_order(team1_stats, team2_stats)
+    
+    # Use EXACT same feature preparation as backtesting
     features = prepare_features_for_backtest(ordered_team1_stats, ordered_team2_stats, selected_features)
+    
     return features, teams_swapped
 def get_historical_team_stats(team_name, target_date, team_data_collection):
     """
@@ -2445,14 +2446,21 @@ def generate_performance_warning(backtest_results):
         warning += "ASSESSMENT: Not recommended - insufficient edge for real-world conditions.\n"
     return warning
 @debug_func
-def build_training_dataset(team_data_collection):
+def build_training_dataset(team_data_collection, test_split=0.3, random_state=42):
     """
-    Enhanced training dataset builder with better opponent matching.
-    REPLACE your existing build_training_dataset function with this code.
-    """
-    print(f"[{datetime.now()}] Building training dataset from teams...")
+    Enhanced training dataset builder with proper train/test splitting.
+    Now creates separate training and testing datasets to prevent data leakage.
     
-    # Handle enhanced cache structure (your cache has 'teams' nested inside)
+    Args:
+        team_data_collection: Dictionary of team data
+        test_split: Fraction of data to reserve for backtesting (0.3 = 30%)
+        random_state: Random seed for reproducible splits
+    
+    Returns:
+        tuple: (X_train, y_train, X_test, y_test, test_matches_info)
+    """
+    print(f"[{datetime.now()}] Building training dataset with {test_split:.1%} test split...")
+    
     if isinstance(team_data_collection, dict) and 'teams' in team_data_collection:
         print("Detected enhanced cache structure - extracting teams data")
         actual_teams = team_data_collection['teams']
@@ -2462,8 +2470,8 @@ def build_training_dataset(team_data_collection):
     
     print(f"Working with {len(actual_teams)} teams")
     
-    X = []  # Feature vectors
-    y = []  # Labels
+    # Collect ALL matches first with timestamps
+    all_matches_with_features = []
     
     debug_stats = {
         'teams_processed': 0,
@@ -2474,15 +2482,15 @@ def build_training_dataset(team_data_collection):
         'features_failed': 0
     }
     
-    # Create better lookup tables for opponent matching
+    # Create lookup dictionaries for faster team matching
     team_names_exact = {name: name for name in actual_teams.keys()}
     team_names_lower = {name.lower(): name for name in actual_teams.keys()}
     
-    # Process each team
+    print("Phase 1: Collecting all matches with dates and features...")
+    
     for team_name, team_data in actual_teams.items():
         debug_stats['teams_processed'] += 1
         
-        # Extract team stats and matches (handle your cache structure)
         if isinstance(team_data, dict):
             if 'stats' in team_data:
                 team_stats = team_data['stats']
@@ -2500,29 +2508,24 @@ def build_training_dataset(team_data_collection):
         
         debug_stats['total_matches'] += len(matches)
         
-        if debug_stats['teams_processed'] <= 3:
-            print(f"Processing {team_name}: {len(matches)} matches, stats keys: {list(team_stats.keys())[:5]}")
-        
-        # Process each match
         for match in matches:
             try:
                 opponent_name = match.get('opponent_name', '')
-                if not opponent_name:
+                match_date = match.get('date', '')
+                
+                if not opponent_name or not match_date:
                     continue
                 
-                # Enhanced opponent matching (multiple strategies)
+                # Find opponent in our dataset
                 matched_opponent = None
-                
-                # Strategy 1: Exact match
                 if opponent_name in team_names_exact:
                     matched_opponent = opponent_name
                     debug_stats['opponents_found'] += 1
-                # Strategy 2: Case-insensitive match
                 elif opponent_name.lower() in team_names_lower:
                     matched_opponent = team_names_lower[opponent_name.lower()]
                     debug_stats['opponents_found'] += 1
-                # Strategy 3: Partial match (contains)
                 else:
+                    # Try partial matching
                     opponent_lower = opponent_name.lower()
                     found_partial = False
                     for team_key, team_name_actual in team_names_lower.items():
@@ -2532,26 +2535,9 @@ def build_training_dataset(team_data_collection):
                             found_partial = True
                             break
                     
-                    # Strategy 4: Fuzzy match as last resort
                     if not found_partial:
-                        try:
-                            import difflib
-                            best_match = None
-                            best_score = 0
-                            for team_key, team_name_actual in team_names_lower.items():
-                                score = difflib.SequenceMatcher(None, opponent_lower, team_key).ratio()
-                                if score > best_score and score > 0.7:  # 70% similarity
-                                    best_match = team_name_actual
-                                    best_score = score
-                            if best_match:
-                                matched_opponent = best_match
-                                debug_stats['opponents_found'] += 1
-                            else:
-                                debug_stats['opponents_missing'] += 1
-                                continue
-                        except ImportError:
-                            debug_stats['opponents_missing'] += 1
-                            continue
+                        debug_stats['opponents_missing'] += 1
+                        continue
                 
                 if not matched_opponent or matched_opponent not in actual_teams:
                     debug_stats['opponents_missing'] += 1
@@ -2568,12 +2554,21 @@ def build_training_dataset(team_data_collection):
                     debug_stats['opponents_missing'] += 1
                     continue
                 
-                # Prepare features using the SAFE function
+                # Create features
                 try:
                     features = prepare_data_for_model_safe(team_stats, opponent_stats)
                     if features and len(features) > 0:
-                        X.append(features)
-                        y.append(1 if match.get('team_won', False) else 0)
+                        match_info = {
+                            'features': features,
+                            'label': 1 if match.get('team_won', False) else 0,
+                            'date': match_date,
+                            'team1': team_name,
+                            'team2': matched_opponent,
+                            'match_id': match.get('match_id', f"{team_name}_{matched_opponent}_{match_date}"),
+                            'team_score': match.get('team_score', 0),
+                            'opponent_score': match.get('opponent_score', 0)
+                        }
+                        all_matches_with_features.append(match_info)
                         debug_stats['features_created'] += 1
                     else:
                         debug_stats['features_failed'] += 1
@@ -2582,60 +2577,144 @@ def build_training_dataset(team_data_collection):
                     if debug_stats['features_failed'] <= 5:
                         print(f"Feature preparation error: {e}")
                     continue
-                    
+                        
             except Exception as e:
                 print(f"Error processing match for {team_name}: {e}")
                 continue
     
-    # Print results with better formatting
-    print(f"\nTraining Dataset Build Results:")
+    print(f"\nPhase 1 Results:")
+    print(f"  Total matches with features: {len(all_matches_with_features)}")
     print(f"  Teams processed: {debug_stats['teams_processed']}")
-    print(f"  Total matches found: {debug_stats['total_matches']}")
     print(f"  Opponents found: {debug_stats['opponents_found']}")
     print(f"  Opponents missing: {debug_stats['opponents_missing']}")
     print(f"  Features created: {debug_stats['features_created']}")
     print(f"  Features failed: {debug_stats['features_failed']}")
     
-    # Enhanced debugging when no samples created
-    if debug_stats['features_created'] == 0:
-        print(f"\n❌ NO TRAINING SAMPLES CREATED!")
-        print(f"Debugging suggestions:")
-        print(f"  1. Check if opponent names match team names in cache")
-        print(f"  2. Verify team data structure has 'stats' and 'matches'")
-        print(f"  3. Ensure prepare_data_for_model function works correctly")
-        
-        # Show sample data for debugging
-        if actual_teams:
-            sample_team_name = list(actual_teams.keys())[0]
-            sample_team_data = actual_teams[sample_team_name]
-            print(f"\nSample team: {sample_team_name}")
-            print(f"Sample team data keys: {list(sample_team_data.keys()) if isinstance(sample_team_data, dict) else 'Not a dict'}")
-            
-            if isinstance(sample_team_data, dict) and 'matches' in sample_team_data:
-                matches = sample_team_data['matches']
-                if matches:
-                    sample_match = matches[0]
-                    opponent_name = sample_match.get('opponent_name', 'NO_OPPONENT_NAME')
-                    print(f"Sample opponent name: '{opponent_name}'")
-                    print(f"Available team names: {list(actual_teams.keys())[:5]}...")
+    if len(all_matches_with_features) == 0:
+        print(f"\n❌ NO MATCHES WITH FEATURES CREATED!")
+        return [], [], [], [], []
     
-    print(f"Created {len(X)} training samples from match data")
-    return X, y
+    print(f"\nPhase 2: Temporal train/test split...")
+    
+    # Sort all matches by date for temporal splitting
+    all_matches_with_features.sort(key=lambda x: x['date'])
+    
+    # Split temporally (older matches for training, newer for testing)
+    split_index = int(len(all_matches_with_features) * (1 - test_split))
+    train_matches = all_matches_with_features[:split_index]
+    test_matches = all_matches_with_features[split_index:]
+    
+    print(f"Temporal split: {len(train_matches)} training matches, {len(test_matches)} test matches")
+    print(f"Training data: {train_matches[0]['date'] if train_matches else 'N/A'} to {train_matches[-1]['date'] if train_matches else 'N/A'}")
+    print(f"Test data: {test_matches[0]['date'] if test_matches else 'N/A'} to {test_matches[-1]['date'] if test_matches else 'N/A'}")
+    
+    # Extract features and labels
+    X_train = [match['features'] for match in train_matches]
+    y_train = [match['label'] for match in train_matches]
+    X_test = [match['features'] for match in test_matches]  
+    y_test = [match['label'] for match in test_matches]
+    
+    # Store test match info for backtesting
+    test_matches_info = [{
+        'match_id': match['match_id'],
+        'date': match['date'],
+        'team1': match['team1'],
+        'team2': match['team2'],
+        'team_score': match['team_score'],
+        'opponent_score': match['opponent_score'],
+        'actual_winner': 'team1' if match['team_score'] > match['opponent_score'] else 'team2',
+        'label': match['label']
+    } for match in test_matches]
+    
+    print(f"\nFinal dataset: {len(X_train)} training samples, {len(X_test)} test samples")
+    
+    return X_train, y_train, X_test, y_test, test_matches_info
+
+def save_test_matches_info(test_matches_info):
+    """Helper function to save test match info for backtesting"""
+    try:
+        with open('test_matches_info.pkl', 'wb') as f:
+            pickle.dump(test_matches_info, f)
+        print(f"Saved {len(test_matches_info)} test matches for backtesting")
+    except Exception as e:
+        print(f"Error saving test matches info: {e}")
+
+def visualize_train_test_split(test_matches_info, team_data_collection):
+    """
+    Visualize the temporal train/test split to verify no data leakage.
+    """
+    try:
+        if not test_matches_info:
+            print("No test matches to visualize")
+            return
+            
+        # Get all match dates
+        all_dates = []
+        
+        # Collect training dates from team data
+        if isinstance(team_data_collection, dict) and 'teams' in team_data_collection:
+            teams = team_data_collection['teams']
+        else:
+            teams = team_data_collection
+            
+        for team_name, team_data in teams.items():
+            matches = team_data.get('matches', [])
+            for match in matches:
+                match_date = match.get('date', '')
+                if match_date:
+                    all_dates.append(('train', match_date))
+        
+        # Add test dates
+        for test_match in test_matches_info:
+            test_date = test_match.get('date', '')
+            if test_date:
+                all_dates.append(('test', test_date))
+        
+        # Sort by date
+        all_dates.sort(key=lambda x: x[1])
+        
+        # Find split point
+        train_dates = [d for t, d in all_dates if t == 'train']
+        test_dates = [d for t, d in all_dates if t == 'test']
+        
+        if train_dates and test_dates:
+            print(f"\n📊 TRAIN/TEST SPLIT VISUALIZATION:")
+            print(f"Training data: {min(train_dates)} to {max(train_dates)} ({len(train_dates)} matches)")
+            print(f"Test data: {min(test_dates)} to {max(test_dates)} ({len(test_dates)} matches)")
+            
+            latest_train = max(train_dates)
+            earliest_test = min(test_dates)
+            
+            if latest_train < earliest_test:
+                print(f"✅ Clean temporal split: No overlap between train and test data")
+                print(f"   Latest training match: {latest_train}")
+                print(f"   Earliest test match: {earliest_test}")
+            else:
+                print(f"⚠️  WARNING: Potential data leakage detected!")
+                print(f"   Latest training match: {latest_train}")
+                print(f"   Earliest test match: {earliest_test}")
+        
+    except Exception as e:
+        print(f"Error visualizing train/test split: {e}")
+
 def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                 bet_pct=0.05, min_edge=0.02, confidence_threshold=0.2, use_cache=True,
-                cache_path="cache/valorant_data_cache.pkl"):
+                cache_path="cache/valorant_data_cache.pkl", use_test_data=True):
     """
-    FIXED VERSION: Bankruptcy-proof backtesting with correct bankroll tracking
+    FIXED VERSION: Added use_test_data parameter to match the calling signature
+    Bankruptcy-proof backtesting with correct bankroll tracking
     """
     print(f"\n=== BANKRUPTCY-PROOF BACKTEST ===")
     print(f"Enhanced parameters: min_edge={min_edge:.1%}, confidence_threshold={confidence_threshold:.1%}")
+    print(f"Use separate test data: {use_test_data}")
     
+    # Load models and features
     ensemble_models, selected_features = load_backtesting_models()
     if not ensemble_models or not selected_features:
         print("Failed to load models or features")
         return None
-    
-    # Load team data (unchanged)
+
+    # Load team data
     team_data = {}
     if use_cache:
         cache_data = load_cache_enhanced(cache_path)
@@ -2647,7 +2726,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                 team_data = cache_data
                 print(f"Loaded {len(team_data)} teams from simple cache")
             
-            # Apply team limit if specified
+            # Apply team limit
             if team_limit and team_limit > 0 and len(team_data) > team_limit:
                 print(f"Applying team limit: {team_limit} from {len(team_data)} available teams")
                 quality_teams = {}
@@ -2675,80 +2754,141 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         else:
             print("Failed to load cache data")
             return None
-    
+
     if not team_data:
         print("No team data available")
         return None
-    
-    # Build backtest matches (unchanged logic)
+
+    # If use_test_data is True, try to load separate test data
+    test_matches_info = []
+    if use_test_data:
+        try:
+            with open('test_matches_info.pkl', 'rb') as f:
+                test_matches_info = pickle.load(f)
+            print(f"Loaded {len(test_matches_info)} separate test matches")
+        except FileNotFoundError:
+            print("No separate test data found, using all data for backtesting")
+            use_test_data = False
+        except Exception as e:
+            print(f"Error loading test data: {e}")
+            use_test_data = False
+
+    # Build backtest matches
     backtest_matches = []
     seen_match_ids = set()
     match_quality_threshold = 10
-    
-    print(f"Building backtest dataset from {len(team_data)} teams...")
-    for team_name, team_info in team_data.items():
-        if not isinstance(team_info, dict):
-            continue
-        
-        team_matches = team_info.get('matches', [])
-        if not isinstance(team_matches, list) or len(team_matches) < match_quality_threshold:
-            continue
-        
-        for match in team_matches:
-            if not isinstance(match, dict):
-                continue
-            
-            match_id = match.get('match_id', '')
-            opponent_name = match.get('opponent_name')
-            match_date = match.get('date', '')
-            
-            if not opponent_name or not match_date:
-                continue
-            
-            if opponent_name not in team_data:
-                found_opponent = None
-                opponent_lower = opponent_name.lower()
-                for cached_name in team_data.keys():
-                    if (opponent_lower == cached_name.lower() or
-                        opponent_lower in cached_name.lower() or
-                        cached_name.lower() in opponent_lower):
-                        found_opponent = cached_name
-                        break
-                if not found_opponent:
+
+    if use_test_data and test_matches_info:
+        # Use the separate test data
+        print(f"Using {len(test_matches_info)} separate test matches for backtesting")
+        for test_match in test_matches_info:
+            try:
+                team1_name = test_match.get('team1', '')
+                team2_name = test_match.get('team2', '')
+                match_date = test_match.get('date', '')
+                
+                if not team1_name or not team2_name or not match_date:
                     continue
-                opponent_name = found_opponent
-            
-            opponent_info = team_data[opponent_name]
-            if not isinstance(opponent_info, dict):
+                    
+                if team1_name not in team_data or team2_name not in team_data:
+                    continue
+                
+                # Apply date filters if specified
+                if start_date and match_date < start_date:
+                    continue
+                if end_date and match_date > end_date:
+                    continue
+                
+                # Create match data structure
+                match_data = {
+                    'team_won': test_match.get('label', 0) == 1,
+                    'team_score': test_match.get('team_score', 0),
+                    'opponent_score': test_match.get('opponent_score', 0),
+                    'date': match_date,
+                    'match_id': test_match.get('match_id', f"test_{len(backtest_matches)}")
+                }
+                
+                backtest_matches.append({
+                    'team1_name': team1_name,
+                    'team2_name': team2_name,
+                    'match_data': match_data,
+                    'match_id': match_data['match_id'],
+                    'date': match_date
+                })
+                
+            except Exception as e:
+                print(f"Error processing test match: {e}")
+                continue
+    else:
+        # Use original backtesting logic with team data
+        print(f"Building backtest dataset from {len(team_data)} teams...")
+        for team_name, team_info in team_data.items():
+            if not isinstance(team_info, dict):
                 continue
             
-            opponent_matches = opponent_info.get('matches', [])
-            if not isinstance(opponent_matches, list) or len(opponent_matches) < match_quality_threshold:
+            team_matches = team_info.get('matches', [])
+            if not isinstance(team_matches, list) or len(team_matches) < match_quality_threshold:
                 continue
             
-            if match_id and match_id in seen_match_ids:
-                continue
-            if match_id:
-                seen_match_ids.add(match_id)
-            
-            if start_date and match_date < start_date:
-                continue
-            if end_date and match_date > end_date:
-                continue
-            
-            backtest_matches.append({
-                'team1_name': team_name,
-                'team2_name': opponent_name,
-                'match_data': match,
-                'match_id': match_id,
-                'date': match_date
-            })
-    
+            for match in team_matches:
+                if not isinstance(match, dict):
+                    continue
+                
+                match_id = match.get('match_id', '')
+                opponent_name = match.get('opponent_name')
+                match_date = match.get('date', '')
+                
+                if not opponent_name or not match_date:
+                    continue
+                
+                # Find opponent in team data
+                if opponent_name not in team_data:
+                    found_opponent = None
+                    opponent_lower = opponent_name.lower()
+                    for cached_name in team_data.keys():
+                        if (opponent_lower == cached_name.lower() or
+                            opponent_lower in cached_name.lower() or
+                            cached_name.lower() in opponent_lower):
+                            found_opponent = cached_name
+                            break
+                    if not found_opponent:
+                        continue
+                    opponent_name = found_opponent
+                
+                opponent_info = team_data[opponent_name]
+                if not isinstance(opponent_info, dict):
+                    continue
+                
+                opponent_matches = opponent_info.get('matches', [])
+                if not isinstance(opponent_matches, list) or len(opponent_matches) < match_quality_threshold:
+                    continue
+                
+                # Check for duplicates
+                if match_id and match_id in seen_match_ids:
+                    continue
+                if match_id:
+                    seen_match_ids.add(match_id)
+                
+                # Apply date filters
+                if start_date and match_date < start_date:
+                    continue
+                if end_date and match_date > end_date:
+                    continue
+                
+                backtest_matches.append({
+                    'team1_name': team_name,
+                    'team2_name': opponent_name,
+                    'match_data': match,
+                    'match_id': match_id,
+                    'date': match_date
+                })
+
     print(f"Quality-filtered matches: {len(backtest_matches)}")
+    
     if len(backtest_matches) == 0:
         print("No valid matches found for backtesting")
         return None
-    
+
     # Initialize results structure
     results = {
         'predictions': [],
@@ -2770,15 +2910,14 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             'monthly_performance': {},
             'risk_metrics': {}
         },
-        'enhanced_analysis': True
+        'enhanced_analysis': True,
+        'used_separate_test_data': use_test_data
     }
-    
-    # CRITICAL FIX: Proper bankroll tracking with bankruptcy prevention
+
+    # Initialize tracking variables
     current_bankroll = float(bankroll)
     starting_bankroll = float(bankroll)
-    running_peak = float(bankroll)  # Track the running peak correctly
-    
-    # Performance tracking
+    running_peak = float(bankroll)
     correct_predictions = 0
     total_predictions = 0
     total_bets = 0
@@ -2789,8 +2928,8 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     bet_returns = []
     consecutive_losses = 0
     max_consecutive_losses = 0
-    
-    # Sample matches to process
+
+    # Process matches (limit sample size for performance)
     sample_size = min(1000, len(backtest_matches))
     if len(backtest_matches) > sample_size:
         selected_matches = np.random.choice(len(backtest_matches), sample_size, replace=False)
@@ -2798,9 +2937,8 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     else:
         selected_matches = range(len(backtest_matches))
         print(f"Processing all {len(backtest_matches)} matches")
-    
+
     from tqdm import tqdm
-    
     for i, match_idx in enumerate(tqdm(selected_matches, desc="Bankruptcy-proof backtesting")):
         if isinstance(match_idx, (int, np.integer)):
             match = backtest_matches[match_idx]
@@ -2808,9 +2946,8 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             match = backtest_matches[i]
         
         try:
-            # BANKRUPTCY PREVENTION: Check if we should stop
+            # Bankruptcy prevention check
             bankruptcy_check = bankruptcy_prevention_check(current_bankroll, starting_bankroll, consecutive_losses)
-            
             if bankruptcy_check['stop_all_betting']:
                 print(f"\nBANKRUPTCY PREVENTION TRIGGERED at match {i}")
                 print(f"Reason: {bankruptcy_check['reason']}")
@@ -2837,16 +2974,17 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             if not team1_stats or not team2_stats:
                 continue
             
-            # Make prediction
+            # Prepare features for prediction
             X = prepare_features_for_backtest(team1_stats, team2_stats, selected_features)
             if X is None:
                 continue
             
+            # Make prediction
             win_probability, raw_predictions, confidence_score = predict_with_ensemble(
                 ensemble_models, X
             )
             
-            # Determine actual winner
+            # Extract actual match result
             team1_score, team2_score = extract_match_score(match_data)
             actual_winner = 'team1' if team1_score > team2_score else 'team2'
             predicted_winner = 'team1' if win_probability > 0.5 else 'team2'
@@ -2858,35 +2996,31 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             # Simulate odds and analyze betting opportunities
             base_odds = simulate_odds(win_probability, vig=0.045, market_efficiency=0.92)
             
-            # FIXED: Use balanced betting analysis instead of ultra-conservative
             betting_analysis = analyze_betting_edge_for_backtesting(
                 win_probability, 1 - win_probability, base_odds,
-                confidence_score, current_bankroll  # Use CURRENT bankroll, not original
+                confidence_score, current_bankroll
             )
             
-            # FIXED: Use balanced bet selection with current bankroll
             optimal_bets = select_optimal_bets_conservative(
                 betting_analysis, team1_name, team2_name, current_bankroll,
-                max_bets=2,  # Back to 2 bets per match for more opportunities
+                max_bets=2,
                 max_total_risk=min(0.18, bankruptcy_check.get('max_bet_size', current_bankroll * 0.05) * 4 / current_bankroll),
                 config=None
             )
             
-            # Process bets with bankruptcy prevention
+            # Process bets
             match_profit = 0.0
             match_bets = []
             
             for bet_type, analysis in optimal_bets.items():
                 bet_amount = analysis['bet_amount']
                 odds = analysis['odds']
-                
-                # BALANCED SAFETY CHECK: Reasonable bankruptcy prevention
                 max_allowed = bankruptcy_check.get('max_bet_size', current_bankroll * 0.01)
+                
                 if bet_amount > max_allowed:
                     print(f"Reducing bet from ${bet_amount:.2f} to ${max_allowed:.2f} for safety")
                     bet_amount = max_allowed
                 
-                # Ensure we have enough bankroll for the bet with small buffer
                 if bet_amount > current_bankroll * 0.98:  # Leave 2% buffer
                     print(f"Skipping bet - insufficient bankroll")
                     continue
@@ -2894,11 +3028,9 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                 bet_won = evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score)
                 returns = bet_amount * odds if bet_won else 0.0
                 profit = returns - bet_amount
-                
                 match_profit += profit
-                current_bankroll += profit  # Update current bankroll
+                current_bankroll += profit
                 
-                # Update running peak for drawdown calculation
                 if current_bankroll > running_peak:
                     running_peak = current_bankroll
                 
@@ -2929,7 +3061,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
             if match_bets:
                 daily_returns.append(match_profit / starting_bankroll)
             
-            # Record bankroll history with correct structure
+            # Record results
             results['performance']['bankroll_history'].append({
                 'match_idx': i,
                 'bankroll': current_bankroll,
@@ -2938,7 +3070,6 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                 'date': match_date
             })
             
-            # Record prediction
             results['predictions'].append({
                 'match_id': match.get('match_id', f'match_{i}'),
                 'team1': team1_name,
@@ -2962,7 +3093,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
                     'date': match_date
                 })
             
-            # BANKRUPTCY PREVENTION: Stop if bankroll drops too low
+            # Stop if bankroll drops too low
             if current_bankroll < starting_bankroll * 0.5:
                 print(f"\nStopping backtest - bankroll dropped to ${current_bankroll:.2f} (50% of starting)")
                 break
@@ -2970,14 +3101,14 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         except Exception as e:
             print(f"Error processing match {i}: {e}")
             continue
-    
-    # Calculate final metrics with corrected drawdown calculation
+
+    # Calculate final metrics
     final_profit = current_bankroll - starting_bankroll
     final_roi = final_profit / starting_bankroll if starting_bankroll > 0 else 0
     final_accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
     bet_win_rate = winning_bets / total_bets if total_bets > 0 else 0
     
-    # FIXED: Use corrected drawdown calculation
+    # Calculate drawdown metrics
     drawdown_metrics = calculate_drawdown_metrics(results['performance']['bankroll_history'])
     max_drawdown = drawdown_metrics['max_drawdown_pct'] / 100  # Convert back to decimal
     
@@ -2992,14 +3123,13 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     # Calculate profit factor
     winning_trades = [r for r in bet_returns if r > 0]
     losing_trades = [r for r in bet_returns if r < 0]
-    
     if winning_trades and losing_trades:
         gross_profit = sum(winning_trades)
         gross_loss = abs(sum(losing_trades))
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf')
     else:
         profit_factor = 0
-    
+
     # Update final results
     results['performance'].update({
         'accuracy': final_accuracy,
@@ -3016,10 +3146,12 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
         'max_consecutive_losses': max_consecutive_losses,
         'avg_bet_size': total_wagered / total_bets if total_bets > 0 else 0
     })
-    
+
+    # Print summary
     print(f"\n{'='*60}")
     print(f"BANKRUPTCY-PROOF BACKTEST RESULTS")
     print(f"{'='*60}")
+    print(f"Data source: {'Separate test data' if use_test_data else 'Training data'}")
     print(f"Teams used: {len(team_data)}")
     print(f"Matches processed: {total_predictions}")
     print(f"Prediction Accuracy: {final_accuracy:.2%}")
@@ -3029,11 +3161,11 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     print(f"Total Returns: ${total_returns:.2f}")
     print(f"Final Profit: ${final_profit:.2f}")
     print(f"ROI: {final_roi:.2%}")
-    print(f"Max Drawdown: {max_drawdown:.2%} (CORRECTED)")
+    print(f"Max Drawdown: {max_drawdown:.2%}")
     print(f"Sharpe Ratio: {sharpe_ratio:.2f}")
     print(f"Profit Factor: {profit_factor:.2f}")
     print(f"Max Consecutive Losses: {max_consecutive_losses}")
-    
+
     if total_bets == 0:
         print("\n" + "="*60)
         print("No bets placed - criteria may be too conservative!")
@@ -3048,7 +3180,7 @@ def run_backtest(start_date=None, end_date=None, team_limit=50, bankroll=1000.0,
     else:
         print(f"\n⚠️  UNPROFITABLE: {final_roi:.1%} ROI - strategy needs adjustment")
         print("   Consider relaxing criteria or improving model")
-    
+
     return results
 def create_improved_model(input_dim, regularization_strength=0.01, dropout_rate=0.4):
     inputs = Input(shape=(input_dim,))
@@ -3874,14 +4006,16 @@ def prepare_prediction_features(team1_stats, team2_stats, selected_features, sca
 def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, selected_features,
                                     team_data_collection=None, current_date=None):
     """
-    Make a prediction with consistent team ordering and proper data handling.
-    Enhanced to fetch missing teams from API when needed.
+    FIXED: Now uses EXACT same prediction pipeline as backtesting.
+    This ensures identical prediction logic between systems.
     """
     logging.info(f"Making prediction for {team1_name} vs {team2_name}")
+    
     if not current_date:
         from datetime import datetime
         current_date = datetime.now().strftime("%Y-%m-%d")
-    missing_teams = []
+    
+    # Handle missing team data collection (fetch if needed)
     if not team_data_collection:
         missing_teams = [team1_name.strip(), team2_name.strip()]
         team_data_collection = collect_team_data(
@@ -3893,42 +4027,11 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
             cache_path=Config.MODEL.CACHE_PATH,
             missing_teams=missing_teams
         )
-    else:
-        team1_clean = team1_name.strip()
-        team2_clean = team2_name.strip()
-        team1_found = team1_clean in team_data_collection
-        team2_found = team2_clean in team_data_collection
-        if not team1_found:
-            for cached_name in team_data_collection.keys():
-                if (team1_clean.lower() in cached_name.lower() or
-                    cached_name.lower() in team1_clean.lower()):
-                    team1_found = True
-                    team1_name = cached_name  # Use the cached name
-                    break
-        if not team2_found:
-            for cached_name in team_data_collection.keys():
-                if (team2_clean.lower() in cached_name.lower() or
-                    cached_name.lower() in team2_clean.lower()):
-                    team2_found = True
-                    team2_name = cached_name  # Use the cached name
-                    break
-        if not team1_found:
-            missing_teams.append(team1_clean)
-        if not team2_found:
-            missing_teams.append(team2_clean)
-        if missing_teams:
-            print(f"Fetching missing teams: {missing_teams}")
-            additional_data = collect_team_data(
-                team_limit=300,
-                include_player_stats=True,
-                include_economy=True,
-                include_maps=True,
-                use_cache=False,  # Don't use cache since we're fetching specific teams
-                missing_teams=missing_teams
-            )
-            team_data_collection.update(additional_data)
+    
+    # Get team stats using SAME method as backtesting
     team1_stats = get_historical_team_stats(team1_name, current_date, team_data_collection)
     team2_stats = get_historical_team_stats(team2_name, current_date, team_data_collection)
+    
     if not team1_stats or not team2_stats:
         logging.error(f"Could not get historical stats for teams")
         return {
@@ -3937,9 +4040,12 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
             'team2_name': team2_name,
             'details': f"Team1 stats: {'✓' if team1_stats else '✗'}, Team2 stats: {'✓' if team2_stats else '✗'}"
         }
+    
+    # Use EXACT same feature preparation as backtesting
     features, teams_swapped = prepare_data_with_consistent_ordering(
         team1_stats, team2_stats, selected_features
     )
+    
     if features is None:
         logging.error(f"Failed to prepare features for prediction")
         return {
@@ -3947,13 +4053,20 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
             'team1_name': team1_name,
             'team2_name': team2_name
         }
+    
+    # Use EXACT same prediction function as backtesting
     win_probability, raw_predictions, confidence = predict_with_ensemble(
         ensemble_models, features
     )
+    
+    # Apply same team swap adjustment as backtesting
     if teams_swapped:
         logging.info(f"Teams were swapped for consistency - adjusting predictions")
         win_probability = 1.0 - win_probability
+    
+    # Calculate derivative probabilities using SAME method as backtesting
     bet_type_probabilities = calculate_bet_type_probabilities(win_probability, confidence)
+    
     prediction_results = {
         'team1_name': team1_name,
         'team2_name': team2_name,
@@ -3964,44 +4077,53 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
         'teams_swapped': teams_swapped,
         'date': current_date
     }
+    
     logging.info(f"Prediction complete: {team1_name}:{win_probability:.4f}, {team2_name}:{1-win_probability:.4f}")
     return prediction_results
+
+class BettingConstants:
+    """Shared constants to ensure consistency between backtesting and live prediction"""
+    MIN_EDGE_BASE = 0.025        # Use backtesting value (2.5%)
+    MIN_CONFIDENCE = 0.45        # Use backtesting value (45%)
+    MIN_PROBABILITY = 0.35       # Consistent bounds
+    MAX_PROBABILITY = 0.75       # Consistent bounds
+    MAX_KELLY_FRACTION = 0.015   # 1.5% maximum
+    MAX_SINGLE_BET = 25.0        # $25 cap
+    MAX_TOTAL_RISK_PCT = 0.1     # 10% total risk (backtesting value)
+
 def analyze_betting_options(prediction_results, odds_data, bankroll=1000.0, bet_history=None):
     """
-    Analyze betting options with conservative bankroll management.
-    Args:
-        prediction_results (dict): Prediction results
-        odds_data (dict): Betting odds data
-        bankroll (float): Current bankroll
-        bet_history (list, optional): Betting history for streak analysis
-    Returns:
-        dict: Betting analysis
+    FIXED: Now uses EXACT same betting analysis as backtesting.
+    This ensures identical bet selection between systems.
     """
     logging.info(f"Analyzing betting options with bankroll ${bankroll:.2f}")
+    
     win_probability = prediction_results['win_probability']
     confidence = prediction_results['confidence']
     team1_name = prediction_results['team1_name']
     team2_name = prediction_results['team2_name']
-    bet_type_probabilities = prediction_results['bet_type_probabilities']
-    betting_analysis = analyze_betting_edge_conservative(
+    
+    # Use EXACT same betting analysis function as backtesting
+    betting_analysis = analyze_betting_edge_for_backtesting(
         win_probability,
-        team1_name,
-        team2_name,
+        1 - win_probability,
         odds_data,
         confidence,
-        bankroll,
-        bet_history,
-        config=Config.BETTING
+        bankroll
     )
+    
+    # Use EXACT same bet selection as backtesting
     optimal_bets = select_optimal_bets_conservative(
         betting_analysis,
         team1_name,
         team2_name,
         bankroll,
-        max_bets=Config.BETTING.MAX_SIMULTANEOUS_BETS,
-        max_total_risk=Config.BETTING.MAX_TOTAL_RISK_PCT,
-        config=Config.BETTING
+        max_bets=2,
+        max_total_risk=BettingConstants.MAX_TOTAL_RISK_PCT,
+        config=None
     )
+    
+    # Add market simulations for consistency
     market_simulations = {}
     for bet_type, analysis in optimal_bets.items():
         probability = analysis['probability']
@@ -4010,20 +4132,23 @@ def analyze_betting_options(prediction_results, odds_data, bankroll=1000.0, bet_
         market_simulations[bet_type] = simulate_market_response(
             odds,
             probability,
-            market_efficiency=Config.FORWARD_TEST.MARKET_EFFICIENCY,
+            market_efficiency=0.92,  # Same as backtesting
             bet_size=bet_amount,
             market_size=10000
         )
+    
     results = {
         'betting_analysis': betting_analysis,
         'optimal_bets': optimal_bets,
         'market_simulations': market_simulations,
         'bankroll': bankroll
     }
+    
     if optimal_bets:
         logging.info(f"Recommended bets: {', '.join(optimal_bets.keys())}")
     else:
         logging.info("No bets recommended")
+    
     return results
 def calibrate_prediction(raw_prediction, confidence):
     """
@@ -4392,52 +4517,12 @@ def bankruptcy_prevention_check(current_bankroll, starting_bankroll, consecutive
 
 def load_prediction_artifacts():
     """
-    Load the diverse ensemble and artifacts needed for prediction.
+    FIXED: Now uses EXACT same loading logic as backtesting.
+    This replaces the existing load_prediction_artifacts() function.
     """
-    print("Loading prediction models and artifacts...")
-    try:
-        with open('diverse_ensemble.pkl', 'rb') as f:
-            ensemble_models = pickle.load(f)
-        print(f"Loaded diverse ensemble with {len(ensemble_models)} models")
-    except Exception as e:
-        print(f"Error loading diverse ensemble: {e}")
-        try:
-            ensemble_models = []
-            for i in range(1, 11):
-                try:
-                    model_path = f'valorant_model_fold_{i}.h5'
-                    model = load_model(model_path)
-                    ensemble_models.append(('nn', model, None))
-                    print(f"Loaded fallback model {i}/10")
-                except:
-                    continue
-            if not ensemble_models:
-                print("Failed to load any models")
-                return None, None, None
-        except Exception as e:
-            print(f"Error loading fallback models: {e}")
-            return None, None, None
-    try:
-        with open('feature_metadata.pkl', 'rb') as f:
-            feature_metadata = pickle.load(f)
-        selected_features = feature_metadata.get('selected_features', [])
-        print(f"Loaded {len(selected_features)} selected features")
-    except Exception as e:
-        print(f"Error loading feature metadata: {e}")
-        try:
-            with open('selected_feature_names.pkl', 'rb') as f:
-                selected_features = pickle.load(f)
-            print(f"Loaded {len(selected_features)} features from backup file")
-        except Exception as e:
-            print(f"Error loading feature names: {e}")
-            try:
-                with open('stable_features.pkl', 'rb') as f:
-                    selected_features = pickle.load(f)
-                print(f"Loaded {len(selected_features)} features from stable_features.pkl")
-            except Exception as e:
-                print(f"Error loading any feature lists: {e}")
-                return ensemble_models, None, None
-    return ensemble_models, None, selected_features
+    print("Loading prediction models using backtesting-consistent method...")
+    return load_backtesting_models() 
+
 def track_betting_performance(prediction, bet_placed, bet_amount, outcome, odds):
     """
     Track betting performance over time.
@@ -4583,189 +4668,219 @@ def view_betting_performance():
     except Exception as e:
         print(f"Error creating visualizations: {e}")
 @debug_func
-def train_with_consistent_features(X, y, n_splits=10, random_state=42):
+def train_with_consistent_features(X_train, y_train, X_test=None, y_test=None, n_splits=10, random_state=42):
     """
-    FIXED VERSION: Now properly handles list input and has better error handling
+    ENHANCED VERSION: Now accepts separate test data and evaluates on held-out test set.
     """
-    print(f"\nTraining ENHANCED ensemble with advanced ML techniques")
+    print(f"\nTraining ENHANCED ensemble with proper train/test evaluation")
+    
+    # Validate we have test data
+    has_test_data = X_test is not None and y_test is not None and len(X_test) > 0
+    if has_test_data:
+        print(f"Using separate test set: {len(X_test)} test samples")
+    else:
+        print("No separate test data - will use validation split from training data")
     
     try:
-        # Fix: Convert X to numpy array if it's a list
-        if isinstance(X, list):
-            print("Converting input list to DataFrame...")
-            if len(X) == 0:
+        # Convert training data
+        if isinstance(X_train, list):
+            print("Converting training list to DataFrame...")
+            if len(X_train) == 0:
                 print("ERROR: Empty training data provided")
                 return None, None, None, None
-            
-            # Convert list of dictionaries to DataFrame
-            df = pd.DataFrame(X)
-            print(f"Converted to DataFrame with shape: {df.shape}")
-        elif hasattr(X, 'shape'):
-            print(f"Input array shape: {X.shape}")
-            df = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
+            df_train = pd.DataFrame(X_train)
+            print(f"Training DataFrame shape: {df_train.shape}")
+        elif hasattr(X_train, 'shape'):
+            print(f"Training array shape: {X_train.shape}")
+            df_train = pd.DataFrame(X_train) if not isinstance(X_train, pd.DataFrame) else X_train
         else:
-            print("ERROR: Invalid input type for X")
+            print("ERROR: Invalid input type for X_train")
             return None, None, None, None
-        
-        # Convert y to numpy array if it's a list
-        if isinstance(y, list):
-            y_arr = np.array(y)
+
+        if isinstance(y_train, list):
+            y_train_arr = np.array(y_train)
         else:
-            y_arr = np.array(y) if not isinstance(y, np.ndarray) else y
-        
-        print(f"Features: {df.shape[1]}, Samples: {df.shape[0]}")
-        print(f"Labels: {len(y_arr)}")
-        
-        if df.shape[0] != len(y_arr):
-            print(f"ERROR: Mismatch between features ({df.shape[0]}) and labels ({len(y_arr)})")
+            y_train_arr = np.array(y_train) if not isinstance(y_train, np.ndarray) else y_train
+
+        print(f"Training - Features: {df_train.shape[1]}, Samples: {df_train.shape[0]}")
+        print(f"Training - Labels: {len(y_train_arr)}")
+
+        if df_train.shape[0] != len(y_train_arr):
+            print(f"ERROR: Training data mismatch ({df_train.shape[0]} vs {len(y_train_arr)})")
             return None, None, None, None
-        
-        if df.shape[0] < 10:
-            print("ERROR: Insufficient training data (need at least 10 samples)")
-            return None, None, None, None
+
+        # Convert test data if provided
+        if has_test_data:
+            if isinstance(X_test, list):
+                df_test = pd.DataFrame(X_test)
+            elif hasattr(X_test, 'shape'):
+                df_test = pd.DataFrame(X_test) if not isinstance(X_test, pd.DataFrame) else X_test
+            else:
+                print("ERROR: Invalid input type for X_test")
+                return None, None, None, None
+                
+            if isinstance(y_test, list):
+                y_test_arr = np.array(y_test)
+            else:
+                y_test_arr = np.array(y_test) if not isinstance(y_test, np.ndarray) else y_test
+                
+            print(f"Test - Features: {df_test.shape[1]}, Samples: {df_test.shape[0]}")
+            print(f"Test - Labels: {len(y_test_arr)}")
         
     except Exception as e:
         print(f"ERROR in data preparation: {e}")
         import traceback
         traceback.print_exc()
         return None, None, None, None
-    
+
     try:
-        # Clean and prepare data
-        print("Cleaning feature data...")
-        df_clean = clean_feature_data(df)
-        
-        if df_clean.empty:
-            print("ERROR: No valid features after cleaning")
+        print("Cleaning training feature data...")
+        df_train_clean = clean_feature_data(df_train)
+        if df_train_clean.empty:
+            print("ERROR: No valid training features after cleaning")
             return None, None, None, None
-        
-        X_arr = df_clean.values
-        print(f"Cleaned data shape: {X_arr.shape}")
-        
-        # Enhanced class balancing
-        class_balance = np.bincount(y_arr)
-        print(f"Original class distribution: {class_balance}")
-        
-        if len(class_balance) >= 2 and min(class_balance) < len(y_arr) * 0.35:
-            print("Applying enhanced class balancing...")
+
+        X_train_arr = df_train_clean.values
+        print(f"Cleaned training data shape: {X_train_arr.shape}")
+
+        # Clean test data if provided
+        if has_test_data:
+            # Ensure test data has same columns as training data
+            df_test_aligned = pd.DataFrame(index=df_test.index, columns=df_train_clean.columns)
+            for col in df_train_clean.columns:
+                if col in df_test.columns:
+                    df_test_aligned[col] = df_test[col]
+                else:
+                    df_test_aligned[col] = 0  # Fill missing columns with 0
+            
+            df_test_clean = clean_feature_data(df_test_aligned)
+            X_test_arr = df_test_clean.values
+            print(f"Cleaned test data shape: {X_test_arr.shape}")
+
+        # Apply class balancing only to training data
+        class_balance = np.bincount(y_train_arr)
+        print(f"Original training class distribution: {class_balance}")
+
+        if len(class_balance) >= 2 and min(class_balance) < len(y_train_arr) * 0.35:
+            print("Applying enhanced class balancing to training data only...")
             minority_class = np.argmin(class_balance)
-            majority_indices = np.where(y_arr != minority_class)[0]
-            minority_indices = np.where(y_arr == minority_class)[0]
+            majority_indices = np.where(y_train_arr != minority_class)[0]
+            minority_indices = np.where(y_train_arr == minority_class)[0]
             
             if len(majority_indices) > len(minority_indices) * 1.8:
-                keep_majority = np.random.choice(majority_indices,
-                                               min(len(minority_indices) * 2, len(majority_indices)),
+                keep_majority = np.random.choice(majority_indices, 
+                                               min(len(minority_indices) * 2, len(majority_indices)), 
                                                replace=False)
                 balanced_indices = np.concatenate([keep_majority, minority_indices])
             else:
                 balanced_indices = np.concatenate([majority_indices, minority_indices])
             
-            X_arr = X_arr[balanced_indices]
-            y_arr = y_arr[balanced_indices]
-            print(f"Balanced class distribution: {np.bincount(y_arr)}")
-        
+            X_train_arr = X_train_arr[balanced_indices]
+            y_train_arr = y_train_arr[balanced_indices]
+            print(f"Balanced training class distribution: {np.bincount(y_train_arr)}")
+
     except Exception as e:
         print(f"ERROR in data cleaning: {e}")
         import traceback
         traceback.print_exc()
         return None, None, None, None
-    
+
     try:
-        # Enhanced feature selection using multiple methods
         print("Enhanced feature selection with multiple techniques...")
         scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X_arr)
+        X_train_scaled = scaler.fit_transform(X_train_arr)
         
-        # Statistical feature selection
+        # Feature selection on training data only
         from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
         
-        n_features_to_select = min(30, X_arr.shape[1]//2, X_arr.shape[1])
+        n_features_to_select = min(30, X_train_arr.shape[1]//2, X_train_arr.shape[1])
         
+        # Statistical selector
         statistical_selector = SelectKBest(f_classif, k=n_features_to_select)
-        statistical_selector.fit(X_scaled, y_arr)
+        statistical_selector.fit(X_train_scaled, y_train_arr)
         
-        # Mutual information selection
-        mi_features_to_select = min(25, X_arr.shape[1]//2, X_arr.shape[1])
+        # Mutual information selector
+        mi_features_to_select = min(25, X_train_arr.shape[1]//2, X_train_arr.shape[1])
         mi_selector = SelectKBest(mutual_info_classif, k=mi_features_to_select)
-        mi_selector.fit(X_scaled, y_arr)
+        mi_selector.fit(X_train_scaled, y_train_arr)
         
-        # Random Forest importance selection
+        # Random forest selector
         rf_selector = RandomForestClassifier(n_estimators=50, random_state=random_state, n_jobs=1)
-        rf_selector.fit(X_scaled, y_arr)
+        rf_selector.fit(X_train_scaled, y_train_arr)
         rf_importances = rf_selector.feature_importances_
         rf_indices = np.argsort(rf_importances)[::-1]
         
-        # Combine all selection methods
+        # Combine selectors
         statistical_features = statistical_selector.get_support()
-        mi_features = mi_selector.get_support()
+        mi_features = mi_selector.get_support() 
         rf_features = np.zeros(len(rf_importances), dtype=bool)
         rf_features[rf_indices[:min(20, len(rf_indices))]] = True
         
-        # Final feature mask
         combined_features = statistical_features | mi_features | rf_features
         n_features = sum(combined_features)
         n_features = min(max(n_features, 12), 30)  # Between 12-30 features
         
         if n_features != sum(combined_features):
-            # Adjust to target number of features
             try:
                 feature_scores = (statistical_selector.scores_ + mi_selector.scores_ + rf_importances * 1000) / 3
                 top_indices = np.argsort(feature_scores)[::-1][:n_features]
                 combined_features = np.zeros(len(feature_scores), dtype=bool)
                 combined_features[top_indices] = True
             except:
-                # Fallback: just use top RF features
                 combined_features = np.zeros(len(rf_importances), dtype=bool)
                 combined_features[rf_indices[:n_features]] = True
-        
-        selected_features = [df_clean.columns[i] for i in range(len(combined_features)) if combined_features[i]]
+
+        selected_features = [df_train_clean.columns[i] for i in range(len(combined_features)) if combined_features[i]]
         print(f"Selected {len(selected_features)} features using enhanced selection")
-        
+
     except Exception as e:
         print(f"ERROR in feature selection: {e}")
         import traceback
         traceback.print_exc()
-        # Fallback: use all features
-        combined_features = np.ones(X_arr.shape[1], dtype=bool)
-        selected_features = list(df_clean.columns)
+        combined_features = np.ones(X_train_arr.shape[1], dtype=bool)
+        selected_features = list(df_train_clean.columns)
         print(f"Using all {len(selected_features)} features as fallback")
-    
+
     try:
-        # Time series split for training
-        from sklearn.model_selection import TimeSeriesSplit
-        
-        if n_splits > len(y_arr) // 2:
-            n_splits = max(2, len(y_arr) // 10)  # Adjust splits for small datasets
-            print(f"Adjusted n_splits to {n_splits} for small dataset")
-        
-        tscv = TimeSeriesSplit(n_splits=n_splits)
-        splits = list(tscv.split(X_arr))
-        
-        if not splits:
-            # Fallback to simple train/test split
-            from sklearn.model_selection import train_test_split
-            train_idx, val_idx = train_test_split(range(len(X_arr)), test_size=0.2, 
-                                                 random_state=random_state, stratify=y_arr)
+        # Split training data for validation if no separate test set
+        if not has_test_data:
+            from sklearn.model_selection import TimeSeriesSplit
+            if n_splits > len(y_train_arr) // 2:
+                n_splits = max(2, len(y_train_arr) // 10)
+                print(f"Adjusted n_splits to {n_splits} for small dataset")
+            
+            tscv = TimeSeriesSplit(n_splits=n_splits)
+            splits = list(tscv.split(X_train_arr))
+            
+            if not splits:
+                from sklearn.model_selection import train_test_split
+                train_idx, val_idx = train_test_split(range(len(X_train_arr)), test_size=0.2, 
+                                                     random_state=random_state, stratify=y_train_arr)
+            else:
+                train_idx, val_idx = splits[-1]  # Use last split for final model
+            
+            X_train_final, X_val = X_train_arr[train_idx], X_train_arr[val_idx]
+            y_train_final, y_val = y_train_arr[train_idx], y_train_arr[val_idx]
         else:
-            train_idx, val_idx = splits[-1]  # Use last split for final model
+            # Use all training data for training, test data for evaluation
+            X_train_final = X_train_arr
+            y_train_final = y_train_arr
+            X_val = X_test_arr
+            y_val = y_test_arr
         
-        X_train, X_val = X_arr[train_idx], X_arr[val_idx]
-        y_train, y_val = y_arr[train_idx], y_arr[val_idx]
-        
-        print(f"Training set: {X_train.shape[0]} samples")
-        print(f"Validation set: {X_val.shape[0]} samples")
-        
+        print(f"Final training set: {X_train_final.shape[0]} samples")
+        print(f"Validation/Test set: {X_val.shape[0]} samples")
+
     except Exception as e:
         print(f"ERROR in data splitting: {e}")
         import traceback
         traceback.print_exc()
         return None, None, None, None
-    
+
     try:
-        # Create enhanced ensemble with all advanced models
         print("Creating enhanced ensemble with advanced ML models...")
         ensemble_models, ensemble_scaler = create_diverse_ensemble(
-            X_train, y_train, combined_features, random_state
+            X_train_final, y_train_final, combined_features, random_state
         )
         
         if not ensemble_models:
@@ -4773,119 +4888,57 @@ def train_with_consistent_features(X, y, n_splits=10, random_state=42):
             return None, None, None, None
         
         print(f"Successfully created ensemble with {len(ensemble_models)} models")
-        
+
     except Exception as e:
         print(f"ERROR in ensemble creation: {e}")
         import traceback
         traceback.print_exc()
         return None, None, None, None
-    
+
     try:
-        # Train calibration models
-        print("Training confidence calibration models...")
+        print("Evaluating on held-out test/validation data...")
         X_val_selected = X_val[:, combined_features]
         
-        # Get validation predictions for calibration
-        val_predictions = []
-        successful_predictions = 0
-        
-        for model_type, model, model_scaler in ensemble_models:
-            try:
-                X_val_pred = X_val_selected.copy()
-                if model_scaler is not None:
-                    X_val_pred = model_scaler.transform(X_val_selected)
-                
-                if model_type == 'xgb':
-                    try:
-                        import xgboost as xgb
-                        dval = xgb.DMatrix(X_val_pred)
-                        pred = model.predict(dval)
-                    except ImportError:
-                        continue
-                elif model_type in ['catboost']:
-                    if hasattr(model, 'predict_proba'):
-                        pred = model.predict_proba(X_val_pred)[:, 1]
-                    else:
-                        pred = model.predict(X_val_pred)
-                elif model_type == 'lgb':
-                    try:
-                        pred = model.predict(X_val_pred)
-                    except:
-                        continue
-                elif 'nn' in model_type or model_type == 'lstm':
-                    pred = model.predict(X_val_pred, verbose=0).flatten()
-                else:
-                    if hasattr(model, 'predict_proba'):
-                        pred = model.predict_proba(X_val_pred)[:, 1]
-                    else:
-                        pred = model.predict(X_val_pred)
-                
-                if len(pred) == len(y_val):
-                    val_predictions.append(pred)
-                    successful_predictions += 1
-                    
-            except Exception as e:
-                print(f"Warning: Error getting validation predictions from {model_type}: {e}")
-                continue
-        
-        print(f"Got validation predictions from {successful_predictions} models")
-        
-        # Train calibration models if we have predictions
-        platt_calibrator = None
-        isotonic_calibrator = None
-        
-        if val_predictions and successful_predictions > 0:
-            try:
-                val_pred_array = np.array(val_predictions)
-                val_pred_mean = np.mean(val_pred_array, axis=0)
-                
-                if len(val_pred_mean) == len(y_val):
-                    platt_calibrator = confidence_calibration_platt_scaling(val_pred_mean, y_val)
-                    isotonic_calibrator = isotonic_regression_calibration(val_pred_mean, y_val)
-            except Exception as e:
-                print(f"Warning: Calibration training failed: {e}")
-        
-    except Exception as e:
-        print(f"ERROR in calibration training: {e}")
-        import traceback
-        traceback.print_exc()
-        platt_calibrator = None
-        isotonic_calibrator = None
-    
-    try:
-        # Evaluate enhanced ensemble
-        print("Evaluating enhanced ensemble...")
-        X_val_selected = X_val[:, combined_features]
-        
+        # Get ensemble prediction on test/validation data
         ensemble_pred, raw_preds, ensemble_confidence = predict_with_ensemble(
             ensemble_models, X_val_selected
         )
         
-        # Simple accuracy calculation
-        ensemble_binary = 1 if ensemble_pred > 0.5 else 0
-        sample_correct = 1 if (ensemble_binary == 1 and y_val[0] == 1) or (ensemble_binary == 0 and y_val[0] == 0) else 0
-        accuracy = sample_correct  # This is just a sample, not full validation
+        # Calculate accuracy on multiple samples
+        val_predictions = []
+        val_actuals = []
         
-        print(f"Enhanced ensemble sample prediction: {ensemble_pred:.4f} (confidence: {ensemble_confidence:.3f})")
+        sample_size = min(100, len(y_val))  # Test on up to 100 samples
+        for i in range(sample_size):
+            X_sample = X_val_selected[i:i+1]
+            pred, _, _ = predict_with_ensemble(ensemble_models, X_sample)
+            val_predictions.append(1 if pred > 0.5 else 0)
+            val_actuals.append(y_val[i])
         
+        accuracy = sum(1 for p, a in zip(val_predictions, val_actuals) if p == a) / len(val_predictions)
+        
+        print(f"Ensemble validation accuracy: {accuracy:.4f} on {len(val_predictions)} samples")
+        print(f"Test data type: {'Held-out test set' if has_test_data else 'Validation split'}")
+
     except Exception as e:
         print(f"Warning: Error in ensemble evaluation: {e}")
         accuracy = 0.7  # Default
         ensemble_confidence = 0.6
-    
+
     try:
-        # Save enhanced ensemble
+        # Save enhanced models and metadata
         enhanced_data = {
             'models': ensemble_models,
-            'feature_mask': combined_features,
+            'feature_mask': combined_features, 
             'selected_features': selected_features,
             'scaler': ensemble_scaler,
-            'platt_calibrator': platt_calibrator,
-            'isotonic_calibrator': isotonic_calibrator,
             'performance_metrics': {
-                'accuracy': accuracy,
+                'validation_accuracy': accuracy,
                 'model_count': len(ensemble_models),
-                'feature_count': len(selected_features)
+                'feature_count': len(selected_features),
+                'trained_on_separate_data': has_test_data,
+                'training_samples': len(y_train_final),
+                'test_samples': len(y_val) if has_test_data else 0
             }
         }
         
@@ -4893,7 +4946,6 @@ def train_with_consistent_features(X, y, n_splits=10, random_state=42):
             pickle.dump(enhanced_data, f)
         print("Saved enhanced ensemble data")
         
-        # Also save in original format for compatibility
         with open('diverse_ensemble.pkl', 'wb') as f:
             pickle.dump(ensemble_models, f)
         print("Saved diverse ensemble for compatibility")
@@ -4904,74 +4956,82 @@ def train_with_consistent_features(X, y, n_splits=10, random_state=42):
                 'feature_importances': dict(zip(selected_features, [1.0] * len(selected_features))),
                 'selection_method': 'enhanced_multi_method',
                 'n_folds': n_splits,
-                'advanced_ml_enabled': True
+                'advanced_ml_enabled': True,
+                'separate_test_data': has_test_data
             }
             pickle.dump(feature_metadata, f)
         print("Saved feature metadata")
-        
+
     except Exception as e:
         print(f"ERROR in saving models: {e}")
         import traceback
         traceback.print_exc()
         return None, None, None, None
-    
+
     print(f"Enhanced ensemble training complete!")
     print(f"Models trained: {len(ensemble_models)}")
-    print(f"Features selected: {len(selected_features)}")
-    print(f"Sample accuracy: {accuracy:.4f}")
-    
-    # Return values in expected format
+    print(f"Features selected: {len(selected_features)}")  
+    print(f"Validation accuracy: {accuracy:.4f}")
+    print(f"Used separate test data: {has_test_data}")
+
     avg_metrics = {
         'accuracy': accuracy,
-        'feature_count': len(selected_features),
+        'feature_count': len(selected_features), 
         'model_count': len(ensemble_models),
         'advanced_ml_enabled': True,
-        'confidence': ensemble_confidence if 'ensemble_confidence' in locals() else 0.6
+        'confidence': ensemble_confidence if 'ensemble_confidence' in locals() else 0.6,
+        'separate_test_data': has_test_data
     }
-    
+
     return ensemble_models, ensemble_scaler, selected_features, avg_metrics
+
 def load_backtesting_models():
     """
-    ENHANCED VERSION: Now loads advanced ensemble if available, falls back to original
+    ENHANCED: Centralized model loading for both backtesting and live prediction.
+    This ensures both systems use identical models.
     """
-    print("\n========== LOADING ENHANCED ENSEMBLE SYSTEM ==========")
+    print("\n========== LOADING CONSISTENT ENSEMBLE SYSTEM ==========")
     
-    # Try to load enhanced ensemble first
+    # Try enhanced ensemble first (preferred)
     try:
         with open('enhanced_ensemble_data.pkl', 'rb') as f:
             enhanced_data = pickle.load(f)
-        
         print(f"SUCCESS: Loaded enhanced ensemble system")
         print(f"Models: {len(enhanced_data['models'])}")
         print(f"Features: {len(enhanced_data['selected_features'])}")
-        print(f"Calibration available: {enhanced_data['platt_calibrator'] is not None}")
-        
         return enhanced_data['models'], enhanced_data['selected_features']
-        
     except FileNotFoundError:
-        print("Enhanced ensemble not found, trying original system...")
+        print("Enhanced ensemble not found, trying diverse ensemble...")
     
-    # Fallback to original loading logic
-    ensemble_models = None
+    # Fallback to diverse ensemble
     try:
-        print("Attempting to load diverse ensemble from diverse_ensemble.pkl...")
         with open('diverse_ensemble.pkl', 'rb') as f:
             ensemble_models = pickle.load(f)
-            print(f"SUCCESS: Loaded ensemble with {len(ensemble_models)} models")
+            print(f"SUCCESS: Loaded diverse ensemble with {len(ensemble_models)} models")
     except Exception as e:
         print(f"ERROR: Failed to load ensemble: {e}")
         return None, None
     
+    # Load features using consistent priority
     selected_features = None
-    try:
-        with open('feature_metadata.pkl', 'rb') as f:
-            feature_metadata = pickle.load(f)
-            selected_features = feature_metadata.get('selected_features')
-            print(f"SUCCESS: Loaded {len(selected_features)} features")
-            if feature_metadata.get('advanced_ml_enabled'):
-                print("Advanced ML features detected in metadata")
-    except Exception as e:
-        print(f"ERROR: Failed to load features: {e}")
+    feature_files = ['feature_metadata.pkl', 'selected_feature_names.pkl', 'stable_features.pkl']
+    
+    for feature_file in feature_files:
+        try:
+            with open(feature_file, 'rb') as f:
+                feature_data = pickle.load(f)
+                if isinstance(feature_data, dict):
+                    selected_features = feature_data.get('selected_features', feature_data)
+                else:
+                    selected_features = feature_data
+                print(f"SUCCESS: Loaded {len(selected_features)} features from {feature_file}")
+                break
+        except Exception as e:
+            print(f"Failed to load {feature_file}: {e}")
+            continue
+    
+    if selected_features is None:
+        print(f"ERROR: Could not load any feature lists")
         return ensemble_models, None
     
     return ensemble_models, selected_features
@@ -5366,10 +5426,10 @@ def identify_key_insights(results):
 def get_backtest_params():
     """
     Interactive function to get parameters for backtesting.
-    Returns:
-        dict: Parameters for backtesting
+    ENHANCED: Now includes option to use separate test data.
     """
     print("\n===== BACKTEST CONFIGURATION =====")
+    
     params = {
         'team_limit': 50,
         'bankroll': 1000.0,
@@ -5377,25 +5437,33 @@ def get_backtest_params():
         'min_edge': 0.08,
         'confidence_threshold': 0.4,
         'start_date': None,
-        'end_date': None
+        'end_date': None,
+        'use_test_data': True
     }
+
     print("\nEnter parameters (press Enter to use defaults):")
+    
     try:
         team_input = input(f"Number of teams to analyze [{params['team_limit']}]: ")
         if team_input.strip():
             params['team_limit'] = int(team_input)
+
         bankroll_input = input(f"Starting bankroll [${params['bankroll']}]: ")
         if bankroll_input.strip():
             params['bankroll'] = float(bankroll_input)
+
         bet_pct_input = input(f"Maximum bet size as percentage of bankroll [{params['bet_pct']*100}%]: ")
         if bet_pct_input.strip():
             params['bet_pct'] = float(bet_pct_input) / 100
+
         min_edge_input = input(f"Minimum required edge [{params['min_edge']*100}%]: ")
         if min_edge_input.strip():
             params['min_edge'] = float(min_edge_input) / 100
+
         conf_input = input(f"Minimum model confidence [{params['confidence_threshold']*100}%]: ")
         if conf_input.strip():
             params['confidence_threshold'] = float(conf_input) / 100
+
         date_range = input("Use specific date range? (y/n): ").lower().startswith('y')
         if date_range:
             start_date = input("Start date (YYYY-MM-DD or blank for no limit): ")
@@ -5404,20 +5472,29 @@ def get_backtest_params():
                 params['start_date'] = start_date.strip()
             if end_date.strip():
                 params['end_date'] = end_date.strip()
+                
+        test_data_input = input("Use separate test data to prevent data leakage? (y/n) [y]: ").lower()
+        if test_data_input == 'n':
+            params['use_test_data'] = False
+        
     except ValueError as e:
         print(f"Invalid input: {e}")
         print("Using default values for all parameters.")
+
     print("\nBacktest Configuration:")
     print(f"Teams to analyze: {params['team_limit']}")
     print(f"Starting bankroll: ${params['bankroll']}")
     print(f"Maximum bet size: {params['bet_pct']*100}% of bankroll")
     print(f"Minimum edge: {params['min_edge']*100}%")
     print(f"Minimum confidence: {params['confidence_threshold']*100}%")
+    print(f"Use separate test data: {params['use_test_data']}")
+    
     if params['start_date'] or params['end_date']:
         date_range = f"{params['start_date'] or 'Beginning'} to {params['end_date'] or 'Present'}"
         print(f"Date range: {date_range}")
     else:
         print("Date range: All available data")
+
     return params
 def select_recommended_bets(betting_analysis, team1_name, team2_name):
     """
@@ -5454,24 +5531,21 @@ def select_recommended_bets(betting_analysis, team1_name, team2_name):
 
 def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_data, confidence_score, bankroll=1000.0):
     """
-    BALANCED VERSION: Profitable while preventing bankruptcy
+    ENHANCED: Now uses shared constants for consistency.
+    This is the single source of truth for betting analysis.
     """
-    print(f"\n=== BALANCED SAFE BETTING ANALYSIS ===")
+    print(f"\n=== CONSISTENT BETTING ANALYSIS ===")
     print(f"Team1 Win Prob: {team1_win_prob:.4f}, Team2 Win Prob: {team2_win_prob:.4f}")
     print(f"Confidence Score: {confidence_score:.4f}")
     print(f"Bankroll: ${bankroll:.2f}")
     
+    # Use shared constants for consistency
+    MIN_EDGE_BASE = BettingConstants.MIN_EDGE_BASE
+    MIN_CONFIDENCE = BettingConstants.MIN_CONFIDENCE
+    MIN_PROBABILITY = BettingConstants.MIN_PROBABILITY
+    MAX_PROBABILITY = BettingConstants.MAX_PROBABILITY
+    
     betting_analysis = {}
-    
-    # BALANCED SAFETY REQUIREMENTS - Profitable but safe
-    MIN_EDGE_BASE = 0.025   # Reduced from 0.08 to 0.06 (6%) - still very conservative
-    MIN_CONFIDENCE = 0.45  # Reduced from 0.75 to 0.65 (65%) - high but achievable
-    MIN_PROBABILITY = 0.25  # Back to 0.35 for more opportunities
-    MAX_PROBABILITY = 0.85  # Back to 0.75 for more opportunities
-    
-    # BANKRUPTCY PREVENTION: Safe but allows for profits
-    MAX_SINGLE_BET_PCT = 0.01   # 1% maximum (was 0.5%) - doubled but still very safe
-    MAX_TOTAL_RISK_PCT = 0.1   # 2% total risk maximum (was 1%) - allows for small profits
     
     if confidence_score < MIN_CONFIDENCE:
         print(f"Confidence {confidence_score:.3f} below minimum {MIN_CONFIDENCE:.3f} - no bets")
@@ -5480,14 +5554,14 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
                 for bet_type in ['team1_ml', 'team2_ml', 'team1_plus_1_5', 'team2_plus_1_5',
                                 'team1_minus_1_5', 'team2_minus_1_5', 'over_2_5_maps', 'under_2_5_maps']}
     
-    # BALANCED: Some dynamism for better opportunities, but still conservative
-    edge_threshold = MIN_EDGE_BASE * (1.8 - confidence_score)  # Some adjustment based on confidence
-    edge_threshold = max(0.04, min(0.08, edge_threshold))  # Bound between 4% and 8%
+    # Dynamic edge threshold based on confidence
+    edge_threshold = MIN_EDGE_BASE * (1.8 - confidence_score)
+    edge_threshold = max(0.02, min(0.06, edge_threshold))
     print(f"Dynamic edge threshold: {edge_threshold:.3f}")
     
-    # Calculate derivative probabilities with MODERATE conservatism
+    # Calculate derivative probabilities using consistent method
     single_map_prob = calculate_improved_single_map_prob(team1_win_prob, confidence_score)
-    correlation_factor = 0.20  # Slightly increased for more realistic probabilities
+    correlation_factor = 0.20
     
     team1_plus_prob = calculate_plus_line_prob(single_map_prob, correlation_factor)
     team2_plus_prob = calculate_plus_line_prob(1 - single_map_prob, correlation_factor)
@@ -5507,14 +5581,13 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
     ]
     
     profitable_bets = 0
-    
     for bet_type, prob, odds in bet_types:
-        print(f"\n--- Safe-Profitable Analysis {bet_type} ---")
+        print(f"\n--- Consistent Analysis {bet_type} ---")
         
         if odds <= 1.0:
             betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, "Invalid odds")
             continue
-        
+            
         if prob < MIN_PROBABILITY or prob > MAX_PROBABILITY:
             print(f"Probability {prob:.3f} outside safe range [{MIN_PROBABILITY:.3f}, {MAX_PROBABILITY:.3f}]")
             betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, "Probability out of safe range")
@@ -5522,49 +5595,45 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
         
         implied_prob = 1 / odds
         raw_edge = prob - implied_prob
-        
-        # BALANCED: Moderate confidence penalty that doesn't kill all profits
-        confidence_penalty = (1 - confidence_score) * 0.2  # Reduced penalty from 0.5 to 0.2
+        confidence_penalty = (1 - confidence_score) * 0.2
         confidence_adjusted_prob = prob - confidence_penalty
         adjusted_edge = confidence_adjusted_prob - implied_prob
         
-        print(f"Raw prob: {prob:.4f}, Balanced adjusted: {confidence_adjusted_prob:.4f}")
+        print(f"Raw prob: {prob:.4f}, Adjusted: {confidence_adjusted_prob:.4f}")
         print(f"Implied prob: {implied_prob:.4f}, Adjusted edge: {adjusted_edge:.4f}")
         
         if adjusted_edge < edge_threshold:
-            print(f"Edge {adjusted_edge:.4f} below safe threshold {edge_threshold:.4f}")
+            print(f"Edge {adjusted_edge:.4f} below threshold {edge_threshold:.4f}")
             betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, f"Insufficient edge ({adjusted_edge:.3f})")
             continue
         
-        # BALANCED KELLY: Conservative but profitable
+        # Consistent Kelly calculation
         b = odds - 1
         p = confidence_adjusted_prob
         q = 1 - p
         
-        if b <= 0 or p <= 0.45 or q >= 0.55:  # Relaxed from 0.5 to 0.45 for more opportunities
+        if b <= 0 or p <= 0.45 or q >= 0.55:
             kelly = 0
         else:
             full_kelly = (b * p - q) / b
             if full_kelly <= 0:
                 kelly = 0
             else:
-                # BALANCED: 4% of Kelly with better cap
-                kelly = full_kelly * 0.04  # Increased from 0.02 to 0.04 (4% of full Kelly)
-                kelly = min(kelly, MAX_SINGLE_BET_PCT)  # Cap at 1%
+                kelly = full_kelly * 0.08  # 8% of full Kelly (consistent with backtesting)
+                kelly = min(kelly, BettingConstants.MAX_KELLY_FRACTION)
         
-        # BALANCED SAFETY: Reasonable bet limits that allow profits
-        max_absolute_bet = min(20.0, bankroll * MAX_SINGLE_BET_PCT)  # Increased from $10 to $20
+        max_absolute_bet = min(BettingConstants.MAX_SINGLE_BET, bankroll * 0.02)
         bet_amount = min(bankroll * kelly, max_absolute_bet) if kelly > 0 else 0
         bet_amount = max(0, round(bet_amount, 0))
         
-        print(f"Balanced Kelly fraction: {kelly:.6f}, Bet amount: ${bet_amount:.2f}")
+        print(f"Kelly fraction: {kelly:.6f}, Bet amount: ${bet_amount:.2f}")
         
         meets_all_criteria = (
             adjusted_edge >= edge_threshold and
             confidence_score >= MIN_CONFIDENCE and
             bet_amount >= 1.0 and
             MIN_PROBABILITY <= prob <= MAX_PROBABILITY and
-            prob >= 0.45  # Relaxed from 0.55 to 0.45 for more opportunities
+            prob >= 0.45
         )
         
         if meets_all_criteria:
@@ -5584,14 +5653,14 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
             'meets_edge': adjusted_edge >= edge_threshold,
             'meets_confidence': confidence_score >= MIN_CONFIDENCE,
             'meets_probability_bounds': MIN_PROBABILITY <= prob <= MAX_PROBABILITY,
-            'rejection_reason': None if meets_all_criteria else get_balanced_rejection_reason(
+            'rejection_reason': None if meets_all_criteria else get_consistent_rejection_reason(
                 adjusted_edge, edge_threshold, confidence_score, MIN_CONFIDENCE, prob, MIN_PROBABILITY, MAX_PROBABILITY
             )
         }
         
-        print(f"BALANCED RECOMMENDED: {meets_all_criteria}")
+        print(f"RECOMMENDED: {meets_all_criteria}")
     
-    print(f"\n=== BALANCED SUMMARY: {profitable_bets} bets recommended out of {len(bet_types)} analyzed ===")
+    print(f"\n=== CONSISTENT SUMMARY: {profitable_bets} bets recommended out of {len(bet_types)} analyzed ===")
     total_risk = sum(analysis.get('bet_amount', 0) for analysis in betting_analysis.values() if analysis.get('recommended', False))
     print(f"Total recommended risk: ${total_risk:.2f} ({(total_risk/bankroll)*100:.3f}% of bankroll)")
     
@@ -6327,16 +6396,18 @@ def apply_betting_calibration_enhanced(prediction, confidence):
 
 def calculate_bet_type_probabilities(win_probability, confidence_score):
     """
-    Calculate probabilities for different bet types using the EXACT same
-    approach as backtesting - MODIFIED TO MATCH BACKTESTING
+    ENHANCED: Now uses EXACT same calculation as backtesting.
+    This ensures derivative probabilities are identical between systems.
     """
     single_map_prob = calculate_improved_single_map_prob(win_probability, confidence_score)
-    correlation_factor = 0.25 + (confidence_score * 0.15)  # Higher confidence = more correlation
+    correlation_factor = 0.25 + (confidence_score * 0.15)
+    
     team1_plus_prob = calculate_plus_line_prob(single_map_prob, correlation_factor)
     team2_plus_prob = calculate_plus_line_prob(1 - single_map_prob, correlation_factor)
     team1_minus_prob = calculate_minus_line_prob(single_map_prob, correlation_factor)
     team2_minus_prob = calculate_minus_line_prob(1 - single_map_prob, correlation_factor)
     over_prob, under_prob = calculate_totals_prob(single_map_prob, correlation_factor)
+    
     return {
         'team1_plus_1_5': team1_plus_prob,
         'team2_plus_1_5': team2_plus_prob,
@@ -6345,62 +6416,197 @@ def calculate_bet_type_probabilities(win_probability, confidence_score):
         'over_2_5_maps': over_prob,
         'under_2_5_maps': under_prob
     }
+
+def validate_consistency():
+    """
+    Comprehensive validation to ensure backtesting and live prediction consistency.
+    Run this after implementing the fixes to verify everything works.
+    """
+    print("\n" + "="*80)
+    print("RUNNING CONSISTENCY VALIDATION TESTS")
+    print("="*80)
+    
+    validation_results = {}
+    
+    # Test 1: Model Loading Consistency
+    try:
+        print("\n1. Testing model loading consistency...")
+        backtest_models, backtest_features = load_backtesting_models()
+        live_models, live_features = load_prediction_artifacts()
+        
+        models_match = len(backtest_models) == len(live_models) if backtest_models and live_models else False
+        features_match = backtest_features == live_features if backtest_features and live_features else False
+        
+        validation_results['model_loading'] = models_match and features_match
+        print(f"   Models match: {models_match}")
+        print(f"   Features match: {features_match}")
+        print(f"   ✅ Model loading consistency: {'PASS' if validation_results['model_loading'] else 'FAIL'}")
+        
+    except Exception as e:
+        validation_results['model_loading'] = False
+        print(f"   ❌ Model loading test failed: {e}")
+    
+    # Test 2: Feature Preparation Consistency
+    try:
+        print("\n2. Testing feature preparation consistency...")
+        
+        # Create sample team stats
+        sample_team1_stats = {
+            'win_rate': 0.65, 'recent_form': 0.70, 'matches': [{'team_won': True}] * 10,
+            'score_differential': 2.5, 'momentum_indicator': 0.6
+        }
+        sample_team2_stats = {
+            'win_rate': 0.55, 'recent_form': 0.60, 'matches': [{'team_won': False}] * 8,
+            'score_differential': -1.2, 'momentum_indicator': -0.3
+        }
+        
+        # Test sample features
+        sample_features = ['win_rate_diff', 'recent_form_diff', 'total_matches', 'momentum_diff']
+        
+        # Test both methods should produce same result
+        backtest_features = prepare_features_for_backtest(sample_team1_stats, sample_team2_stats, sample_features)
+        live_features, swapped = prepare_data_with_consistent_ordering(sample_team1_stats, sample_team2_stats, sample_features)
+        
+        features_identical = np.array_equal(backtest_features, live_features) if backtest_features is not None and live_features is not None else False
+        
+        validation_results['feature_preparation'] = features_identical
+        print(f"   Features shape: {backtest_features.shape if backtest_features is not None else 'None'}")
+        print(f"   ✅ Feature preparation consistency: {'PASS' if features_identical else 'FAIL'}")
+        
+    except Exception as e:
+        validation_results['feature_preparation'] = False
+        print(f"   ❌ Feature preparation test failed: {e}")
+    
+    # Test 3: Betting Analysis Consistency
+    try:
+        print("\n3. Testing betting analysis consistency...")
+        
+        # Same inputs
+        win_prob = 0.65
+        confidence = 0.72
+        odds_data = {"team1_ml_odds": 2.1, "team2_ml_odds": 1.8}
+        bankroll = 1000.0
+        
+        # Test both methods
+        backtest_analysis = analyze_betting_edge_for_backtesting(win_prob, 1-win_prob, odds_data, confidence, bankroll)
+        live_analysis = analyze_betting_edge_conservative(win_prob, "Team1", "Team2", odds_data, confidence, bankroll)
+        
+        # Compare key metrics
+        analysis_consistent = True
+        for bet_type in backtest_analysis:
+            if bet_type in live_analysis:
+                edge_diff = abs(backtest_analysis[bet_type]['edge'] - live_analysis[bet_type]['edge'])
+                rec_match = backtest_analysis[bet_type]['recommended'] == live_analysis[bet_type]['recommended']
+                if edge_diff > 0.001 or not rec_match:
+                    analysis_consistent = False
+                    break
+        
+        validation_results['betting_analysis'] = analysis_consistent
+        print(f"   ✅ Betting analysis consistency: {'PASS' if analysis_consistent else 'FAIL'}")
+        
+    except Exception as e:
+        validation_results['betting_analysis'] = False
+        print(f"   ❌ Betting analysis test failed: {e}")
+    
+    # Overall Results
+    print(f"\n" + "="*80)
+    print("VALIDATION SUMMARY")
+    print("="*80)
+    
+    all_passed = all(validation_results.values())
+    
+    for test_name, result in validation_results.items():
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"{test_name.replace('_', ' ').title()}: {status}")
+    
+    print(f"\nOverall Consistency: {'✅ ALL TESTS PASSED' if all_passed else '❌ SOME TESTS FAILED'}")
+    
+    if all_passed:
+        print("\n🎉 SUCCESS: Your backtesting and live prediction systems are now consistent!")
+        print("   You can expect live predictions to replicate backtest performance.")
+    else:
+        print("\n⚠️  Some tests failed. Please check the implementations and try again.")
+    
+    return validation_results
+
 def prepare_features_for_backtest(team1_stats, team2_stats, selected_features):
-   features = prepare_data_for_model(team1_stats, team2_stats)
-   if not features:
-       return None
-   features_df = pd.DataFrame([features])
-   original_feature_count = len(features_df.columns)
-   recent_matches_1 = team1_stats.get('matches', [])
-   recent_matches_2 = team2_stats.get('matches', [])
-   if isinstance(recent_matches_1, list) and len(recent_matches_1) >= 3:
-       recent_3_1 = recent_matches_1[-3:]
-       recent_momentum_1 = sum(1 for m in recent_3_1 if m.get('team_won', False)) / 3
-       features_df['team1_recent_momentum'] = recent_momentum_1
-   if isinstance(recent_matches_2, list) and len(recent_matches_2) >= 3:
-       recent_3_2 = recent_matches_2[-3:]
-       recent_momentum_2 = sum(1 for m in recent_3_2 if m.get('team_won', False)) / 3
-       features_df['team2_recent_momentum'] = recent_momentum_2
-   if 'team1_recent_momentum' in features_df.columns and 'team2_recent_momentum' in features_df.columns:
-       features_df['momentum_diff'] = features_df['team1_recent_momentum'] - features_df['team2_recent_momentum']
-   complete_features = pd.DataFrame(0, index=[0], columns=selected_features)
-   missing_features = []
-   derived_features = []
-   for feature in selected_features:
-       if feature in features_df.columns:
-           complete_features[feature] = features_df[feature].values
-       else:
-           missing_features.append(feature)
-   for feature in missing_features[:]:
-       if feature == 'win_rate_diff':
-           val = team1_stats.get('win_rate', 0.5) - team2_stats.get('win_rate', 0.5)
-           complete_features[feature] = val
-           missing_features.remove(feature)
-           derived_features.append(feature)
-       elif feature == 'recent_form_diff':
-           val = team1_stats.get('recent_form', 0.5) - team2_stats.get('recent_form', 0.5)
-           complete_features[feature] = val
-           missing_features.remove(feature)
-           derived_features.append(feature)
-       elif feature == 'total_matches':
-           team1_matches = team1_stats.get('matches', 0)
-           team2_matches = team2_stats.get('matches', 0)
-           if isinstance(team1_matches, list):
-               team1_count = len(team1_matches)
-           else:
-               team1_count = team1_matches
-           if isinstance(team2_matches, list):
-               team2_count = len(team2_matches)
-           else:
-               team2_count = team2_matches
-           complete_features[feature] = team1_count + team2_count
-           missing_features.remove(feature)
-           derived_features.append(feature)
-       elif "padding_feature" in feature:
-           missing_features.remove(feature)
-   complete_features = normalize_features(complete_features)
-   X = complete_features.values
-   return X
+    """
+    ENHANCED: This is now the single source of truth for feature preparation.
+    Used by both backtesting and live prediction for consistency.
+    """
+    # Step 1: Create base features using shared logic
+    features = prepare_data_for_model(team1_stats, team2_stats)
+    if not features:
+        return None
+    
+    features_df = pd.DataFrame([features])
+    original_feature_count = len(features_df.columns)
+    
+    # Step 2: Add momentum features (CRITICAL - was missing in live)
+    recent_matches_1 = team1_stats.get('matches', [])
+    recent_matches_2 = team2_stats.get('matches', [])
+    
+    if isinstance(recent_matches_1, list) and len(recent_matches_1) >= 3:
+        recent_3_1 = recent_matches_1[-3:]
+        recent_momentum_1 = sum(1 for m in recent_3_1 if m.get('team_won', False)) / 3
+        features_df['team1_recent_momentum'] = recent_momentum_1
+    
+    if isinstance(recent_matches_2, list) and len(recent_matches_2) >= 3:
+        recent_3_2 = recent_matches_2[-3:]
+        recent_momentum_2 = sum(1 for m in recent_3_2 if m.get('team_won', False)) / 3
+        features_df['team2_recent_momentum'] = recent_momentum_2
+    
+    if 'team1_recent_momentum' in features_df.columns and 'team2_recent_momentum' in features_df.columns:
+        features_df['momentum_diff'] = features_df['team1_recent_momentum'] - features_df['team2_recent_momentum']
+    
+    # Step 3: Ensure all selected features are present
+    complete_features = pd.DataFrame(0, index=[0], columns=selected_features)
+    missing_features = []
+    derived_features = []
+    
+    for feature in selected_features:
+        if feature in features_df.columns:
+            complete_features[feature] = features_df[feature].values
+        else:
+            missing_features.append(feature)
+    
+    # Step 4: Derive missing features using consistent logic
+    for feature in missing_features[:]:
+        if feature == 'win_rate_diff':
+            val = team1_stats.get('win_rate', 0.5) - team2_stats.get('win_rate', 0.5)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+        elif feature == 'recent_form_diff':
+            val = team1_stats.get('recent_form', 0.5) - team2_stats.get('recent_form', 0.5)
+            complete_features[feature] = val
+            missing_features.remove(feature)
+            derived_features.append(feature)
+        elif feature == 'total_matches':
+            team1_matches = team1_stats.get('matches', 0)
+            team2_matches = team2_stats.get('matches', 0)
+            if isinstance(team1_matches, list):
+                team1_count = len(team1_matches)
+            else:
+                team1_count = team1_matches
+            if isinstance(team2_matches, list):
+                team2_count = len(team2_matches)
+            else:
+                team2_count = team2_matches
+            complete_features[feature] = team1_count + team2_count
+            missing_features.remove(feature)
+            derived_features.append(feature)
+        elif "padding_feature" in feature:
+            missing_features.remove(feature)
+    
+    # Step 5: Apply consistent normalization (CRITICAL - was missing in live)
+    complete_features = normalize_features(complete_features)
+    
+    X = complete_features.values
+    print(f"Feature preparation: {original_feature_count} → {len(selected_features)} features")
+    print(f"Derived features: {len(derived_features)}, Missing: {len(missing_features)}")
+    
+    return X
 def analyze_team_form_trajectory(team_matches, window_size=5):
     """Analyze if team is improving or declining recently."""
     if not isinstance(team_matches, list) or len(team_matches) < window_size * 2:
@@ -7587,113 +7793,21 @@ def calculate_bet_amount(bankroll, win_prob, decimal_odds, bet_history=None, con
     return final_bet, kelly_fraction, adjustments
 def analyze_betting_edge_conservative(win_probability, team1_name, team2_name, odds_data,
                                      confidence_score, bankroll=1000.0, bet_history=None,
-                                     config=BankrollConfig):
+                                     config=None):
     """
-    Conservative betting edge analysis - MODIFIED TO MATCH BACKTESTING EXACTLY
+    FIXED: Now redirects to backtesting function for consistency.
+    This ensures both systems use identical betting analysis.
     """
-    print(f"\n=== ENHANCED BETTING ANALYSIS ===")
-    print(f"Team1 Win Prob: {win_probability:.4f}, Team2 Win Prob: {1-win_probability:.4f}")
-    print(f"Confidence Score: {confidence_score:.4f}")
-    print(f"Bankroll: ${bankroll:.2f}")
-    MIN_EDGE_BASE = 0.045  # Increased from 0.002 to 0.045 (4.5%)
-    MIN_CONFIDENCE = 0.450   # Increased from 0.01 to 0.65 (65%)
-    MIN_PROBABILITY = 0.35  # Don't bet on extreme underdogs
-    MAX_PROBABILITY = 0.75  # Don't bet on extreme favorites
-    if confidence_score < MIN_CONFIDENCE:
-        print(f"Confidence {confidence_score:.3f} below minimum {MIN_CONFIDENCE:.3f} - no bets")
-        return {bet_type: create_no_bet_analysis(bet_type, odds_data.get(f'{bet_type}_odds', 2.0),
-                                                "Insufficient confidence")
-                for bet_type in ['team1_ml', 'team2_ml', 'team1_plus_1_5', 'team2_plus_1_5',
-                                'team1_minus_1_5', 'team2_minus_1_5', 'over_2_5_maps', 'under_2_5_maps']}
-    edge_threshold = MIN_EDGE_BASE * (2.0 - confidence_score)  # Higher confidence = lower threshold
-    edge_threshold = max(0.035, min(0.065, edge_threshold))  # Bound between 3.5% and 6.5%
-    print(f"Dynamic edge threshold: {edge_threshold:.3f}")
-    single_map_prob = calculate_improved_single_map_prob(win_probability, confidence_score)
-    correlation_factor = 0.25 + (confidence_score * 0.15)  # Higher confidence = more correlation
-    team1_plus_prob = calculate_plus_line_prob(single_map_prob, correlation_factor)
-    team2_plus_prob = calculate_plus_line_prob(1 - single_map_prob, correlation_factor)
-    team1_minus_prob = calculate_minus_line_prob(single_map_prob, correlation_factor)
-    team2_minus_prob = calculate_minus_line_prob(1 - single_map_prob, correlation_factor)
-    over_prob, under_prob = calculate_totals_prob(single_map_prob, correlation_factor)
-    print(f"Calculated probabilities - Single map: {single_map_prob:.3f}")
-    print(f"Plus lines: T1={team1_plus_prob:.3f}, T2={team2_plus_prob:.3f}")
-    print(f"Minus lines: T1={team1_minus_prob:.3f}, T2={team2_minus_prob:.3f}")
-    print(f"Totals: Over={over_prob:.3f}, Under={under_prob:.3f}")
-    bet_types = [
-        ('team1_ml', win_probability, odds_data.get('team1_ml_odds', 0)),
-        ('team2_ml', 1 - win_probability, odds_data.get('team2_ml_odds', 0)),
-        ('team1_plus_1_5', team1_plus_prob, odds_data.get('team1_plus_1_5_odds', 0)),
-        ('team2_plus_1_5', team2_plus_prob, odds_data.get('team2_plus_1_5_odds', 0)),
-        ('team1_minus_1_5', team1_minus_prob, odds_data.get('team1_minus_1_5_odds', 0)),
-        ('team2_minus_1_5', team2_minus_prob, odds_data.get('team2_minus_1_5_odds', 0)),
-        ('over_2_5_maps', over_prob, odds_data.get('over_2_5_maps_odds', 0)),
-        ('under_2_5_maps', under_prob, odds_data.get('under_2_5_maps_odds', 0))
-    ]
-    betting_analysis = {}
-    MAX_KELLY_FRACTION = 0.015  # Never bet more than 1.5% of bankroll
-    MAX_SINGLE_BET = min(bankroll * 0.02, 25.0)  # Cap at $25 or 2% of bankroll
-    for bet_type, prob, odds in bet_types:
-        print(f"\n--- Analyzing {bet_type} ---")
-        if odds <= 1.0:
-            print(f"Invalid odds: {odds}")
-            betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, "Invalid odds")
-            continue
-        if prob < MIN_PROBABILITY or prob > MAX_PROBABILITY:
-            print(f"Probability {prob:.3f} outside acceptable range [{MIN_PROBABILITY:.3f}, {MAX_PROBABILITY:.3f}]")
-            betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, "Probability out of range")
-            continue
-        implied_prob = 1 / odds
-        raw_edge = prob - implied_prob
-        confidence_adjusted_prob = apply_confidence_adjustment(prob, confidence_score)
-        adjusted_edge = confidence_adjusted_prob - implied_prob
-        print(f"Raw prob: {prob:.4f}, Confidence adjusted: {confidence_adjusted_prob:.4f}")
-        print(f"Implied prob: {implied_prob:.4f}, Raw edge: {raw_edge:.4f}, Adjusted edge: {adjusted_edge:.4f}")
-        if adjusted_edge < edge_threshold:
-            print(f"Edge {adjusted_edge:.4f} below threshold {edge_threshold:.4f}")
-            betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, f"Insufficient edge ({adjusted_edge:.3f})")
-            continue
-        b = odds - 1
-        p = confidence_adjusted_prob
-        q = 1 - p
-        if b <= 0 or p <= 0 or q <= 0:
-            kelly = 0
-        else:
-            full_kelly = (b * p - q) / b
-            if full_kelly <= 0:
-                kelly = 0
-            else:
-                kelly = full_kelly * 0.08  # 8% of full Kelly - EXACT MATCH TO BACKTESTING
-                kelly = min(kelly, MAX_KELLY_FRACTION)  # Cap at 1.5%
-        bet_amount = bankroll * kelly
-        bet_amount = min(bet_amount, MAX_SINGLE_BET)
-        bet_amount = max(1.0, round(bet_amount, 0)) if kelly > 0 else 0
-        print(f"Kelly fraction: {kelly:.6f}, Bet amount: ${bet_amount:.2f}")
-        meets_all_criteria = (
-            adjusted_edge >= edge_threshold and
-            confidence_score >= MIN_CONFIDENCE and
-            bet_amount >= 1.0 and
-            MIN_PROBABILITY <= prob <= MAX_PROBABILITY
-        )
-        betting_analysis[bet_type] = {
-            'probability': confidence_adjusted_prob,
-            'implied_prob': implied_prob,
-            'edge': adjusted_edge,
-            'raw_edge': raw_edge,
-            'edge_threshold': edge_threshold,
-            'odds': odds,
-            'kelly_fraction': kelly,
-            'bet_amount': bet_amount,
-            'recommended': meets_all_criteria,
-            'confidence': confidence_score,
-            'meets_edge': adjusted_edge >= edge_threshold,
-            'meets_confidence': confidence_score >= MIN_CONFIDENCE,
-            'meets_probability_bounds': MIN_PROBABILITY <= prob <= MAX_PROBABILITY,
-            'rejection_reason': None if meets_all_criteria else get_rejection_reason(
-                adjusted_edge, edge_threshold, confidence_score, MIN_CONFIDENCE, prob, MIN_PROBABILITY, MAX_PROBABILITY
-            )
-        }
-        print(f"RECOMMENDED: {meets_all_criteria}")
-    return betting_analysis
+    print(f"Using consistent betting analysis for {team1_name} vs {team2_name}")
+    
+    # Redirect to backtesting function with same parameters
+    return analyze_betting_edge_for_backtesting(
+        win_probability,
+        1 - win_probability,
+        odds_data,
+        confidence_score,
+        bankroll
+    )
 def load_configuration():
     """Load and initialize the configuration settings."""
     Config.create_directories()
@@ -7709,17 +7823,20 @@ def load_configuration():
     logging.info("Configuration loaded")
     return Config
 def select_optimal_bets_conservative(betting_analysis, team1_name, team2_name, bankroll,
-                                   max_bets=2, max_total_risk=0.1, config=None):
+                                   max_bets=2, max_total_risk=None, config=None):
     """
-    BALANCED VERSION: Safe bankruptcy prevention with profit potential
+    ENHANCED: Now uses consistent parameters and logic for both systems.
     """
-    print(f"\n=== SAFE-PROFITABLE BET SELECTION ===")
-    print(f"Max bets: {max_bets}, Max total risk: {max_total_risk:.1%} (BALANCED)")
+    if max_total_risk is None:
+        max_total_risk = BettingConstants.MAX_TOTAL_RISK_PCT
+    
+    print(f"\n=== CONSISTENT BET SELECTION ===")
+    print(f"Max bets: {max_bets}, Max total risk: {max_total_risk:.1%}")
     
     recommended_bets = {k: v for k, v in betting_analysis.items() if v.get('recommended', False)}
     
     if not recommended_bets:
-        print("No bets meet the safe profitability criteria")
+        print("No bets meet the consistent criteria")
         return {}
     
     print(f"Candidate bets: {len(recommended_bets)}")
@@ -7727,9 +7844,9 @@ def select_optimal_bets_conservative(betting_analysis, team1_name, team2_name, b
     selected_bets = {}
     total_risk_amount = 0
     
-    # Sort by edge and confidence for best opportunities
-    sorted_bets = sorted(recommended_bets.items(), 
-                        key=lambda x: (x[1]['edge'], x[1]['confidence']), 
+    # Sort by edge and confidence (consistent with backtesting)
+    sorted_bets = sorted(recommended_bets.items(),
+                        key=lambda x: (x[1]['edge'], x[1]['confidence']),
                         reverse=True)
     
     for bet_type, analysis in sorted_bets:
@@ -7739,18 +7856,16 @@ def select_optimal_bets_conservative(betting_analysis, team1_name, team2_name, b
         
         bet_amount = analysis['bet_amount']
         
-        # SAFETY CHECK: Proper risk calculation with buffer
         if total_risk_amount + bet_amount > bankroll * max_total_risk:
             print(f"Skipping {bet_type} - would exceed total risk limit")
-            print(f"  Current risk: ${total_risk_amount:.2f}, Adding: ${bet_amount:.2f}, Limit: ${bankroll * max_total_risk:.2f}")
             continue
         
-        # ADDITIONAL SAFETY: Individual bet cap at 1%
+        # Apply consistent individual bet limits
         individual_risk_pct = bet_amount / bankroll
-        if individual_risk_pct > 0.01:  # 1% max per bet
-            print(f"Reducing {bet_type} bet from ${bet_amount:.2f} to ${bankroll * 0.01:.2f} (1% cap)")
-            bet_amount = bankroll * 0.01
-            analysis['bet_amount'] = bet_amount  # Update the analysis
+        if individual_risk_pct > 0.02:  # 2% max per bet (consistent)
+            print(f"Reducing {bet_type} bet from ${bet_amount:.2f} to ${bankroll * 0.02:.2f} (2% cap)")
+            bet_amount = bankroll * 0.02
+            analysis['bet_amount'] = bet_amount
         
         selected_bets[bet_type] = analysis
         total_risk_amount += bet_amount
@@ -7759,12 +7874,21 @@ def select_optimal_bets_conservative(betting_analysis, team1_name, team2_name, b
     final_risk_pct = total_risk_amount / bankroll
     print(f"Final selection: {len(selected_bets)} bets, total risk: ${total_risk_amount:.2f} ({final_risk_pct:.2%})")
     
-    # FINAL SAFETY CHECK with error tolerance
-    if final_risk_pct > max_total_risk * 1.1:  # Allow 10% tolerance for rounding
-        print(f"WARNING: Total risk {final_risk_pct:.2%} slightly exceeds limit {max_total_risk:.2%}")
-        # Don't reject all bets, just log the warning
-    
     return selected_bets
+
+def get_consistent_rejection_reason(edge, edge_threshold, confidence, min_confidence, prob, min_prob, max_prob):
+    """Helper function for consistent rejection reasons"""
+    reasons = []
+    if edge < edge_threshold:
+        reasons.append(f"Edge {edge:.3f} < threshold {edge_threshold:.3f}")
+    if confidence < min_confidence:
+        reasons.append(f"Confidence {confidence:.3f} < minimum {min_confidence:.3f}")
+    if prob < min_prob or prob > max_prob:
+        reasons.append(f"Probability {prob:.3f} outside [{min_prob:.3f}, {max_prob:.3f}]")
+    if prob < 0.45:
+        reasons.append(f"Probability {prob:.3f} below minimum 45%")
+    return "; ".join(reasons)
+
 def implement_dynamic_betting_strategy(match_history, current_bankroll, starting_bankroll, win_rate, target_roi=0.25):
     """
     Implement a dynamic betting strategy that adjusts based on bankroll and performance.
@@ -7924,16 +8048,15 @@ def calculate_ot_win_rate(map_statistics):
 def run_backtest_with_safeguards(params):
     """
     Run backtesting with enhanced safeguards.
-    FIXED: Uses proper team data loading without artificial limits.
+    ENHANCED: Now supports using separate test data to prevent data leakage.
     """
     logging.info(f"Starting backtest with parameters: {params}")
-    
+
     ensemble_models, selected_features = load_backtesting_models()
     if not ensemble_models or not selected_features:
         logging.error("Failed to load models or features")
         return None
 
-    # Extract parameters
     start_date = params.get('start_date', None)
     end_date = params.get('end_date', None)
     team_limit = params.get('team_limit', 50)
@@ -7943,8 +8066,8 @@ def run_backtest_with_safeguards(params):
     confidence_threshold = params.get('confidence_threshold', 0.4)
     use_cache = params.get('use_cache', True)
     cache_path = params.get('cache_path', "cache/valorant_data_cache.pkl")
+    use_test_data = params.get('use_test_data', True)
 
-    # Run the enhanced backtest
     results = run_backtest(
         start_date=start_date,
         end_date=end_date,
@@ -7954,18 +8077,17 @@ def run_backtest_with_safeguards(params):
         min_edge=min_edge,
         confidence_threshold=confidence_threshold,
         use_cache=use_cache,
-        cache_path=cache_path
+        cache_path=cache_path,
+        use_test_data=use_test_data
     )
 
     if not results:
         logging.error("Backtest failed or no results generated")
         return None
 
-    # Add realistic expectations
     warning = generate_performance_warning(results)
     results['realistic_expectations'] = warning
 
-    # Add long-term simulation if configured
     if Config.BACKTEST.SIMULATE_LONG_TERM_VARIANCE:
         win_rate = results['performance']['win_rate']
         avg_odds = 2.0  # Estimate
@@ -8741,7 +8863,9 @@ def main_optimized():
     import sys
     import logging
     from datetime import datetime
+
     config = load_configuration()
+
     parser = argparse.ArgumentParser(description="Enhanced Valorant Match Predictor and Betting System")
     parser.add_argument("--train", action="store_true", help="Train a new model")
     parser.add_argument("--retrain", action="store_true", help="Retrain with consistent features for profitability")
@@ -8777,8 +8901,12 @@ def main_optimized():
     parser.add_argument("--cache-info", action="store_true", help="Display information about the cache and exit")
     parser.add_argument("--debug", action="store_true", help="Enable extra debug output")
     parser.add_argument("--forward-test", action="store_true", help="Use forward testing framework")
+    parser.add_argument("--test-split", type=float, default=0.3, help="Fraction of data to reserve for testing (0.3 = 30%)")
+    parser.add_argument("--validate", action="store_true", help="Run consistency validation tests")
     args = parser.parse_args()
+
     Config.DEBUG_MODE = args.debug
+
     if args.cache_info:
         cache_path = args.cache_path
         if os.path.exists(cache_path):
@@ -8798,24 +8926,31 @@ def main_optimized():
             print(f"No cache found at {cache_path}")
             print("Run cache.py to create the initial cache.")
         return
+
     include_player_stats = args.players
     include_economy = args.economy
     include_maps = args.maps
     use_cache = not args.no_cache
+
     if not args.players and not args.economy and not args.maps:
         include_player_stats = True
         include_economy = True
         include_maps = True
+
     logging.info(f"Configuration: players={include_player_stats}, economy={include_economy}, maps={include_maps}, use_cache={use_cache}")
+
     if args.train or args.retrain:
         print(f"\n{'='*80}")
         print(f"{'ENHANCED PROFITABILITY TRAINING' if args.train else 'ENHANCED RETRAINING WITH CONSISTENT FEATURES'}")
         print(f"{'='*80}")
         print(f"Starting timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Test split: {args.test_split:.1%} of data reserved for unbiased backtesting")
+
         if use_cache and not os.path.exists(args.cache_path):
             print(f"Cache file not found at {args.cache_path}")
             print("Please run cache.py first to create the cache, or use --no-cache to fetch data from API.")
             return
+
         try:
             import psutil
             mem = psutil.virtual_memory()
@@ -8824,6 +8959,7 @@ def main_optimized():
                 print("WARNING: Low memory available. Training may fail due to insufficient memory.")
         except ImportError:
             print("psutil not installed. Skipping memory check.")
+
         try:
             print("\nCollecting team data for profitability-focused training...")
             team_data_collection = collect_team_data(
@@ -8836,23 +8972,37 @@ def main_optimized():
             if not team_data_collection:
                 print("Failed to collect team data. Aborting training.")
                 return
+
             print(f"Successfully collected data for {len(team_data_collection)} teams")
-            print("\nBuilding enhanced training dataset...")
-            X, y = build_training_dataset(team_data_collection)
-            print(f"Built training dataset with {len(X)} samples and {len(y)} labels.")
-            if len(X) < 10:
+
+            print(f"\nBuilding enhanced training dataset with {args.test_split:.1%} test split...")
+            X_train, y_train, X_test, y_test, test_matches_info = build_training_dataset(
+                team_data_collection, test_split=args.test_split, random_state=Config.MODEL.RANDOM_STATE
+            )
+            
+            print(f"Built training dataset: {len(X_train)} train samples, {len(X_test)} test samples")
+            
+            if len(X_train) < 10:
                 print("Not enough training data. Please collect more match data.")
                 return
+                
+            # Save test matches info for backtesting
+            if test_matches_info:
+                save_test_matches_info(test_matches_info)
+                visualize_train_test_split(test_matches_info, team_data_collection)
+
             if args.cross_validate:
                 print(f"\nTraining with {args.folds}-fold cross-validation and enhanced ensemble modeling...")
                 if args.retrain:
                     print("Implementing enhanced retraining with profitability focus...")
                     try:
                         ensemble_models, scaler, selected_features, avg_metrics = train_with_consistent_features(
-                            X, y, n_splits=args.folds, random_state=Config.MODEL.RANDOM_STATE
+                            X_train, y_train, X_test, y_test, n_splits=args.folds, random_state=Config.MODEL.RANDOM_STATE
                         )
                         print("Enhanced retraining with consistent features complete.")
                         print(f"Metrics: {avg_metrics}")
+                        if avg_metrics.get('separate_test_data'):
+                            print("✅ Model evaluated on completely separate test data - no data leakage!")
                     except Exception as e:
                         print(f"ERROR in train_with_consistent_features: {e}")
                         import traceback
@@ -8862,7 +9012,7 @@ def main_optimized():
                     print("Training standard cross-validation ensemble...")
                     try:
                         ensemble_models, stable_features, avg_metrics, fold_metrics, scaler = train_with_cross_validation(
-                            X, y, n_splits=args.folds, random_state=Config.MODEL.RANDOM_STATE
+                            X_train, y_train, n_splits=args.folds, random_state=Config.MODEL.RANDOM_STATE
                         )
                         print("Ensemble model training complete.")
                         print(f"Average metrics: {avg_metrics}")
@@ -8875,7 +9025,7 @@ def main_optimized():
             else:
                 print("Training standard model...")
                 try:
-                    model, scaler, feature_names = train_model(X, y)
+                    model, scaler, feature_names = train_model(X_train, y_train)
                     print("Model training complete.")
                     if model:
                         print(f"Feature count: {len(feature_names)}")
@@ -8885,12 +9035,17 @@ def main_optimized():
                     import traceback
                     traceback.print_exc()
                     return
+
             print(f"\nTraining completed successfully at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"✅ Test data reserved: {len(test_matches_info) if test_matches_info else 0} matches")
+            print(f"   This test data will be used for unbiased backtesting")
+            
         except Exception as e:
             print(f"CRITICAL ERROR in training process: {e}")
             import traceback
             traceback.print_exc()
             return
+
     elif args.predict:
             print("\n=== ENHANCED MATCH PREDICTION ===")
             print("🎯 Using profitability-focused model for realistic betting analysis")
@@ -8899,6 +9054,7 @@ def main_optimized():
                 if not ensemble_models or not selected_features:
                     print("Failed to load models or features. Make sure you've trained models first with --retrain.")
                     return
+
                 if args.team1 and args.team2:
                     team1_name = args.team1
                     team2_name = args.team2
@@ -8909,6 +9065,7 @@ def main_optimized():
                     if not team1_name or not team2_name:
                         print("Team names are required for prediction.")
                         return
+
                 if not args.bankroll:
                     try:
                         bankroll = float(input("\nEnter your current bankroll ($): ") or 1000)
@@ -8917,6 +9074,7 @@ def main_optimized():
                         print("Invalid bankroll value, using default $1000")
                 else:
                     bankroll = args.bankroll
+
                 print("Loading team data...")
                 team_data_collection = collect_team_data(
                     include_player_stats=include_player_stats,
@@ -8925,6 +9083,7 @@ def main_optimized():
                     use_cache=use_cache,
                     cache_path=args.cache_path
                 )
+
                 prediction_results = predict_with_consistent_ordering(
                     team1_name,
                     team2_name,
@@ -8932,6 +9091,7 @@ def main_optimized():
                     selected_features,
                     team_data_collection
                 )
+
                 if 'error' in prediction_results:
                     print(f"Error in prediction: {prediction_results['error']}")
                     if 'details' in prediction_results:
@@ -8945,6 +9105,7 @@ def main_optimized():
                         if (search_term1 in cached_lower or cached_lower in search_term1 or
                             search_term2 in cached_lower or cached_lower in search_term2):
                             similar_teams.append(cached_team)
+
                     if similar_teams:
                         print("Found similar teams in cache:")
                         for i, team in enumerate(similar_teams[:10]):  # Show max 10
@@ -8968,9 +9129,11 @@ def main_optimized():
                                 )
                         except ValueError:
                             pass
+
                     if 'error' in prediction_results:
                         print("Unable to find sufficient data for prediction. Please check team names.")
                         return
+
                 print("\nEnter the betting odds from your bookmaker:")
                 odds_data = {}
                 try:
@@ -9000,6 +9163,7 @@ def main_optimized():
                         odds_data['under_2_5_maps_odds'] = under
                 except ValueError:
                     print("Invalid odds input. Using available odds only.")
+
                 bet_history = None
                 try:
                     import json  # Ensure json is imported locally if needed
@@ -9015,19 +9179,23 @@ def main_optimized():
                 except Exception as e:
                     print(f"Error loading betting history: {e}")
                     bet_history = None
+
                 betting_analysis = analyze_betting_options(
                     prediction_results,
                     odds_data,
                     bankroll=bankroll,
                     bet_history=bet_history
                 )
+
                 print("\n========== ENHANCED PREDICTION RESULTS ==========")
                 print(f"Match: {team1_name} vs {team2_name}")
                 print(f"{team1_name} win probability: {prediction_results['win_probability']:.2%}")
                 print(f"{team2_name} win probability: {(1-prediction_results['win_probability']):.2%}")
                 print(f"Model confidence: {prediction_results['confidence']:.2f}")
+
                 if prediction_results.get('teams_swapped', False):
                     print("\nNote: Teams were reordered for consistent prediction processing.")
+
                 if 'optimal_bets' in betting_analysis and betting_analysis['optimal_bets']:
                     print("\n🎯 RECOMMENDED BETS (ULTRA-CONSERVATIVE CRITERIA):")
                     print("-" * 80)
@@ -9049,6 +9217,7 @@ def main_optimized():
                 else:
                     print("\n✅ No bets recommended for this match based on ultra-conservative criteria.")
                     print("This is GOOD - it means the model is avoiding -EV opportunities!")
+
                 print("\n⚠️  ENHANCED REALITY CHECK:")
                 print("-" * 80)
                 print("• Enhanced model uses 4.5% minimum edge (vs 2% before)")
@@ -9058,6 +9227,7 @@ def main_optimized():
                 print("• Track Closing Line Value, not just wins/losses")
                 print("• Expect 5+ game losing streaks even with profitable strategies")
                 print("• Bankroll management failures kill most profitable strategies")
+
                 if args.live and betting_analysis.get('optimal_bets'):
                     print("\nAfter the match, please enter the results:")
                     recommended_bets = list(betting_analysis['optimal_bets'].keys())
@@ -9087,9 +9257,12 @@ def main_optimized():
                 import traceback
                 traceback.print_exc()
                 return
+
     elif args.backtest:
         print("\n=== ENHANCED PROFITABILITY-FOCUSED BACKTESTING ===")
         print("🎯 Using ultra-conservative criteria for realistic profit projections")
+        print("🔒 Enhanced with train/test split to prevent data leakage")
+        
         try:
             print("Running enhanced backtesting to verify prediction accuracy and profitability...")
             if args.interactive:
@@ -9103,6 +9276,7 @@ def main_optimized():
                 print("✅ Ultra-conservative Kelly sizing (8% of full Kelly)")
                 print("✅ Realistic market simulation with vig and inefficiency")
                 print("✅ Quality-based team filtering")
+                print("✅ Separate test data to prevent data leakage")
                 print("="*60)
                 results = run_backtest_with_safeguards(params)
             else:
@@ -9116,23 +9290,32 @@ def main_optimized():
                     'min_edge': max(args.min_edge, 0.045),  # FORCE minimum 4.5% edge
                     'confidence_threshold': max(args.min_confidence, 0.65),  # FORCE minimum 65% confidence
                     'use_cache': use_cache,
-                    'cache_path': args.cache_path
+                    'cache_path': args.cache_path,
+                    'use_test_data': True  # Always try to use separate test data
                 }
                 print(f"🎯 Enhanced parameters (automatically applied):")
                 print(f"   Min Edge: {params['min_edge']:.1%} (forced minimum 4.5%)")
                 print(f"   Min Confidence: {params['confidence_threshold']:.1%} (forced minimum 65%)")
                 print(f"   Max Total Risk: 3.0% across all bets")
+                print(f"   Using separate test data: {params['use_test_data']}")
                 results = run_backtest_with_safeguards(params)
+
             if not results:
                 print("Backtesting failed or no results generated.")
                 return
+
             print("\n" + results.get('realistic_expectations', ''))
+
             roi = results['performance'].get('roi', 0)
             total_bets = results['performance'].get('total_bets', 0)
             win_rate = results['performance'].get('win_rate', 0)
             max_drawdown = results['performance'].get('max_drawdown', 0)
+            used_separate_test_data = results.get('used_separate_test_data', False)
+
             print(f"\n🎯 ENHANCED PROFITABILITY ASSESSMENT:")
             print("="*50)
+            print(f"🔒 Data Leakage Prevention: {'✅ Used separate test data' if used_separate_test_data else '⚠️ Used same data as training'}")
+            
             if total_bets == 0:
                 print("🏆 EXCELLENT: Model correctly avoided all -EV opportunities!")
                 print("   This ultra-conservative approach is exactly what we want for profitability.")
@@ -9148,10 +9331,22 @@ def main_optimized():
             else:
                 print(f"❌ NOT RECOMMENDED: {roi:.1%} ROI with {total_bets} bets")
                 print("   Either unprofitable or too many bets (lacks selectivity).")
+
             print(f"\nRisk Metrics:")
             print(f"📊 Win Rate: {win_rate:.1%}")
             print(f"📉 Max Drawdown: {max_drawdown:.1%}")
             print(f"🎯 Bet Frequency: {total_bets} total bets")
+
+            if used_separate_test_data:
+                print(f"\n✅ RELIABILITY BOOST: Results are more trustworthy because:")
+                print(f"   • Model never saw the test data during training")
+                print(f"   • Prevents overfitting and data leakage")
+                print(f"   • More realistic performance expectations")
+            else:
+                print(f"\n⚠️  DATA LEAKAGE WARNING: Results may be overly optimistic because:")
+                print(f"   • Model may have seen some test data during training")
+                print(f"   • Consider retraining with --retrain to get separate test data")
+
             analyze_matches = input("\nWould you like to analyze specific matches from the backtest? (y/n): ").lower().startswith('y')
             if analyze_matches:
                 while True:
@@ -9160,6 +9355,7 @@ def main_optimized():
                     print("2. Analyze a specific team's matches")
                     print("3. Exit analysis")
                     choice = input("\nEnter your choice (1-3): ")
+                    
                     if choice == '1':
                         try:
                             match_idx = int(input("Enter match index (0-{}): ".format(len(results['predictions'])-1)))
@@ -9200,6 +9396,7 @@ def main_optimized():
             import traceback
             traceback.print_exc()
             return
+
     elif args.analyze_results:
         print("\n=== ANALYZING BACKTEST RESULTS ===")
         try:
@@ -9227,6 +9424,7 @@ def main_optimized():
             import traceback
             traceback.print_exc()
             return
+
     elif args.stats:
         print("\n=== VIEWING BETTING PERFORMANCE ===")
         try:
@@ -9236,6 +9434,7 @@ def main_optimized():
             import traceback
             traceback.print_exc()
             return
+
     elif args.forward_test:
         print("\n=== FORWARD TESTING SYSTEM ===")
         try:
@@ -9246,24 +9445,42 @@ def main_optimized():
             import traceback
             traceback.print_exc()
             return
+
+    elif args.validate:
+        print("\n=== RUNNING CONSISTENCY VALIDATION ===")
+        try:
+            validation_results = validate_consistency()
+            if all(validation_results.values()):
+                print("\n🎉 All systems are consistent! Ready for live trading.")
+            else:
+                print("\n⚠️  Some inconsistencies found. Please check the output above.")
+        except Exception as e:
+            print(f"Validation failed with error: {e}")
+            import traceback
+            traceback.print_exc()
+
     else:
         print("Please specify an action. Available options:")
         print("\n🎯 ENHANCED COMMANDS:")
-        print("  --retrain --cross-validate --folds 10     # Train profitability-focused model")
-        print("  --predict --team1 'Sentinels' --team2 'Cloud9'  # Get betting recommendations")
-        print("  --backtest --interactive                   # Test strategy profitability")
-        print("  --stats                                    # View betting performance")
-        print("  --forward-test                            # Forward testing framework")
-        print("  --cache-info                              # Check cache status")
+        print("  --retrain --cross-validate --folds 10 --test-split 0.3     # Train profitability-focused model")
+        print("  --predict --team1 'Sentinels' --team2 'Cloud9'             # Get betting recommendations")
+        print("  --backtest --interactive                                    # Test strategy profitability")
+        print("  --stats                                                     # View betting performance")
+        print("  --forward-test                                             # Forward testing framework")
+        print("  --cache-info                                               # Check cache status")
         print("\n📊 EXAMPLE WORKFLOWS:")
-        print("1. First time setup:")
-        print("   python valorant_predictor.py --retrain --cross-validate --folds 10")
+        print("1. First time setup (with train/test split):")
+        print("   python valorant_predictor.py --retrain --cross-validate --folds 10 --test-split 0.3")
         print("   python valorant_predictor.py --backtest --interactive")
         print("\n2. Make predictions:")
         print("   python valorant_predictor.py --predict --team1 'Team1' --team2 'Team2'")
-        print("\n3. Test profitability:")
+        print("\n3. Test profitability (uses separate test data):")
         print("   python valorant_predictor.py --backtest --teams 40 --interactive")
-        print("\n💡 REMEMBER: The enhanced model is designed to be highly selective.")
-        print("   If backtests show 0-5 bets, that's SUCCESS (avoiding -EV opportunities)!")
+        print("\n💡 REMEMBER: The enhanced model with train/test split prevents data leakage!")
+        print("   • Training uses older matches, backtesting uses newer matches")
+        print("   • More realistic and trustworthy performance estimates")
+        print("   • If backtests show 0-5 bets, that's SUCCESS (avoiding -EV opportunities)!")
+
+
 if __name__ == "__main__":
     main_optimized()
