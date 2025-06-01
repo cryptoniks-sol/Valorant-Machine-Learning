@@ -1,0 +1,79 @@
+{
+  "starting_bankroll": 500.0,
+  "current_bankroll": 492.0,
+  "total_trades": 3,
+  "winning_trades": 0,
+  "total_wagered": 8.0,
+  "total_profit": 0.0,
+  "max_drawdown": 0,
+  "max_bankroll": 500.0,
+  "trades": [
+    {
+      "trade_id": "PT_20250531_214145_0",
+      "timestamp": "2025-05-31T21:41:45.896909",
+      "team1": "E-Xolos LAZER",
+      "team2": "Chivas Esports",
+      "bet_type": "under_2_5_maps",
+      "bet_amount": 3.0,
+      "odds": 2.23,
+      "predicted_prob": 0.48304774341618395,
+      "edge": 0.03461725014264133,
+      "confidence": 0.882995311790901,
+      "match_id": "1179546",
+      "match_start_time": "2025-05-31T22:00:00Z",
+      "status": "pending",
+      "actual_result": null,
+      "profit_loss": 0.0,
+      "closing_odds": null,
+      "clv": 0.0,
+      "mapping_confidence": null
+    },
+    {
+      "trade_id": "PT_20250531_215603_1",
+      "timestamp": "2025-05-31T21:56:03.412973",
+      "team1": "Six Karma",
+      "team2": "Bon Bon Bum Contra",
+      "bet_type": "under_2_5_maps",
+      "bet_amount": 3.0,
+      "odds": 2.26,
+      "predicted_prob": 0.48804122108348114,
+      "edge": 0.045563344977286424,
+      "confidence": 0.9045764657811504,
+      "match_id": "1179548",
+      "match_start_time": "2025-06-01T01:00:00Z",
+      "status": "pending",
+      "actual_result": null,
+      "profit_loss": 0.0,
+      "closing_odds": null,
+      "clv": 0.0,
+      "mapping_confidence": {
+        "team1": "none",
+        "team2": "high"
+      }
+    },
+    {
+      "trade_id": "PT_20250531_215939_2",
+      "timestamp": "2025-05-31T21:59:39.535761",
+      "team1": "Six Karma",
+      "team2": "Bon Bon Bum Contra",
+      "bet_type": "under_2_5_maps",
+      "bet_amount": 2.0,
+      "odds": 2.17,
+      "predicted_prob": 0.48804122108348114,
+      "edge": 0.02721172799592353,
+      "confidence": 0.9045764657811504,
+      "match_id": "1179548",
+      "match_start_time": "2025-06-01T01:00:00Z",
+      "status": "pending",
+      "actual_result": null,
+      "profit_loss": 0.0,
+      "closing_odds": null,
+      "clv": 0.0,
+      "mapping_confidence": {
+        "team1": "none",
+        "team2": "high"
+      }
+    }
+  ],
+  "last_update": "2025-05-31T21:59:41.673874"
+}

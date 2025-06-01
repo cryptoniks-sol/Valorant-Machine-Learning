@@ -274,27 +274,98 @@ def get_team_id_exact_only(team_name, region=None, max_retries=2):
     return None
 def find_team_in_collection_exact_only(team_name, team_data_collection):
     """
-    Find team in collection with exact matching only.
-    Args:
-        team_name (str): Name to search for
-        team_data_collection (dict): Collection of team data
-    Returns:
-        tuple: (found_name, similarity_score) or (None, 0) if not found
+    Find team in collection with precise matching only to avoid false positives.
+    FIXED: Prevents matching different teams like MIBR Academy with MIBR.
     """
     team_name_clean = team_name.strip()
     team_name_lower = team_name_clean.lower()
+    
+    # 1. EXACT MATCH (highest priority)
     for cached_name in team_data_collection.keys():
         if cached_name.strip().lower() == team_name_lower:
             return cached_name, 1.0
+    
+    # 2. EXACT MATCH (case-sensitive)
     for cached_name in team_data_collection.keys():
         if cached_name.strip() == team_name_clean:
             return cached_name, 1.0
+    
+    # 3. SAFE PARTIAL MATCHES (with very strict criteria)
     for cached_name in team_data_collection.keys():
-        cached_lower = cached_name.lower()
-        if team_name_lower in cached_lower:
-            if len(cached_lower) <= len(team_name_lower) * 2:
-                return cached_name, 0.9
+        cached_lower = cached_name.lower().strip()
+        
+        # Length check to avoid false positives - must be very similar length
+        length_ratio = len(cached_lower) / len(team_name_lower) if team_name_lower else 1
+        if not (0.85 <= length_ratio <= 1.15):  # Within 15% length difference only
+            continue
+        
+        # Academy teams should NEVER match main teams
+        if ('academy' in team_name_lower) != ('academy' in cached_lower):
+            continue
+            
+        # Junior teams should NEVER match main teams
+        if ('junior' in team_name_lower) != ('junior' in cached_lower):
+            continue
+        
+        # Only allow very safe partial matches where one is clearly contained in the other
+        # but they must be very similar in length
+        if team_name_lower in cached_lower and len(cached_lower) <= len(team_name_lower) * 1.2:
+            return cached_name, 0.9
+    
     return None, 0
+
+def teams_are_similar_enough(search_name, api_name):
+    """
+    Determine if the searched name and API name are similar enough to be the same team.
+    This prevents false matches like "MIBR Academy" matching with "MIBR".
+    """
+    search_lower = search_name.lower().strip()
+    api_lower = api_name.lower().strip()
+    
+    # Exact matches are always OK
+    if search_lower == api_lower:
+        return True
+    
+    # Check for common variations
+    variations = [
+        (' esports', ''),
+        (' gaming', ''),
+        (' club', ''),
+        (' team', ''),
+    ]
+    
+    for suffix, replacement in variations:
+        if search_lower.endswith(suffix) and api_lower == search_lower.replace(suffix, replacement):
+            return True
+        if api_lower.endswith(suffix) and search_lower == api_lower.replace(suffix, replacement):
+            return True
+    
+    # Academy teams should NOT match main teams
+    if ('academy' in search_lower) != ('academy' in api_lower):
+        print(f"🚫 Academy mismatch prevented: '{search_name}' vs '{api_name}'")
+        return False
+    
+    # Junior teams should NOT match main teams  
+    if ('junior' in search_lower) != ('junior' in api_lower):
+        print(f"🚫 Junior mismatch prevented: '{search_name}' vs '{api_name}'")
+        return False
+    
+    # If names are very different lengths, probably not the same team
+    length_ratio = len(api_lower) / len(search_lower) if search_lower else 1
+    if not (0.7 <= length_ratio <= 1.5):
+        print(f"🚫 Length mismatch prevented: '{search_name}' vs '{api_name}' (ratio: {length_ratio:.2f})")
+        return False
+    
+    # Use difflib for final similarity check with high threshold
+    import difflib
+    similarity = difflib.SequenceMatcher(None, search_lower, api_lower).ratio()
+    is_similar = similarity >= 0.85  # High threshold to avoid false positives
+    
+    if not is_similar:
+        print(f"🚫 Similarity too low: '{search_name}' vs '{api_name}' (similarity: {similarity:.2f})")
+    
+    return is_similar
+
 def fetch_api_data(endpoint, params=None):
     """Generic function to fetch data from API with error handling"""
     url = f"{API_URL}/{endpoint}"
@@ -505,6 +576,7 @@ def prepare_data_with_consistent_ordering(team1_stats, team2_stats, selected_fea
 def get_historical_team_stats(team_name, target_date, team_data_collection):
     """
     Get team statistics using only matches that occurred before the specified date.
+    FIXED: For live predictions, use all available data when target_date is current date.
     This prevents data leakage by ensuring we only use information that would have
     been available at prediction time.
     Args:
@@ -517,26 +589,53 @@ def get_historical_team_stats(team_name, target_date, team_data_collection):
     if team_name not in team_data_collection:
         print(f"Warning: Team '{team_name}' not found in data collection")
         return None
+    
     team_data = team_data_collection[team_name]
-    past_matches = []
-    for match in team_data.get('matches', []):
-        match_date = match.get('date', '')
-        if match_date and match_date < target_date:
-            past_matches.append(match)
+    
+    # For live predictions (current date), use all available matches
+    from datetime import datetime
+    current_date_str = datetime.now().strftime('%Y-%m-%d')
+    is_live_prediction = target_date >= current_date_str
+    
+    if is_live_prediction:
+        print(f"Live prediction mode: using all available matches for {team_name}")
+        past_matches = team_data.get('matches', [])
+    else:
+        # For backtesting, only use matches before target date
+        past_matches = []
+        for match in team_data.get('matches', []):
+            match_date = match.get('date', '')
+            if match_date and match_date < target_date:
+                past_matches.append(match)
+    
     if len(past_matches) < 3:
-        print(f"Warning: Insufficient historical data for {team_name} before {target_date}")
-        print(f"Only {len(past_matches)} matches available")
-        return None
+        print(f"Warning: Insufficient data for {team_name}")
+        print(f"Available matches: {len(past_matches)} (need minimum 3)")
+        if is_live_prediction and len(team_data.get('matches', [])) >= 3:
+            print(f"Using all {len(team_data.get('matches', []))} matches for live prediction")
+            past_matches = team_data.get('matches', [])
+        else:
+            return None
+    
+    # Calculate team stats from available matches
     team_stats = calculate_team_stats(past_matches,
                                      team_data.get('player_stats', None),
                                      include_economy=True)
+    
+    # Add team metadata
     team_stats['team_name'] = team_name
     team_stats['team_id'] = team_data.get('team_id', '')
     team_stats['team_tag'] = team_data.get('team_tag', '')
+    
+    # Add map statistics if available
     if 'map_statistics' in team_data:
         team_stats['map_statistics'] = team_data.get('map_statistics', {})
+    
+    # Add opponent quality analysis
     if past_matches:
         team_stats['opponent_quality'] = analyze_opponent_quality(past_matches, team_data.get('team_id', ''))
+    
+    print(f"✅ Generated stats for {team_name} using {len(past_matches)} matches")
     return team_stats
 def analyze_historical_h2h(team1_name, team2_name, target_date, team_data_collection):
     """
@@ -4004,10 +4103,30 @@ def prepare_prediction_features(team1_stats, team2_stats, selected_features, sca
     print("WARNING: Skipping feature scaling due to dimension mismatch issues")
     return X
 def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, selected_features,
-                                    team_data_collection=None, current_date=None):
+                                   team_data_collection=None, current_date=None):
     """
-    FIXED: Now uses EXACT same prediction pipeline as backtesting.
-    This ensures identical prediction logic between systems.
+    UPDATED: Now redirects to enhanced version that uses API data collection.
+    This maintains backward compatibility while adding API data fetching.
+    """
+    if team_data_collection is not None:
+        # If team_data_collection is provided, use the original method
+        return predict_with_consistent_ordering_original(
+            team1_name, team2_name, ensemble_models, selected_features,
+            team_data_collection, current_date
+        )
+    else:
+        # If no team_data_collection provided, use enhanced API method
+        return predict_with_consistent_ordering_enhanced(
+            team1_name, team2_name, ensemble_models, selected_features,
+            use_cache=True, current_date=current_date
+        )
+
+
+def predict_with_consistent_ordering_original(team1_name, team2_name, ensemble_models, selected_features,
+                                            team_data_collection=None, current_date=None):
+    """
+    ORIGINAL VERSION: Maintains the existing prediction logic for backward compatibility.
+    This is the original function that expects team_data_collection to be provided.
     """
     logging.info(f"Making prediction for {team1_name} vs {team2_name}")
     
@@ -4015,7 +4134,6 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
         from datetime import datetime
         current_date = datetime.now().strftime("%Y-%m-%d")
     
-    # Handle missing team data collection (fetch if needed)
     if not team_data_collection:
         missing_teams = [team1_name.strip(), team2_name.strip()]
         team_data_collection = collect_team_data(
@@ -4023,12 +4141,11 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
             include_player_stats=True,
             include_economy=True,
             include_maps=True,
-            use_cache=Config.MODEL.CACHE_ENABLED,
-            cache_path=Config.MODEL.CACHE_PATH,
+            use_cache=True,
+            cache_path="cache/valorant_data_cache.pkl",
             missing_teams=missing_teams
         )
     
-    # Get team stats using SAME method as backtesting
     team1_stats = get_historical_team_stats(team1_name, current_date, team_data_collection)
     team2_stats = get_historical_team_stats(team2_name, current_date, team_data_collection)
     
@@ -4041,7 +4158,6 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
             'details': f"Team1 stats: {'✓' if team1_stats else '✗'}, Team2 stats: {'✓' if team2_stats else '✗'}"
         }
     
-    # Use EXACT same feature preparation as backtesting
     features, teams_swapped = prepare_data_with_consistent_ordering(
         team1_stats, team2_stats, selected_features
     )
@@ -4054,17 +4170,14 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
             'team2_name': team2_name
         }
     
-    # Use EXACT same prediction function as backtesting
     win_probability, raw_predictions, confidence = predict_with_ensemble(
         ensemble_models, features
     )
     
-    # Apply same team swap adjustment as backtesting
     if teams_swapped:
         logging.info(f"Teams were swapped for consistency - adjusting predictions")
         win_probability = 1.0 - win_probability
     
-    # Calculate derivative probabilities using SAME method as backtesting
     bet_type_probabilities = calculate_bet_type_probabilities(win_probability, confidence)
     
     prediction_results = {
@@ -4079,6 +4192,7 @@ def predict_with_consistent_ordering(team1_name, team2_name, ensemble_models, se
     }
     
     logging.info(f"Prediction complete: {team1_name}:{win_probability:.4f}, {team2_name}:{1-win_probability:.4f}")
+    
     return prediction_results
 
 class BettingConstants:
@@ -5051,54 +5165,100 @@ print("\nUSAGE:")
 print("Just retrain your model: python valorant_predictor.py --retrain --cross-validate")
 print("The enhanced functions will automatically use advanced ML when available!")
 
-def simulate_odds(team1_win_prob, vig=0.045, market_efficiency=0.92):
+def simulate_odds(team1_win_prob, vig=0.045, market_efficiency=0.92, match_format='bo3'):
     """
-    Improved odds simulation that better reflects real sportsbook behavior.
-    This is crucial for realistic backtesting results.
+    Improved odds simulation that better reflects real sportsbook behavior for both BO3 and BO5.
+    Args:
+        team1_win_prob: Probability of team1 winning
+        vig: Bookmaker's vig/juice
+        market_efficiency: How efficient the market is
+        match_format: 'bo3' or 'bo5' to determine which odds to generate
+    Returns:
+        dict: Dictionary of simulated odds
     """
     if not isinstance(team1_win_prob, (int, float)) or np.isnan(team1_win_prob):
         team1_win_prob = 0.5
     team1_win_prob = np.clip(team1_win_prob, 0.05, 0.95)
+    
+    # Market noise and adjustments
     market_noise = np.random.uniform(-0.02, 0.02)
     adjusted_prob = np.clip(team1_win_prob + market_noise, 0.15, 0.85)
-    sharp_adjustment = np.random.uniform(0.88, 0.95)  # Market sharpness
+    
+    sharp_adjustment = np.random.uniform(0.88, 0.95)
     public_bias = 0.01 if adjusted_prob > 0.55 else -0.01
+    
     implied_team1 = (adjusted_prob * sharp_adjustment) + public_bias
     implied_team2 = ((1 - adjusted_prob) * sharp_adjustment) - public_bias
+    
     implied_team1 = max(0.05, implied_team1)
     implied_team2 = max(0.05, implied_team2)
+    
     total_implied = implied_team1 + implied_team2 + vig
     final_team1_implied = implied_team1 / total_implied
     final_team2_implied = implied_team2 / total_implied
+    
     try:
         team1_odds = max(1.15, min(8.0, 1 / max(0.125, final_team1_implied)))
         team2_odds = max(1.15, min(8.0, 1 / max(0.125, final_team2_implied)))
     except (ZeroDivisionError, OverflowError):
         team1_odds = 2.0
         team2_odds = 2.0
+    
     derivative_vig = vig * 1.4
+    
     try:
-        team1_plus_implied = min(0.88, 1 - (1 - final_team1_implied) ** 1.4)
-        team2_plus_implied = min(0.88, 1 - final_team2_implied ** 1.4)
-        team1_minus_implied = max(0.08, final_team1_implied ** 1.8)
-        team2_minus_implied = max(0.08, final_team2_implied ** 1.8)
-        base_over_prob = 2 * final_team1_implied * final_team2_implied * 1.2
-        over_implied = np.clip(base_over_prob + 0.15, 0.35, 0.65)
-        under_implied = np.clip(1 - over_implied, 0.35, 0.65)
+        if match_format.lower() == 'bo5':
+            # BO5 derivative probabilities
+            team1_plus_2_5_implied = min(0.88, 1 - (1 - final_team1_implied) ** 1.2)
+            team2_plus_2_5_implied = min(0.88, 1 - final_team2_implied ** 1.2)
+            team1_minus_2_5_implied = max(0.05, final_team1_implied ** 2.0)
+            team2_minus_2_5_implied = max(0.05, final_team2_implied ** 2.0)
+            
+            team1_plus_1_5_implied = min(0.88, 1 - (1 - final_team1_implied) ** 1.4)
+            team2_plus_1_5_implied = min(0.88, 1 - final_team2_implied ** 1.4)
+            team1_minus_1_5_implied = max(0.08, final_team1_implied ** 1.8)
+            team2_minus_1_5_implied = max(0.08, final_team2_implied ** 1.8)
+            
+            base_over_3_5_prob = 2 * final_team1_implied * final_team2_implied * 1.4
+            over_3_5_implied = np.clip(base_over_3_5_prob + 0.25, 0.45, 0.75)
+            under_3_5_implied = np.clip(1 - over_3_5_implied, 0.25, 0.55)
+            
+            base_over_4_5_prob = 2 * final_team1_implied * final_team2_implied * 1.1
+            over_4_5_implied = np.clip(base_over_4_5_prob + 0.1, 0.3, 0.6)
+            under_4_5_implied = np.clip(1 - over_4_5_implied, 0.4, 0.7)
+        else:
+            # BO3 derivative probabilities (original logic)
+            team1_plus_1_5_implied = min(0.88, 1 - (1 - final_team1_implied) ** 1.4)
+            team2_plus_1_5_implied = min(0.88, 1 - final_team2_implied ** 1.4)
+            team1_minus_1_5_implied = max(0.08, final_team1_implied ** 1.8)
+            team2_minus_1_5_implied = max(0.08, final_team2_implied ** 1.8)
+            
+            base_over_prob = 2 * final_team1_implied * final_team2_implied * 1.2
+            over_2_5_implied = np.clip(base_over_prob + 0.15, 0.35, 0.65)
+            under_2_5_implied = np.clip(1 - over_2_5_implied, 0.35, 0.65)
     except (OverflowError, ValueError):
-        team1_plus_implied = 0.75
-        team2_plus_implied = 0.75
-        team1_minus_implied = 0.25
-        team2_minus_implied = 0.25
-        over_implied = 0.5
-        under_implied = 0.5
-    derivative_probs = [
-        team1_plus_implied, team2_plus_implied,
-        team1_minus_implied, team2_minus_implied,
-        over_implied, under_implied
-    ]
-    avg_derivative_prob = np.mean(derivative_probs)
-    normalization_factor = 1 + (derivative_vig / len(derivative_probs))
+        # Fallback values
+        if match_format.lower() == 'bo5':
+            team1_plus_2_5_implied = 0.8
+            team2_plus_2_5_implied = 0.8
+            team1_minus_2_5_implied = 0.2
+            team2_minus_2_5_implied = 0.2
+            team1_plus_1_5_implied = 0.75
+            team2_plus_1_5_implied = 0.75
+            team1_minus_1_5_implied = 0.25
+            team2_minus_1_5_implied = 0.25
+            over_3_5_implied = 0.6
+            under_3_5_implied = 0.4
+            over_4_5_implied = 0.4
+            under_4_5_implied = 0.6
+        else:
+            team1_plus_1_5_implied = 0.75
+            team2_plus_1_5_implied = 0.75
+            team1_minus_1_5_implied = 0.25
+            team2_minus_1_5_implied = 0.25
+            over_2_5_implied = 0.5
+            under_2_5_implied = 0.5
+    
     def safe_odds_conversion(prob, min_odds=1.12, max_odds=12.0):
         """Safely convert probability to odds with comprehensive error handling"""
         try:
@@ -5106,18 +5266,42 @@ def simulate_odds(team1_win_prob, vig=0.045, market_efficiency=0.92):
             odds = 1 / prob
             return max(min_odds, min(max_odds, odds))
         except (ZeroDivisionError, OverflowError, ValueError):
-            return 2.0  # Safe default
+            return 2.0
+    
+    normalization_factor = 1 + (derivative_vig / (8 if match_format.lower() == 'bo5' else 6))
+    
     try:
         odds_dict = {
             'team1_ml_odds': round(max(1.15, team1_odds), 2),
             'team2_ml_odds': round(max(1.15, team2_odds), 2),
-            'team1_plus_1_5_odds': round(safe_odds_conversion(team1_plus_implied / normalization_factor), 2),
-            'team2_plus_1_5_odds': round(safe_odds_conversion(team2_plus_implied / normalization_factor), 2),
-            'team1_minus_1_5_odds': round(safe_odds_conversion(team1_minus_implied / normalization_factor), 2),
-            'team2_minus_1_5_odds': round(safe_odds_conversion(team2_minus_implied / normalization_factor), 2),
-            'over_2_5_maps_odds': round(safe_odds_conversion(over_implied / normalization_factor), 2),
-            'under_2_5_maps_odds': round(safe_odds_conversion(under_implied / normalization_factor), 2)
         }
+        
+        if match_format.lower() == 'bo5':
+            odds_dict.update({
+                'team1_plus_2_5_odds': round(safe_odds_conversion(team1_plus_2_5_implied / normalization_factor), 2),
+                'team2_plus_2_5_odds': round(safe_odds_conversion(team2_plus_2_5_implied / normalization_factor), 2),
+                'team1_minus_2_5_odds': round(safe_odds_conversion(team1_minus_2_5_implied / normalization_factor), 2),
+                'team2_minus_2_5_odds': round(safe_odds_conversion(team2_minus_2_5_implied / normalization_factor), 2),
+                'team1_plus_1_5_odds': round(safe_odds_conversion(team1_plus_1_5_implied / normalization_factor), 2),
+                'team2_plus_1_5_odds': round(safe_odds_conversion(team2_plus_1_5_implied / normalization_factor), 2),
+                'team1_minus_1_5_odds': round(safe_odds_conversion(team1_minus_1_5_implied / normalization_factor), 2),
+                'team2_minus_1_5_odds': round(safe_odds_conversion(team2_minus_1_5_implied / normalization_factor), 2),
+                'over_3_5_maps_odds': round(safe_odds_conversion(over_3_5_implied / normalization_factor), 2),
+                'under_3_5_maps_odds': round(safe_odds_conversion(under_3_5_implied / normalization_factor), 2),
+                'over_4_5_maps_odds': round(safe_odds_conversion(over_4_5_implied / normalization_factor), 2),
+                'under_4_5_maps_odds': round(safe_odds_conversion(under_4_5_implied / normalization_factor), 2)
+            })
+        else:
+            odds_dict.update({
+                'team1_plus_1_5_odds': round(safe_odds_conversion(team1_plus_1_5_implied / normalization_factor), 2),
+                'team2_plus_1_5_odds': round(safe_odds_conversion(team2_plus_1_5_implied / normalization_factor), 2),
+                'team1_minus_1_5_odds': round(safe_odds_conversion(team1_minus_1_5_implied / normalization_factor), 2),
+                'team2_minus_1_5_odds': round(safe_odds_conversion(team2_minus_1_5_implied / normalization_factor), 2),
+                'over_2_5_maps_odds': round(safe_odds_conversion(over_2_5_implied / normalization_factor), 2),
+                'under_2_5_maps_odds': round(safe_odds_conversion(under_2_5_implied / normalization_factor), 2)
+            })
+        
+        # Validate all odds
         for key, odds_value in odds_dict.items():
             if not isinstance(odds_value, (int, float)) or odds_value < 1.12 or odds_value > 12.0 or np.isnan(odds_value):
                 if 'plus' in key:
@@ -5128,48 +5312,112 @@ def simulate_odds(team1_win_prob, vig=0.045, market_efficiency=0.92):
                     odds_dict[key] = 2.00
                 else:
                     odds_dict[key] = 2.00
+        
         return odds_dict
     except Exception as e:
         print(f"Error in odds simulation, using safe defaults: {e}")
-        return {
-            'team1_ml_odds': 2.00,
-            'team2_ml_odds': 2.00,
-            'team1_plus_1_5_odds': 1.30,
-            'team2_plus_1_5_odds': 1.30,
-            'team1_minus_1_5_odds': 3.50,
-            'team2_minus_1_5_odds': 3.50,
-            'over_2_5_maps_odds': 2.00,
-            'under_2_5_maps_odds': 2.00
-        }
-def calculate_derivative_probabilities(team1_ml_prob, correlation_factor=0.2):
+        if match_format.lower() == 'bo5':
+            return {
+                'team1_ml_odds': 2.00,
+                'team2_ml_odds': 2.00,
+                'team1_plus_2_5_odds': 1.25,
+                'team2_plus_2_5_odds': 1.25,
+                'team1_minus_2_5_odds': 4.00,
+                'team2_minus_2_5_odds': 4.00,
+                'team1_plus_1_5_odds': 1.30,
+                'team2_plus_1_5_odds': 1.30,
+                'team1_minus_1_5_odds': 3.50,
+                'team2_minus_1_5_odds': 3.50,
+                'over_3_5_maps_odds': 2.20,
+                'under_3_5_maps_odds': 1.80,
+                'over_4_5_maps_odds': 2.80,
+                'under_4_5_maps_odds': 1.60
+            }
+        else:
+            return {
+                'team1_ml_odds': 2.00,
+                'team2_ml_odds': 2.00,
+                'team1_plus_1_5_odds': 1.30,
+                'team2_plus_1_5_odds': 1.30,
+                'team1_minus_1_5_odds': 3.50,
+                'team2_minus_1_5_odds': 3.50,
+                'over_2_5_maps_odds': 2.00,
+                'under_2_5_maps_odds': 2.00
+            }
+
+def calculate_derivative_probabilities(team1_ml_prob, correlation_factor=0.2, match_format='bo3'):
     """
-    Calculate derivative market probabilities with proper correlation modeling.
+    Calculate derivative market probabilities with proper correlation modeling for both BO3 and BO5.
     Args:
         team1_ml_prob: Moneyline probability for team1
         correlation_factor: How correlated are the maps (0.1-0.4 typical)
+        match_format: 'bo3' or 'bo5' to determine which lines to calculate
     Returns:
         dict: Dictionary of probabilities for all bet types
     """
     team2_ml_prob = 1 - team1_ml_prob
     team1_map_prob = 0.5 + (team1_ml_prob - 0.5) * 0.85
     team2_map_prob = 1 - team1_map_prob
-    team1_plus_prob = 1 - (team2_map_prob ** (2.0 - correlation_factor))
-    team2_plus_prob = 1 - (team1_map_prob ** (2.0 - correlation_factor))
-    team1_minus_prob = team1_map_prob ** (2.0 + correlation_factor * 0.5)
-    team2_minus_prob = team2_map_prob ** (2.0 + correlation_factor * 0.5)
-    over_prob = 2 * team1_map_prob * team2_map_prob * (1 + correlation_factor)
-    over_prob = np.clip(over_prob, 0.3, 0.7)  # Reasonable bounds
-    under_prob = 1 - over_prob
-    return {
-        'team1_ml': np.clip(team1_ml_prob, 0.15, 0.85),
-        'team2_ml': np.clip(team2_ml_prob, 0.15, 0.85),
-        'team1_plus_1_5': np.clip(team1_plus_prob, 0.2, 0.9),
-        'team2_plus_1_5': np.clip(team2_plus_prob, 0.2, 0.9),
-        'team1_minus_1_5': np.clip(team1_minus_prob, 0.05, 0.7),
-        'team2_minus_1_5': np.clip(team2_minus_prob, 0.05, 0.7),
-        'over_2_5_maps': np.clip(over_prob, 0.3, 0.7),
-        'under_2_5_maps': np.clip(under_prob, 0.3, 0.7)
-    }
+    
+    # Calculate spread probabilities based on match format
+    if match_format.lower() == 'bo5':
+        # BO5: Need 3 maps to win, so +2.5/-2.5 and +1.5/-1.5
+        team1_plus_2_5_prob = 1 - (team2_map_prob ** (3.0 - correlation_factor * 0.5))
+        team2_plus_2_5_prob = 1 - (team1_map_prob ** (3.0 - correlation_factor * 0.5))
+        team1_minus_2_5_prob = team1_map_prob ** (3.0 + correlation_factor * 0.3)
+        team2_minus_2_5_prob = team2_map_prob ** (3.0 + correlation_factor * 0.3)
+        
+        team1_plus_1_5_prob = 1 - (team2_map_prob ** (2.2 - correlation_factor * 0.4))
+        team2_plus_1_5_prob = 1 - (team1_map_prob ** (2.2 - correlation_factor * 0.4))
+        team1_minus_1_5_prob = team1_map_prob ** (2.4 + correlation_factor * 0.3)
+        team2_minus_1_5_prob = team2_map_prob ** (2.4 + correlation_factor * 0.3)
+        
+        # BO5 totals: Over/Under 3.5 and 4.5
+        base_over_3_5_prob = 2 * team1_map_prob * team2_map_prob * (1.4 + correlation_factor * 0.3)
+        over_3_5_prob = np.clip(base_over_3_5_prob + 0.25, 0.45, 0.75)
+        under_3_5_prob = np.clip(1 - over_3_5_prob, 0.25, 0.55)
+        
+        base_over_4_5_prob = 2 * team1_map_prob * team2_map_prob * (1.1 + correlation_factor * 0.2)
+        over_4_5_prob = np.clip(base_over_4_5_prob + 0.1, 0.3, 0.6)
+        under_4_5_prob = np.clip(1 - over_4_5_prob, 0.4, 0.7)
+        
+        return {
+            'team1_ml': np.clip(team1_ml_prob, 0.15, 0.85),
+            'team2_ml': np.clip(team2_ml_prob, 0.15, 0.85),
+            'team1_plus_2_5': np.clip(team1_plus_2_5_prob, 0.3, 0.95),
+            'team2_plus_2_5': np.clip(team2_plus_2_5_prob, 0.3, 0.95),
+            'team1_minus_2_5': np.clip(team1_minus_2_5_prob, 0.05, 0.6),
+            'team2_minus_2_5': np.clip(team2_minus_2_5_prob, 0.05, 0.6),
+            'team1_plus_1_5': np.clip(team1_plus_1_5_prob, 0.2, 0.9),
+            'team2_plus_1_5': np.clip(team2_plus_1_5_prob, 0.2, 0.9),
+            'team1_minus_1_5': np.clip(team1_minus_1_5_prob, 0.05, 0.7),
+            'team2_minus_1_5': np.clip(team2_minus_1_5_prob, 0.05, 0.7),
+            'over_3_5_maps': over_3_5_prob,
+            'under_3_5_maps': under_3_5_prob,
+            'over_4_5_maps': over_4_5_prob,
+            'under_4_5_maps': under_4_5_prob
+        }
+    else:
+        # BO3: Original logic with +1.5/-1.5 and over/under 2.5
+        team1_plus_1_5_prob = 1 - (team2_map_prob ** (2.2 - correlation_factor * 0.4))
+        team2_plus_1_5_prob = 1 - (team1_map_prob ** (2.2 - correlation_factor * 0.4))
+        team1_minus_1_5_prob = team1_map_prob ** (2.4 + correlation_factor * 0.3)
+        team2_minus_1_5_prob = team2_map_prob ** (2.4 + correlation_factor * 0.3)
+        
+        base_over_prob = 2 * team1_map_prob * team2_map_prob * (1.2 + correlation_factor * 0.2)
+        over_2_5_prob = np.clip(base_over_prob + 0.15, 0.35, 0.65)
+        under_2_5_prob = np.clip(1 - over_2_5_prob, 0.35, 0.65)
+        
+        return {
+            'team1_ml': np.clip(team1_ml_prob, 0.15, 0.85),
+            'team2_ml': np.clip(team2_ml_prob, 0.15, 0.85),
+            'team1_plus_1_5': np.clip(team1_plus_1_5_prob, 0.2, 0.9),
+            'team2_plus_1_5': np.clip(team2_plus_1_5_prob, 0.2, 0.9),
+            'team1_minus_1_5': np.clip(team1_minus_1_5_prob, 0.05, 0.7),
+            'team2_minus_1_5': np.clip(team2_minus_1_5_prob, 0.05, 0.7),
+            'over_2_5_maps': over_2_5_prob,
+            'under_2_5_maps': under_2_5_prob
+        }
 def calculate_single_map_prob_for_backtesting(match_win_prob):
     """Calculate single map win probability from match win probability."""
     single_map_prob = max(0.3, min(0.7, np.sqrt(match_win_prob)))
@@ -5529,17 +5777,16 @@ def select_recommended_bets(betting_analysis, team1_name, team2_name):
     return selected_bets
 # CRITICAL FIXES FOR 91% DRAWDOWN ISSUE AND BANKRUPTCY PREVENTION
 
-def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_data, confidence_score, bankroll=1000.0):
+def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_data, confidence_score, bankroll=1000.0, match_format='bo3'):
     """
-    ENHANCED: Now uses shared constants for consistency.
+    ENHANCED: Now uses shared constants for consistency and supports both BO3 and BO5.
     This is the single source of truth for betting analysis.
     """
-    print(f"\n=== CONSISTENT BETTING ANALYSIS ===")
+    print(f"\n=== CONSISTENT BETTING ANALYSIS ({match_format.upper()}) ===")
     print(f"Team1 Win Prob: {team1_win_prob:.4f}, Team2 Win Prob: {team2_win_prob:.4f}")
     print(f"Confidence Score: {confidence_score:.4f}")
     print(f"Bankroll: ${bankroll:.2f}")
     
-    # Use shared constants for consistency
     MIN_EDGE_BASE = BettingConstants.MIN_EDGE_BASE
     MIN_CONFIDENCE = BettingConstants.MIN_CONFIDENCE
     MIN_PROBABILITY = BettingConstants.MIN_PROBABILITY
@@ -5549,45 +5796,81 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
     
     if confidence_score < MIN_CONFIDENCE:
         print(f"Confidence {confidence_score:.3f} below minimum {MIN_CONFIDENCE:.3f} - no bets")
+        # Return no-bet analysis for all possible bet types based on format
+        if match_format.lower() == 'bo5':
+            bet_types = ['team1_ml', 'team2_ml', 'team1_plus_2_5', 'team2_plus_2_5', 
+                        'team1_minus_2_5', 'team2_minus_2_5', 'team1_plus_1_5', 'team2_plus_1_5',
+                        'team1_minus_1_5', 'team2_minus_1_5', 'over_3_5_maps', 'under_3_5_maps',
+                        'over_4_5_maps', 'under_4_5_maps']
+        else:
+            bet_types = ['team1_ml', 'team2_ml', 'team1_plus_1_5', 'team2_plus_1_5',
+                        'team1_minus_1_5', 'team2_minus_1_5', 'over_2_5_maps', 'under_2_5_maps']
+        
         return {bet_type: create_no_bet_analysis(bet_type, odds_data.get(f'{bet_type}_odds', 2.0),
                                                 "Insufficient confidence")
-                for bet_type in ['team1_ml', 'team2_ml', 'team1_plus_1_5', 'team2_plus_1_5',
-                                'team1_minus_1_5', 'team2_minus_1_5', 'over_2_5_maps', 'under_2_5_maps']}
+                for bet_type in bet_types}
     
-    # Dynamic edge threshold based on confidence
     edge_threshold = MIN_EDGE_BASE * (1.8 - confidence_score)
     edge_threshold = max(0.02, min(0.06, edge_threshold))
     print(f"Dynamic edge threshold: {edge_threshold:.3f}")
     
-    # Calculate derivative probabilities using consistent method
     single_map_prob = calculate_improved_single_map_prob(team1_win_prob, confidence_score)
     correlation_factor = 0.20
     
-    team1_plus_prob = calculate_plus_line_prob(single_map_prob, correlation_factor)
-    team2_plus_prob = calculate_plus_line_prob(1 - single_map_prob, correlation_factor)
-    team1_minus_prob = calculate_minus_line_prob(single_map_prob, correlation_factor)
-    team2_minus_prob = calculate_minus_line_prob(1 - single_map_prob, correlation_factor)
-    over_prob, under_prob = calculate_totals_prob(single_map_prob, correlation_factor)
-    
-    bet_types = [
-        ('team1_ml', team1_win_prob, odds_data.get('team1_ml_odds', 0)),
-        ('team2_ml', team2_win_prob, odds_data.get('team2_ml_odds', 0)),
-        ('team1_plus_1_5', team1_plus_prob, odds_data.get('team1_plus_1_5_odds', 0)),
-        ('team2_plus_1_5', team2_plus_prob, odds_data.get('team2_plus_1_5_odds', 0)),
-        ('team1_minus_1_5', team1_minus_prob, odds_data.get('team1_minus_1_5_odds', 0)),
-        ('team2_minus_1_5', team2_minus_prob, odds_data.get('team2_minus_1_5_odds', 0)),
-        ('over_2_5_maps', over_prob, odds_data.get('over_2_5_maps_odds', 0)),
-        ('under_2_5_maps', under_prob, odds_data.get('under_2_5_maps_odds', 0))
-    ]
+    # Calculate probabilities based on match format
+    if match_format.lower() == 'bo5':
+        team1_plus_2_5_prob = calculate_plus_line_prob_bo5(single_map_prob, correlation_factor, 2.5)
+        team2_plus_2_5_prob = calculate_plus_line_prob_bo5(1 - single_map_prob, correlation_factor, 2.5)
+        team1_minus_2_5_prob = calculate_minus_line_prob_bo5(single_map_prob, correlation_factor, 2.5)
+        team2_minus_2_5_prob = calculate_minus_line_prob_bo5(1 - single_map_prob, correlation_factor, 2.5)
+        team1_plus_1_5_prob = calculate_plus_line_prob_bo5(single_map_prob, correlation_factor, 1.5)
+        team2_plus_1_5_prob = calculate_plus_line_prob_bo5(1 - single_map_prob, correlation_factor, 1.5)
+        team1_minus_1_5_prob = calculate_minus_line_prob_bo5(single_map_prob, correlation_factor, 1.5)
+        team2_minus_1_5_prob = calculate_minus_line_prob_bo5(1 - single_map_prob, correlation_factor, 1.5)
+        over_3_5_prob, under_3_5_prob = calculate_totals_prob_bo5(single_map_prob, correlation_factor, 3.5)
+        over_4_5_prob, under_4_5_prob = calculate_totals_prob_bo5(single_map_prob, correlation_factor, 4.5)
+        
+        bet_types = [
+            ('team1_ml', team1_win_prob, odds_data.get('team1_ml_odds', 0)),
+            ('team2_ml', team2_win_prob, odds_data.get('team2_ml_odds', 0)),
+            ('team1_plus_2_5', team1_plus_2_5_prob, odds_data.get('team1_plus_2_5_odds', 0)),
+            ('team2_plus_2_5', team2_plus_2_5_prob, odds_data.get('team2_plus_2_5_odds', 0)),
+            ('team1_minus_2_5', team1_minus_2_5_prob, odds_data.get('team1_minus_2_5_odds', 0)),
+            ('team2_minus_2_5', team2_minus_2_5_prob, odds_data.get('team2_minus_2_5_odds', 0)),
+            ('team1_plus_1_5', team1_plus_1_5_prob, odds_data.get('team1_plus_1_5_odds', 0)),
+            ('team2_plus_1_5', team2_plus_1_5_prob, odds_data.get('team2_plus_1_5_odds', 0)),
+            ('team1_minus_1_5', team1_minus_1_5_prob, odds_data.get('team1_minus_1_5_odds', 0)),
+            ('team2_minus_1_5', team2_minus_1_5_prob, odds_data.get('team2_minus_1_5_odds', 0)),
+            ('over_3_5_maps', over_3_5_prob, odds_data.get('over_3_5_maps_odds', 0)),
+            ('under_3_5_maps', under_3_5_prob, odds_data.get('under_3_5_maps_odds', 0)),
+            ('over_4_5_maps', over_4_5_prob, odds_data.get('over_4_5_maps_odds', 0)),
+            ('under_4_5_maps', under_4_5_prob, odds_data.get('under_4_5_maps_odds', 0))
+        ]
+    else:
+        team1_plus_1_5_prob = calculate_plus_line_prob(single_map_prob, correlation_factor)
+        team2_plus_1_5_prob = calculate_plus_line_prob(1 - single_map_prob, correlation_factor)
+        team1_minus_1_5_prob = calculate_minus_line_prob(single_map_prob, correlation_factor)
+        team2_minus_1_5_prob = calculate_minus_line_prob(1 - single_map_prob, correlation_factor)
+        over_2_5_prob, under_2_5_prob = calculate_totals_prob(single_map_prob, correlation_factor)
+        
+        bet_types = [
+            ('team1_ml', team1_win_prob, odds_data.get('team1_ml_odds', 0)),
+            ('team2_ml', team2_win_prob, odds_data.get('team2_ml_odds', 0)),
+            ('team1_plus_1_5', team1_plus_1_5_prob, odds_data.get('team1_plus_1_5_odds', 0)),
+            ('team2_plus_1_5', team2_plus_1_5_prob, odds_data.get('team2_plus_1_5_odds', 0)),
+            ('team1_minus_1_5', team1_minus_1_5_prob, odds_data.get('team1_minus_1_5_odds', 0)),
+            ('team2_minus_1_5', team2_minus_1_5_prob, odds_data.get('team2_minus_1_5_odds', 0)),
+            ('over_2_5_maps', over_2_5_prob, odds_data.get('over_2_5_maps_odds', 0)),
+            ('under_2_5_maps', under_2_5_prob, odds_data.get('under_2_5_maps_odds', 0))
+        ]
     
     profitable_bets = 0
     for bet_type, prob, odds in bet_types:
         print(f"\n--- Consistent Analysis {bet_type} ---")
-        
         if odds <= 1.0:
             betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, "Invalid odds")
             continue
-            
+        
         if prob < MIN_PROBABILITY or prob > MAX_PROBABILITY:
             print(f"Probability {prob:.3f} outside safe range [{MIN_PROBABILITY:.3f}, {MAX_PROBABILITY:.3f}]")
             betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, "Probability out of safe range")
@@ -5607,11 +5890,9 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
             betting_analysis[bet_type] = create_no_bet_analysis(bet_type, odds, f"Insufficient edge ({adjusted_edge:.3f})")
             continue
         
-        # Consistent Kelly calculation
         b = odds - 1
         p = confidence_adjusted_prob
         q = 1 - p
-        
         if b <= 0 or p <= 0.45 or q >= 0.55:
             kelly = 0
         else:
@@ -5665,7 +5946,7 @@ def analyze_betting_edge_for_backtesting(team1_win_prob, team2_win_prob, odds_da
     print(f"Total recommended risk: ${total_risk:.2f} ({(total_risk/bankroll)*100:.3f}% of bankroll)")
     
     return betting_analysis
-
+    
 def get_balanced_rejection_reason(edge, edge_threshold, confidence, min_confidence, prob, min_prob, max_prob):
     """Balanced rejection reasons for safe-profitable betting"""
     reasons = []
@@ -6019,8 +6300,8 @@ def check_profit_targets(starting_bankroll, current_bankroll, target_percentage=
     if profit_percentage >= target_percentage * 0.8:
         return False, f"Approaching profit target. Current profit: ${profit:.2f} ({profit_percentage:.1f}% of {target_percentage}% target)"
     return False, ""
-def evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score):
-    """Determine if a bet won based on actual results."""
+def evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score, match_format='bo3'):
+    """Determine if a bet won based on actual results, supporting both BO3 and BO5."""
     if bet_type == 'team1_ml':
         return team1_score > team2_score
     elif bet_type == 'team2_ml':
@@ -6033,11 +6314,68 @@ def evaluate_bet_outcome(bet_type, actual_winner, team1_score, team2_score):
         return team1_score - 1.5 > team2_score
     elif bet_type == 'team2_minus_1_5':
         return team2_score - 1.5 > team1_score
-    elif bet_type == 'over_2_5_maps':
+    elif bet_type == 'team1_plus_2_5':  # BO5 only
+        return team1_score + 2.5 > team2_score
+    elif bet_type == 'team2_plus_2_5':  # BO5 only
+        return team2_score + 2.5 > team1_score
+    elif bet_type == 'team1_minus_2_5':  # BO5 only
+        return team1_score - 2.5 > team2_score
+    elif bet_type == 'team2_minus_2_5':  # BO5 only
+        return team2_score - 2.5 > team1_score
+    elif bet_type == 'over_2_5_maps':  # BO3
         return team1_score + team2_score > 2.5
-    elif bet_type == 'under_2_5_maps':
+    elif bet_type == 'under_2_5_maps':  # BO3
         return team1_score + team2_score < 2.5
+    elif bet_type == 'over_3_5_maps':  # BO5
+        return team1_score + team2_score > 3.5
+    elif bet_type == 'under_3_5_maps':  # BO5
+        return team1_score + team2_score < 3.5
+    elif bet_type == 'over_4_5_maps':  # BO5
+        return team1_score + team2_score > 4.5
+    elif bet_type == 'under_4_5_maps':  # BO5
+        return team1_score + team2_score < 4.5
     return False
+
+def detect_match_format(team1_score, team2_score):
+    """
+    Detect if a match was BO3 or BO5 based on the final score.
+    Args:
+        team1_score: Final score for team 1
+        team2_score: Final score for team 2
+    Returns:
+        str: 'bo3' or 'bo5'
+    """
+    total_maps = team1_score + team2_score
+    max_score = max(team1_score, team2_score)
+    
+    # BO3: First to 2, so max possible is 3 maps total (2-1) with winner having 2
+    # BO5: First to 3, so max possible is 5 maps total (3-2) with winner having 3
+    if max_score == 2:
+        return 'bo3'
+    elif max_score == 3:
+        return 'bo5'
+    elif total_maps <= 3:
+        return 'bo3'  # Likely 2-0 or 2-1 in BO3
+    else:
+        return 'bo5'  # Likely 3-0, 3-1, or 3-2 in BO5
+
+def get_match_format_from_user():
+    """
+    Ask user for match format when making predictions.
+    Returns:
+        str: 'bo3' or 'bo5'
+    """
+    while True:
+        format_input = input("\nIs this a Best of 3 (BO3) or Best of 5 (BO5) match? Enter 'bo3' or 'bo5': ").lower().strip()
+        if format_input in ['bo3', 'bo5']:
+            return format_input
+        elif format_input in ['3', 'best of 3', 'bestof3']:
+            return 'bo3'
+        elif format_input in ['5', 'best of 5', 'bestof5']:
+            return 'bo5'
+        else:
+            print("Please enter 'bo3' for Best of 3 or 'bo5' for Best of 5")
+
 def extract_match_score(match_data):
     """Extract the actual map score from match data."""
     if 'map_score' in match_data:
@@ -6394,28 +6732,95 @@ def apply_betting_calibration_enhanced(prediction, confidence):
     return calibrated
 
 
-def calculate_bet_type_probabilities(win_probability, confidence_score):
+def calculate_bet_type_probabilities(win_probability, confidence_score, match_format='bo3'):
     """
-    ENHANCED: Now uses EXACT same calculation as backtesting.
+    ENHANCED: Now uses EXACT same calculation as backtesting for both BO3 and BO5.
     This ensures derivative probabilities are identical between systems.
     """
     single_map_prob = calculate_improved_single_map_prob(win_probability, confidence_score)
     correlation_factor = 0.25 + (confidence_score * 0.15)
     
-    team1_plus_prob = calculate_plus_line_prob(single_map_prob, correlation_factor)
-    team2_plus_prob = calculate_plus_line_prob(1 - single_map_prob, correlation_factor)
-    team1_minus_prob = calculate_minus_line_prob(single_map_prob, correlation_factor)
-    team2_minus_prob = calculate_minus_line_prob(1 - single_map_prob, correlation_factor)
-    over_prob, under_prob = calculate_totals_prob(single_map_prob, correlation_factor)
+    if match_format.lower() == 'bo5':
+        team1_plus_2_5_prob = calculate_plus_line_prob_bo5(single_map_prob, correlation_factor, 2.5)
+        team2_plus_2_5_prob = calculate_plus_line_prob_bo5(1 - single_map_prob, correlation_factor, 2.5)
+        team1_minus_2_5_prob = calculate_minus_line_prob_bo5(single_map_prob, correlation_factor, 2.5)
+        team2_minus_2_5_prob = calculate_minus_line_prob_bo5(1 - single_map_prob, correlation_factor, 2.5)
+        
+        team1_plus_1_5_prob = calculate_plus_line_prob_bo5(single_map_prob, correlation_factor, 1.5)
+        team2_plus_1_5_prob = calculate_plus_line_prob_bo5(1 - single_map_prob, correlation_factor, 1.5)
+        team1_minus_1_5_prob = calculate_minus_line_prob_bo5(single_map_prob, correlation_factor, 1.5)
+        team2_minus_1_5_prob = calculate_minus_line_prob_bo5(1 - single_map_prob, correlation_factor, 1.5)
+        
+        over_3_5_prob, under_3_5_prob = calculate_totals_prob_bo5(single_map_prob, correlation_factor, 3.5)
+        over_4_5_prob, under_4_5_prob = calculate_totals_prob_bo5(single_map_prob, correlation_factor, 4.5)
+        
+        return {
+            'team1_plus_2_5': team1_plus_2_5_prob,
+            'team2_plus_2_5': team2_plus_2_5_prob,
+            'team1_minus_2_5': team1_minus_2_5_prob,
+            'team2_minus_2_5': team2_minus_2_5_prob,
+            'team1_plus_1_5': team1_plus_1_5_prob,
+            'team2_plus_1_5': team2_plus_1_5_prob,
+            'team1_minus_1_5': team1_minus_1_5_prob,
+            'team2_minus_1_5': team2_minus_1_5_prob,
+            'over_3_5_maps': over_3_5_prob,
+            'under_3_5_maps': under_3_5_prob,
+            'over_4_5_maps': over_4_5_prob,
+            'under_4_5_maps': under_4_5_prob
+        }
+    else:
+        team1_plus_1_5_prob = calculate_plus_line_prob(single_map_prob, correlation_factor)
+        team2_plus_1_5_prob = calculate_plus_line_prob(1 - single_map_prob, correlation_factor)
+        team1_minus_1_5_prob = calculate_minus_line_prob(single_map_prob, correlation_factor)
+        team2_minus_1_5_prob = calculate_minus_line_prob(1 - single_map_prob, correlation_factor)
+        over_2_5_prob, under_2_5_prob = calculate_totals_prob(single_map_prob, correlation_factor)
+        
+        return {
+            'team1_plus_1_5': team1_plus_1_5_prob,
+            'team2_plus_1_5': team2_plus_1_5_prob,
+            'team1_minus_1_5': team1_minus_1_5_prob,
+            'team2_minus_1_5': team2_minus_1_5_prob,
+            'over_2_5_maps': over_2_5_prob,
+            'under_2_5_maps': under_2_5_prob
+        }
+
+def calculate_plus_line_prob_bo5(single_map_prob, correlation, line):
+    """Calculate +X.5 maps probability for BO5"""
+    if line == 2.5:
+        # +2.5 means winning at least 1 map (losing 0-3 is the only way to lose)
+        prob_lose_all = (1 - single_map_prob) ** (3.2 - correlation * 0.3)
+        plus_prob = 1 - prob_lose_all
+    else:  # line == 1.5
+        # +1.5 means winning at least 2 maps (losing 0-3 or 1-3)
+        prob_lose_badly = (1 - single_map_prob) ** (2.4 - correlation * 0.4)
+        plus_prob = 1 - prob_lose_badly
     
-    return {
-        'team1_plus_1_5': team1_plus_prob,
-        'team2_plus_1_5': team2_plus_prob,
-        'team1_minus_1_5': team1_minus_prob,
-        'team2_minus_1_5': team2_minus_prob,
-        'over_2_5_maps': over_prob,
-        'under_2_5_maps': under_prob
-    }
+    return np.clip(plus_prob, 0.15, 0.95)
+
+def calculate_minus_line_prob_bo5(single_map_prob, correlation, line):
+    """Calculate -X.5 maps probability for BO5"""
+    if line == 2.5:
+        # -2.5 means winning 3-0, 3-1, or 3-2 (winning by more than 2.5)
+        minus_prob = single_map_prob ** (2.8 + correlation * 0.2)
+    else:  # line == 1.5
+        # -1.5 means winning 3-0 or 3-1 (winning by more than 1.5)
+        minus_prob = single_map_prob ** (2.6 + correlation * 0.25)
+    
+    return np.clip(minus_prob, 0.05, 0.75)
+
+def calculate_totals_prob_bo5(single_map_prob, correlation, total):
+    """Calculate over/under X.5 maps probability for BO5"""
+    if total == 3.5:
+        # Over 3.5 means 4+ maps (any series that goes 4+ maps)
+        over_prob = 2 * single_map_prob * (1 - single_map_prob) * (1.6 + correlation * 0.4)
+        over_prob = np.clip(over_prob + 0.35, 0.45, 0.75)
+    else:  # total == 4.5
+        # Over 4.5 means exactly 5 maps (closest series possible)
+        over_prob = 2 * single_map_prob * (1 - single_map_prob) * (1.2 + correlation * 0.3)
+        over_prob = np.clip(over_prob + 0.1, 0.3, 0.6)
+    
+    under_prob = 1 - over_prob
+    return over_prob, under_prob
 
 def validate_consistency():
     """
@@ -8851,6 +9256,393 @@ def create_backup():
     
     return create_backup
 
+def collect_single_team_data_for_prediction(team_name, include_player_stats=True, include_economy=True, include_maps=True):
+    """
+    Collect data for a single team using the same method as cache.py for prediction consistency.
+    FIXED: Added validation to ensure we get the correct team and not a false match.
+    This ensures identical data structure between cached data and live prediction data.
+    Args:
+        team_name (str): Name of the team to fetch
+        include_player_stats (bool): Whether to include player statistics
+        include_economy (bool): Whether to include economy data
+        include_maps (bool): Whether to include map statistics
+    Returns:
+        dict: Team data in the same format as cached data, or None if failed
+    """
+    print(f"\n--- Fetching live team data: {team_name} ---")
+    try:
+        team_id = get_team_id_exact_only(team_name)
+        if not team_id:
+            print(f"❌ Could not find team ID for '{team_name}'")
+            return None
+        print(f"✅ Found team ID: {team_id}")
+        
+        team_details, team_tag = fetch_team_details(team_id)
+        if not team_details:
+            print(f"❌ Could not fetch team details for {team_name}")
+            return None
+        
+        actual_team_name = team_details.get('data', {}).get('info', {}).get('name', team_name)
+        print(f"✅ API team name: '{actual_team_name}'")
+        
+        # VALIDATION: Check if the API name matches what we searched for
+        if not teams_are_similar_enough(team_name, actual_team_name):
+            print(f"⚠️  WARNING: Search term '{team_name}' returned API team '{actual_team_name}'")
+            print(f"    These appear to be different teams!")
+            print(f"    Common issue: 'Team Academy' vs 'Team' are different organizations")
+            return None
+        
+        team_history = fetch_team_match_history(team_id)
+        if not team_history:
+            print(f"❌ No match history found for {team_name}")
+            return None
+        
+        team_matches = parse_match_data(team_history, actual_team_name)
+        if not team_matches:
+            print(f"❌ No valid matches found for {team_name}")
+            return None
+        print(f"✅ Found {len(team_matches)} matches")
+        
+        # Ensure all match data has correct team info
+        for match in team_matches:
+            match['team_tag'] = team_tag
+            match['team_id'] = team_id
+            match['team_name'] = actual_team_name
+        
+        team_player_stats = None
+        if include_player_stats:
+            print("👥 Fetching player statistics...")
+            team_player_stats = fetch_team_player_stats(team_id)
+            if team_player_stats:
+                print(f"✅ Found stats for {len(team_player_stats)} players")
+        
+        print("📈 Calculating team statistics...")
+        team_stats = calculate_team_stats(team_matches, team_player_stats, include_economy=include_economy)
+        team_stats['team_tag'] = team_tag
+        team_stats['team_name'] = actual_team_name
+        team_stats['team_id'] = team_id
+        
+        if include_maps:
+            print("🗺️  Fetching map statistics...")
+            map_stats = fetch_team_map_statistics(team_id)
+            if map_stats:
+                team_stats['map_statistics'] = map_stats
+                print(f"✅ Found statistics for {len(map_stats)} maps")
+        
+        # Calculate additional performance metrics
+        team_stats['map_performance'] = extract_map_performance(team_matches)
+        team_stats['tournament_performance'] = extract_tournament_performance(team_matches)
+        team_stats['performance_trends'] = analyze_performance_trends(team_matches)
+        team_stats['opponent_quality'] = analyze_opponent_quality(team_matches, team_id)
+        
+        team_data = {
+            'team_id': team_id,
+            'team_tag': team_tag,
+            'stats': team_stats,
+            'matches': team_matches,
+            'player_stats': team_player_stats,
+            'ranking': None,  # Not available from individual team fetch
+            'api_name': actual_team_name  # Store the actual API name for validation
+        }
+        
+        print(f"✅ Successfully collected data for {team_name}")
+        return team_data
+        
+    except Exception as e:
+        print(f"❌ Error collecting data for {team_name}: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def collect_teams_for_prediction(team1_name, team2_name, use_cache=True, cache_path="cache/valorant_data_cache.pkl"):
+    """
+    Collect team data for prediction, using cache first and falling back to API.
+    FIXED: Much more precise team matching to avoid false positives like MIBR Academy -> MIBR.
+    """
+    print(f"\n=== COLLECTING TEAMS FOR PREDICTION (FIXED MATCHING) ===")
+    print(f"Team 1: {team1_name}")
+    print(f"Team 2: {team2_name}")
+    print(f"Use cache: {use_cache}")
+    
+    team_data_collection = {}
+    
+    if use_cache:
+        print(f"\n📂 Checking cache for existing data...")
+        cached_data = load_cache_enhanced(cache_path)
+        if cached_data:
+            if isinstance(cached_data, dict) and 'teams' in cached_data:
+                cache_teams = cached_data['teams']
+            else:
+                cache_teams = cached_data
+            print(f"Found {len(cache_teams)} teams in cache")
+            
+            for team_name in [team1_name, team2_name]:
+                found_in_cache = None
+                
+                # 1. EXACT MATCH (highest priority)
+                if team_name in cache_teams:
+                    found_in_cache = team_name
+                    print(f"✅ Found EXACT match in cache: {team_name}")
+                
+                # 2. EXACT MATCH (case-insensitive, trimmed)
+                if not found_in_cache:
+                    team_lower = team_name.lower().strip()
+                    for cached_name in cache_teams.keys():
+                        cached_lower = cached_name.lower().strip()
+                        if team_lower == cached_lower:
+                            found_in_cache = cached_name
+                            print(f"✅ Found EXACT case-insensitive match: {team_name} -> {cached_name}")
+                            break
+                
+                # 3. SAFE PARTIAL MATCHES (with strict criteria to avoid false positives)
+                if not found_in_cache:
+                    team_lower = team_name.lower().strip()
+                    for cached_name in cache_teams.keys():
+                        cached_lower = cached_name.lower().strip()
+                        
+                        # STRICT length check to avoid false positives
+                        length_ratio = len(cached_lower) / len(team_lower) if team_lower else 1
+                        if not (0.85 <= length_ratio <= 1.15):  # Must be within 15% length difference
+                            continue
+                            
+                        # Academy teams should NOT match main teams
+                        if ('academy' in team_lower) != ('academy' in cached_lower):
+                            print(f"🚫 Prevented academy mismatch: {team_name} vs {cached_name}")
+                            continue
+                        
+                        # Junior teams should NOT match main teams    
+                        if ('junior' in team_lower) != ('junior' in cached_lower):
+                            print(f"🚫 Prevented junior mismatch: {team_name} vs {cached_name}")
+                            continue
+                            
+                        # Check for safe organization name variants only
+                        if (team_lower.endswith(' esports') and cached_lower == team_lower.replace(' esports', '')) or \
+                           (cached_lower.endswith(' esports') and team_lower == cached_lower.replace(' esports', '')):
+                            found_in_cache = cached_name
+                            print(f"✅ Found ESPORTS variant match: {team_name} -> {cached_name}")
+                            break
+                            
+                        if (team_lower.endswith(' gaming') and cached_lower == team_lower.replace(' gaming', '')) or \
+                           (cached_lower.endswith(' gaming') and team_lower == cached_lower.replace(' gaming', '')):
+                            found_in_cache = cached_name
+                            print(f"✅ Found GAMING variant match: {team_name} -> {cached_name}")
+                            break
+                
+                # 4. NO DANGEROUS FUZZY MATCHING - removed to prevent false positives
+                
+                if found_in_cache:
+                    team_data_collection[team_name] = cache_teams[found_in_cache]
+                    print(f"✅ Using cached data for {team_name}")
+                else:
+                    print(f"❌ {team_name} not found in cache - will fetch from API")
+    
+    # Rest of the function remains the same...
+    missing_teams = []
+    for team_name in [team1_name, team2_name]:
+        if team_name not in team_data_collection:
+            missing_teams.append(team_name)
+    
+    if missing_teams:
+        print(f"\n🌐 Fetching {len(missing_teams)} teams from API...")
+        for team_name in missing_teams:
+            print(f"\n--- Processing {team_name} ---")
+            team_data = collect_single_team_data_for_prediction(
+                team_name,
+                include_player_stats=True,
+                include_economy=True,  
+                include_maps=True
+            )
+            
+            if team_data:
+                if validate_team_data_structure(team_data):
+                    team_data_collection[team_name] = team_data
+                    print(f"✅ Successfully added {team_name} to collection")
+                else:
+                    print(f"❌ Data structure validation failed for {team_name}")
+            else:
+                print(f"❌ Failed to collect data for {team_name}")
+    
+    success_count = len(team_data_collection)
+    print(f"\n=== COLLECTION SUMMARY ===")
+    print(f"Teams requested: 2")
+    print(f"Teams collected: {success_count}")
+    
+    if success_count == 2:
+        print("✅ Successfully collected both teams")
+        for team_name, team_data in team_data_collection.items():
+            matches_count = len(team_data.get('matches', []))
+            has_player_stats = bool(team_data.get('player_stats'))
+            has_map_stats = 'map_statistics' in team_data.get('stats', {})
+            api_name = team_data.get('api_name', team_name)
+            print(f"  {team_name} (API: {api_name}): {matches_count} matches, players: {has_player_stats}, maps: {has_map_stats}")
+    else:
+        print(f"⚠️  Only collected {success_count}/2 teams")
+        missing = [name for name in [team1_name, team2_name] if name not in team_data_collection]
+        print(f"Missing: {missing}")
+    
+    return team_data_collection
+
+def validate_team_data_structure(team_data):
+    """
+    Validate that team data has the same structure as cached data.
+    
+    Args:
+        team_data (dict): Team data to validate
+    Returns:
+        bool: True if structure is valid
+    """
+    if not isinstance(team_data, dict):
+        return False
+    
+    required_keys = ['team_id', 'team_tag', 'stats', 'matches', 'player_stats']
+    for key in required_keys:
+        if key not in team_data:
+            print(f"Missing required key: {key}")
+            return False
+    
+    # Validate stats structure
+    stats = team_data.get('stats', {})
+    if not isinstance(stats, dict):
+        return False
+    
+    required_stats = ['win_rate', 'matches', 'wins', 'losses']
+    for stat in required_stats:
+        if stat not in stats:
+            print(f"Missing required stat: {stat}")
+            return False
+    
+    # Validate matches structure
+    matches = team_data.get('matches', [])
+    if not isinstance(matches, list):
+        return False
+    
+    if len(matches) < 3:  # Minimum matches for prediction
+        print(f"Insufficient matches: {len(matches)}")
+        return False
+    
+    return True
+
+def predict_with_consistent_ordering_enhanced(team1_name, team2_name, ensemble_models, selected_features,
+                                            use_cache=True, cache_path="cache/valorant_data_cache.pkl",
+                                            current_date=None):
+    """
+    ENHANCED VERSION: Now collects teams using the same API methods as cache.py
+    while maintaining exact same prediction logic as backtesting.
+    FIXED: Better handling of live prediction vs backtesting date filtering.
+    """
+    print(f"\n========== ENHANCED PREDICTION PIPELINE ==========")
+    print(f"🎯 Using identical methods as cache.py for team data collection")
+    print(f"🔒 Maintaining exact same prediction logic as backtesting")
+    
+    logging.info(f"Making prediction for {team1_name} vs {team2_name}")
+    
+    if not current_date:
+        from datetime import datetime
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        print(f"📅 Using current date for live prediction: {current_date}")
+    
+    print(f"\n🔍 Collecting team data...")
+    team_data_collection = collect_teams_for_prediction(
+        team1_name, team2_name, use_cache, cache_path
+    )
+    
+    if len(team_data_collection) != 2:
+        error_msg = f"Could not collect data for both teams"
+        logging.error(error_msg)
+        return {
+            'error': error_msg,
+            'team1_name': team1_name,
+            'team2_name': team2_name,
+            'details': f"Collected {len(team_data_collection)}/2 teams"
+        }
+    
+    print(f"\n📊 Extracting team statistics...")
+    team1_stats = get_historical_team_stats(team1_name, current_date, team_data_collection)
+    team2_stats = get_historical_team_stats(team2_name, current_date, team_data_collection)
+    
+    # FALLBACK: If historical stats fail, try using all available stats directly
+    if not team1_stats and team1_name in team_data_collection:
+        print(f"⚠️  Fallback: Using direct stats for {team1_name}")
+        team1_data = team_data_collection[team1_name]
+        if 'stats' in team1_data and team1_data['stats']:
+            team1_stats = team1_data['stats'].copy()
+            team1_stats['team_name'] = team1_name
+            print(f"✅ Fallback successful for {team1_name}")
+    
+    if not team2_stats and team2_name in team_data_collection:
+        print(f"⚠️  Fallback: Using direct stats for {team2_name}")
+        team2_data = team_data_collection[team2_name]
+        if 'stats' in team2_data and team2_data['stats']:
+            team2_stats = team2_data['stats'].copy()
+            team2_stats['team_name'] = team2_name
+            print(f"✅ Fallback successful for {team2_name}")
+    
+    if not team1_stats or not team2_stats:
+        error_msg = "Could not get stats for teams"
+        logging.error(error_msg)
+        return {
+            'error': error_msg,
+            'team1_name': team1_name,
+            'team2_name': team2_name,
+            'details': f"Team1 stats: {'✓' if team1_stats else '✗'}, Team2 stats: {'✓' if team2_stats else '✗'}"
+        }
+    
+    print(f"✅ Team1 ({team1_name}): {team1_stats.get('matches', 0)} matches, {team1_stats.get('win_rate', 0):.2%} win rate")
+    print(f"✅ Team2 ({team2_name}): {team2_stats.get('matches', 0)} matches, {team2_stats.get('win_rate', 0):.2%} win rate")
+    
+    # Rest of the function remains the same...
+    print(f"\n🔧 Preparing features with consistent ordering...")
+    features, teams_swapped = prepare_data_with_consistent_ordering(
+        team1_stats, team2_stats, selected_features
+    )
+    
+    if features is None:
+        error_msg = "Failed to prepare features for prediction"
+        logging.error(error_msg)
+        return {
+            'error': error_msg,
+            'team1_name': team1_name,
+            'team2_name': team2_name
+        }
+    
+    print(f"✅ Features prepared: {features.shape if hasattr(features, 'shape') else len(features)} features")
+    if teams_swapped:
+        print(f"⚠️  Teams were swapped for consistency - predictions will be adjusted")
+    
+    print(f"\n🤖 Making ensemble prediction...")
+    win_probability, raw_predictions, confidence = predict_with_ensemble(
+        ensemble_models, features
+    )
+    
+    if teams_swapped:
+        logging.info(f"Teams were swapped for consistency - adjusting predictions")
+        win_probability = 1.0 - win_probability
+    
+    print(f"\n📈 Calculating derivative probabilities...")
+    bet_type_probabilities = calculate_bet_type_probabilities(win_probability, confidence)
+    
+    prediction_results = {
+        'team1_name': team1_name,
+        'team2_name': team2_name,
+        'win_probability': win_probability,
+        'confidence': confidence,
+        'raw_predictions': raw_predictions,
+        'bet_type_probabilities': bet_type_probabilities,
+        'teams_swapped': teams_swapped,
+        'date': current_date,
+        'data_source': 'api_with_cache_fallback',
+        'team1_matches': team1_stats.get('matches', 0),
+        'team2_matches': team2_stats.get('matches', 0)
+    }
+    
+    print(f"\n✅ Prediction complete:")
+    print(f"   {team1_name}: {win_probability:.2%}")
+    print(f"   {team2_name}: {(1-win_probability):.2%}")
+    print(f"   Confidence: {confidence:.3f}")
+    
+    logging.info(f"Prediction complete: {team1_name}:{win_probability:.4f}, {team2_name}:{1-win_probability:.4f}")
+    
+    return prediction_results
 
 def main_optimized():
     """
@@ -9047,102 +9839,135 @@ def main_optimized():
             return
 
     elif args.predict:
-            print("\n=== ENHANCED MATCH PREDICTION ===")
-            print("🎯 Using profitability-focused model for realistic betting analysis")
-            try:
-                ensemble_models, selected_features = load_backtesting_models()
-                if not ensemble_models or not selected_features:
-                    print("Failed to load models or features. Make sure you've trained models first with --retrain.")
+        print("\n=== ENHANCED MATCH PREDICTION (BO3/BO5 SUPPORT) ===")
+        print("🎯 Using profitability-focused model with live API data fetching")
+        print("📡 Fetching team data using same methods as cache.py for consistency")
+        print("🎮 Now supporting both Best of 3 and Best of 5 matches")
+        
+        try:
+            ensemble_models, selected_features = load_backtesting_models()
+            if not ensemble_models or not selected_features:
+                print("Failed to load models or features. Make sure you've trained models first with --retrain.")
+                return
+            
+            if args.team1 and args.team2:
+                team1_name = args.team1
+                team2_name = args.team2
+            else:
+                print("\nEnter the teams to predict:")
+                team1_name = input("Team 1 name: ")
+                team2_name = input("Team 2 name: ")
+                if not team1_name or not team2_name:
+                    print("Team names are required for prediction.")
                     return
-
-                if args.team1 and args.team2:
-                    team1_name = args.team1
-                    team2_name = args.team2
-                else:
-                    print("\nEnter the teams to predict:")
-                    team1_name = input("Team 1 name: ")
-                    team2_name = input("Team 2 name: ")
-                    if not team1_name or not team2_name:
-                        print("Team names are required for prediction.")
-                        return
-
-                if not args.bankroll:
-                    try:
-                        bankroll = float(input("\nEnter your current bankroll ($): ") or 1000)
-                    except ValueError:
-                        bankroll = 1000
-                        print("Invalid bankroll value, using default $1000")
-                else:
-                    bankroll = args.bankroll
-
-                print("Loading team data...")
-                team_data_collection = collect_team_data(
-                    include_player_stats=include_player_stats,
-                    include_economy=include_economy,
-                    include_maps=include_maps,
-                    use_cache=use_cache,
-                    cache_path=args.cache_path
-                )
-
-                prediction_results = predict_with_consistent_ordering(
-                    team1_name,
-                    team2_name,
-                    ensemble_models,
-                    selected_features,
-                    team_data_collection
-                )
-
-                if 'error' in prediction_results:
-                    print(f"Error in prediction: {prediction_results['error']}")
-                    if 'details' in prediction_results:
-                        print(f"Details: {prediction_results['details']}")
-                    print("\nLet me search for similar team names in the database...")
-                    search_term1 = team1_name.lower()
-                    search_term2 = team2_name.lower()
-                    similar_teams = []
-                    for cached_team in team_data_collection.keys():
-                        cached_lower = cached_team.lower()
-                        if (search_term1 in cached_lower or cached_lower in search_term1 or
-                            search_term2 in cached_lower or cached_lower in search_term2):
-                            similar_teams.append(cached_team)
-
-                    if similar_teams:
-                        print("Found similar teams in cache:")
-                        for i, team in enumerate(similar_teams[:10]):  # Show max 10
-                            print(f"  {i+1}. {team}")
-                        try:
-                            choice = input("\nWould you like to try with one of these teams? Enter number (or 'n' to skip): ")
-                            if choice.isdigit() and 1 <= int(choice) <= len(similar_teams):
-                                suggested_team = similar_teams[int(choice)-1]
-                                replace_choice = input(f"Replace '{team1_name}' (1) or '{team2_name}' (2)? ")
-                                if replace_choice == '1':
-                                    team1_name = suggested_team
-                                elif replace_choice == '2':
-                                    team2_name = suggested_team
-                                print(f"Retrying prediction with: {team1_name} vs {team2_name}")
-                                prediction_results = predict_with_consistent_ordering(
-                                    team1_name,
-                                    team2_name,
-                                    ensemble_models,
-                                    selected_features,
-                                    team_data_collection
-                                )
-                        except ValueError:
-                            pass
-
-                    if 'error' in prediction_results:
-                        print("Unable to find sufficient data for prediction. Please check team names.")
-                        return
-
-                print("\nEnter the betting odds from your bookmaker:")
-                odds_data = {}
+            
+            # Get match format from user
+            match_format = get_match_format_from_user()
+            print(f"Match format set to: {match_format.upper()}")
+            
+            if not args.bankroll:
                 try:
-                    team1_ml = float(input(f"{team1_name} moneyline odds (decimal format, e.g. 2.50): ") or 0)
-                    if team1_ml > 0:
-                        odds_data['team1_ml_odds'] = team1_ml
-                    team2_ml = float(input(f"{team2_name} moneyline odds (decimal format, e.g. 2.50): ") or 0)
-                    if team2_ml > 0:
-                        odds_data['team2_ml_odds'] = team2_ml
+                    bankroll = float(input("\nEnter your current bankroll ($): ") or 1000)
+                except ValueError:
+                    bankroll = 1000
+                    print("Invalid bankroll value, using default $1000")
+            else:
+                bankroll = args.bankroll
+            
+            print(f"\n🔍 Fetching live team data for {team1_name} vs {team2_name}...")
+            print("📊 This will use the same data collection methods as cache.py")
+            print("⏱️  Please wait while we fetch comprehensive team data from the API...")
+            
+            prediction_results = predict_with_consistent_ordering_enhanced(
+                team1_name,
+                team2_name,
+                ensemble_models,
+                selected_features,
+                use_cache=use_cache,
+                cache_path=args.cache_path
+            )
+            
+            if 'error' in prediction_results:
+                print(f"Error in prediction: {prediction_results['error']}")
+                if 'details' in prediction_results:
+                    print(f"Details: {prediction_results['details']}")
+                print("\n💡 Troubleshooting suggestions:")
+                print("1. Check team name spelling (try exact names from vlr.gg)")
+                print("2. Try team abbreviations (e.g., 'SEN' instead of 'Sentinels')")
+                print("3. Ensure teams have recent match data")
+                print("4. Try running cache.py first to pre-load team data")
+                return
+            
+            print("\n========== ENHANCED PREDICTION RESULTS ==========")
+            print(f"Match: {team1_name} vs {team2_name} ({match_format.upper()})")
+            print(f"📊 Data Quality:")
+            print(f"   {team1_name}: {prediction_results.get('team1_matches', 0)} matches")
+            print(f"   {team2_name}: {prediction_results.get('team2_matches', 0)} matches")
+            print(f"   Data source: {prediction_results.get('data_source', 'unknown')}")
+            
+            print(f"\n🎯 PREDICTION:")
+            print(f"   {team1_name} win probability: {prediction_results['win_probability']:.2%}")
+            print(f"   {team2_name} win probability: {(1-prediction_results['win_probability']):.2%}")
+            print(f"   Model confidence: {prediction_results['confidence']:.3f}")
+            
+            if prediction_results.get('teams_swapped', False):
+                print(f"\n📝 Note: Teams were reordered for consistent prediction processing.")
+            
+            print(f"\n💰 Enter the betting odds from your bookmaker ({match_format.upper()} Format):")
+            odds_data = {}
+            
+            try:
+                team1_ml = float(input(f"{team1_name} moneyline odds (decimal format, e.g. 2.50): ") or 0)
+                if team1_ml > 0:
+                    odds_data['team1_ml_odds'] = team1_ml
+                team2_ml = float(input(f"{team2_name} moneyline odds (decimal format, e.g. 2.50): ") or 0)
+                if team2_ml > 0:
+                    odds_data['team2_ml_odds'] = team2_ml
+                
+                print(f"\n📈 {match_format.upper()} Spread and Total Markets (press Enter to skip):")
+                
+                if match_format == 'bo5':
+                    # BO5 markets
+                    team1_plus_2_5 = float(input(f"{team1_name} +2.5 maps odds: ") or 0)
+                    if team1_plus_2_5 > 0:
+                        odds_data['team1_plus_2_5_odds'] = team1_plus_2_5
+                    team2_plus_2_5 = float(input(f"{team2_name} +2.5 maps odds: ") or 0)
+                    if team2_plus_2_5 > 0:
+                        odds_data['team2_plus_2_5_odds'] = team2_plus_2_5
+                    team1_minus_2_5 = float(input(f"{team1_name} -2.5 maps odds: ") or 0)
+                    if team1_minus_2_5 > 0:
+                        odds_data['team1_minus_2_5_odds'] = team1_minus_2_5
+                    team2_minus_2_5 = float(input(f"{team2_name} -2.5 maps odds: ") or 0)
+                    if team2_minus_2_5 > 0:
+                        odds_data['team2_minus_2_5_odds'] = team2_minus_2_5
+                    
+                    team1_plus_1_5 = float(input(f"{team1_name} +1.5 maps odds: ") or 0)
+                    if team1_plus_1_5 > 0:
+                        odds_data['team1_plus_1_5_odds'] = team1_plus_1_5
+                    team2_plus_1_5 = float(input(f"{team2_name} +1.5 maps odds: ") or 0)
+                    if team2_plus_1_5 > 0:
+                        odds_data['team2_plus_1_5_odds'] = team2_plus_1_5
+                    team1_minus_1_5 = float(input(f"{team1_name} -1.5 maps odds: ") or 0)
+                    if team1_minus_1_5 > 0:
+                        odds_data['team1_minus_1_5_odds'] = team1_minus_1_5
+                    team2_minus_1_5 = float(input(f"{team2_name} -1.5 maps odds: ") or 0)
+                    if team2_minus_1_5 > 0:
+                        odds_data['team2_minus_1_5_odds'] = team2_minus_1_5
+                    
+                    over_3_5 = float(input(f"Over 3.5 maps odds: ") or 0)
+                    if over_3_5 > 0:
+                        odds_data['over_3_5_maps_odds'] = over_3_5
+                    under_3_5 = float(input(f"Under 3.5 maps odds: ") or 0)
+                    if under_3_5 > 0:
+                        odds_data['under_3_5_maps_odds'] = under_3_5
+                    over_4_5 = float(input(f"Over 4.5 maps odds: ") or 0)
+                    if over_4_5 > 0:
+                        odds_data['over_4_5_maps_odds'] = over_4_5
+                    under_4_5 = float(input(f"Under 4.5 maps odds: ") or 0)
+                    if under_4_5 > 0:
+                        odds_data['under_4_5_maps_odds'] = under_4_5
+                else:
+                    # BO3 markets (original)
                     team1_plus = float(input(f"{team1_name} +1.5 maps odds: ") or 0)
                     if team1_plus > 0:
                         odds_data['team1_plus_1_5_odds'] = team1_plus
@@ -9161,102 +9986,126 @@ def main_optimized():
                     under = float(input(f"Under 2.5 maps odds: ") or 0)
                     if under > 0:
                         odds_data['under_2_5_maps_odds'] = under
-                except ValueError:
-                    print("Invalid odds input. Using available odds only.")
-
+                        
+            except ValueError:
+                print("Invalid odds input. Using available odds only.")
+            
+            # Load betting history
+            bet_history = None
+            try:
+                import json
+                with open('betting_performance.json', 'r') as f:
+                    betting_data = json.load(f)
+                    bet_history = betting_data.get('bets', [])
+            except (FileNotFoundError, json.JSONDecodeError):
+                print("No previous betting history found. Starting fresh.")
                 bet_history = None
-                try:
-                    import json  # Ensure json is imported locally if needed
-                    with open('betting_performance.json', 'r') as f:
-                        betting_data = json.load(f)
-                        bet_history = betting_data.get('bets', [])
-                except FileNotFoundError:
-                    print("No previous betting history found. Starting fresh.")
-                    bet_history = None
-                except json.JSONDecodeError:
-                    print("Invalid betting history file. Starting fresh.")
-                    bet_history = None
-                except Exception as e:
-                    print(f"Error loading betting history: {e}")
-                    bet_history = None
-
-                betting_analysis = analyze_betting_options(
-                    prediction_results,
-                    odds_data,
-                    bankroll=bankroll,
-                    bet_history=bet_history
-                )
-
-                print("\n========== ENHANCED PREDICTION RESULTS ==========")
-                print(f"Match: {team1_name} vs {team2_name}")
-                print(f"{team1_name} win probability: {prediction_results['win_probability']:.2%}")
-                print(f"{team2_name} win probability: {(1-prediction_results['win_probability']):.2%}")
-                print(f"Model confidence: {prediction_results['confidence']:.2f}")
-
-                if prediction_results.get('teams_swapped', False):
-                    print("\nNote: Teams were reordered for consistent prediction processing.")
-
-                if 'optimal_bets' in betting_analysis and betting_analysis['optimal_bets']:
-                    print("\n🎯 RECOMMENDED BETS (ULTRA-CONSERVATIVE CRITERIA):")
-                    print("-" * 80)
-                    for bet_type, analysis in betting_analysis['optimal_bets'].items():
-                        formatted_type = bet_type.replace("_", " ").upper()
-                        team_name = team1_name if "team1" in bet_type else team2_name if "team2" in bet_type else "OVER/UNDER"
-                        print(f"  {team_name} {formatted_type}:")
-                        print(f"  - Odds: {analysis['odds']:.2f}")
-                        print(f"  - Our probability: {analysis['probability']:.2%}")
-                        print(f"  - Edge: {analysis['edge']:.2%}")
-                        print(f"  - Recommended bet: ${analysis['bet_amount']:.2f}")
-                        if 'adjustments' in analysis and analysis['adjustments']:
-                            print(f"  - Adjustments: {', '.join(analysis['adjustments'])}")
-                        if 'market_simulations' in betting_analysis and bet_type in betting_analysis['market_simulations']:
-                            market_sim = betting_analysis['market_simulations'][bet_type]
-                            print(f"  - Expected closing odds: {market_sim['expected_closing_odds']:.2f}")
-                            print(f"  - Expected CLV: {market_sim['closing_line_value']:.2%}")
-                        print("")
-                else:
-                    print("\n✅ No bets recommended for this match based on ultra-conservative criteria.")
-                    print("This is GOOD - it means the model is avoiding -EV opportunities!")
-
-                print("\n⚠️  ENHANCED REALITY CHECK:")
-                print("-" * 80)
-                print("• Enhanced model uses 4.5% minimum edge (vs 2% before)")
-                print("• Requires 65% minimum confidence (vs 20% before)")
-                print("• Maximum 3% total bankroll risk across all bets")
-                print("• Backtests typically overestimate real-world performance by 40-60%")
-                print("• Track Closing Line Value, not just wins/losses")
-                print("• Expect 5+ game losing streaks even with profitable strategies")
-                print("• Bankroll management failures kill most profitable strategies")
-
-                if args.live and betting_analysis.get('optimal_bets'):
-                    print("\nAfter the match, please enter the results:")
-                    recommended_bets = list(betting_analysis['optimal_bets'].keys())
-                    print("Recommended bets:")
-                    for i, bet_type in enumerate(recommended_bets):
-                        formatted_type = bet_type.replace("_", " ").upper()
-                        team_name = team1_name if "team1" in bet_type else team2_name if "team2" in bet_type else "OVER/UNDER"
-                        print(f"{i+1}. {team_name} {formatted_type}")
-                    try:
-                        bet_choice = int(input("\nWhich bet did you place? (enter number, 0 for none): ")) - 1
-                        if 0 <= bet_choice < len(recommended_bets):
-                            bet_placed = recommended_bets[bet_choice]
-                            bet_amount = float(input("How much did you bet? $"))
-                            outcome = input("Did the bet win? (y/n): ").lower().startswith('y')
-                            odds = 0
-                            for bet_key, odds_value in odds_data.items():
-                                if bet_key.replace('_odds', '') == bet_placed:
-                                    odds = odds_value
-                                    break
-                            if odds > 0:
-                                track_betting_performance(prediction_results, bet_placed, bet_amount, outcome, odds)
-                                print("Bet tracked successfully.")
-                    except (ValueError, IndexError):
-                        print("Invalid input, not tracking this bet.")
             except Exception as e:
-                print(f"Error during prediction: {e}")
-                import traceback
-                traceback.print_exc()
-                return
+                print(f"Error loading betting history: {e}")
+                bet_history = None
+            
+            # Analyze betting options with match format
+            betting_analysis = analyze_betting_edge_for_backtesting(
+                prediction_results['win_probability'],
+                1 - prediction_results['win_probability'],
+                odds_data,
+                prediction_results['confidence'],
+                bankroll=bankroll,
+                match_format=match_format
+            )
+            
+            # Select optimal bets
+            optimal_bets = select_optimal_bets_conservative(
+                betting_analysis,
+                team1_name,
+                team2_name,
+                bankroll,
+                max_bets=3 if match_format == 'bo5' else 2,  # More bets possible in BO5
+                max_total_risk=BettingConstants.MAX_TOTAL_RISK_PCT,
+                config=None
+            )
+            
+            if optimal_bets:
+                print(f"\n🎯 RECOMMENDED BETS (ULTRA-CONSERVATIVE CRITERIA - {match_format.upper()}):")
+                print("-" * 80)
+                for bet_type, analysis in optimal_bets.items():
+                    formatted_type = bet_type.replace("_", " ").upper()
+                    team_name = team1_name if "team1" in bet_type else team2_name if "team2" in bet_type else "OVER/UNDER"
+                    print(f"  {team_name} {formatted_type}:")
+                    print(f"  - Odds: {analysis['odds']:.2f}")
+                    print(f"  - Our probability: {analysis['probability']:.2%}")
+                    print(f"  - Edge: {analysis['edge']:.2%}")
+                    print(f"  - Recommended bet: ${analysis['bet_amount']:.2f}")
+                    if 'adjustments' in analysis and analysis['adjustments']:
+                        print(f"  - Adjustments: {', '.join(analysis['adjustments'])}")
+                    print("")
+            else:
+                print(f"\n✅ No bets recommended for this {match_format.upper()} match based on ultra-conservative criteria.")
+                print("This is GOOD - it means the model is avoiding -EV opportunities!")
+            
+            print(f"\n⚠️  ENHANCED REALITY CHECK ({match_format.upper()}):")
+            print("-" * 80)
+            print("• Enhanced model uses 4.5% minimum edge (vs 2% before)")
+            print("• Requires 65% minimum confidence (vs 20% before)")
+            print("• Maximum 3% total bankroll risk across all bets")
+            print(f"• {match_format.upper()} format detected - appropriate markets analyzed")
+            print("• Live API data ensures most recent team performance")
+            print("• Data collected using same methods as backtesting for consistency")
+            print("• Backtests typically overestimate real-world performance by 40-60%")
+            print("• Track Closing Line Value, not just wins/losses")
+            print("• Expect 5+ game losing streaks even with profitable strategies")
+            print("• Bankroll management failures kill most profitable strategies")
+            
+            # Handle live betting tracking
+            if args.live and optimal_bets:
+                print("\nAfter the match, please enter the results:")
+                recommended_bets = list(optimal_bets.keys())
+                print("Recommended bets:")
+                for i, bet_type in enumerate(recommended_bets):
+                    formatted_type = bet_type.replace("_", " ").upper()
+                    team_name = team1_name if "team1" in bet_type else team2_name if "team2" in bet_type else "OVER/UNDER"
+                    print(f"{i+1}. {team_name} {formatted_type}")
+                
+                try:
+                    bet_choice = int(input("\nWhich bet did you place? (enter number, 0 for none): ")) - 1
+                    if 0 <= bet_choice < len(recommended_bets):
+                        bet_placed = recommended_bets[bet_choice]
+                        bet_amount = float(input("How much did you bet? $"))
+                        
+                        print(f"\nEnter the final match score:")
+                        team1_final = int(input(f"{team1_name} maps won: "))
+                        team2_final = int(input(f"{team2_name} maps won: "))
+                        
+                        # Detect actual match format from results
+                        actual_format = detect_match_format(team1_final, team2_final)
+                        if actual_format != match_format:
+                            print(f"Note: Detected {actual_format.upper()} format from score, but you predicted {match_format.upper()}")
+                        
+                        outcome = evaluate_bet_outcome(bet_placed, 'team1' if team1_final > team2_final else 'team2', 
+                                                     team1_final, team2_final, actual_format)
+                        
+                        odds = 0
+                        for bet_key, odds_value in odds_data.items():
+                            if bet_key.replace('_odds', '') == bet_placed:
+                                odds = odds_value
+                                break
+                        
+                        if odds > 0:
+                            # Update prediction results for tracking
+                            prediction_results['final_score'] = f"{team1_final}-{team2_final}"
+                            prediction_results['match_format'] = actual_format
+                            track_betting_performance(prediction_results, bet_placed, bet_amount, outcome, odds)
+                            print("Bet tracked successfully.")
+                        else:
+                            print("Could not find odds for tracking.")
+                except (ValueError, IndexError):
+                    print("Invalid input, not tracking this bet.")
+                    
+        except Exception as e:
+            print(f"Error during prediction: {e}")
+            import traceback
+            traceback.print_exc()
+            return
 
     elif args.backtest:
         print("\n=== ENHANCED PROFITABILITY-FOCUSED BACKTESTING ===")

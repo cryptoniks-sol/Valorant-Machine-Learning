@@ -1,0 +1,1434 @@
+#!/usr/bin/env python3
+"""
+Valorant Paper Trading Bot - Enhanced Version
+Integrates with valorant_predictor.py for live paper trading using PandaScore API
+"""
+
+import os
+import sys
+import json
+import time
+import logging
+import requests
+import schedule
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Optional, Tuple
+import pandas as pd
+import numpy as np
+from dataclasses import dataclass, asdict
+from pathlib import Path
+
+# Import your prediction pipeline
+try:
+    from train import (
+        predict_with_consistent_ordering_enhanced,
+        load_backtesting_models,
+        analyze_betting_edge_for_backtesting,
+        select_optimal_bets_conservative,
+        BettingConstants,
+        simulate_odds
+    )
+    print("✅ Successfully imported prediction pipeline")
+except ImportError as e:
+    print(f"❌ Error importing prediction pipeline: {e}")
+    print("Make sure paste.py (your valorant_predictor.py) is in the same directory")
+    sys.exit(1)
+
+@dataclass
+class PaperTrade:
+    """Represents a single paper trade"""
+    trade_id: str
+    timestamp: str
+    team1: str
+    team2: str
+    bet_type: str
+    bet_amount: float
+    odds: float
+    predicted_prob: float
+    edge: float
+    confidence: float
+    match_id: str
+    match_start_time: str
+    status: str = "pending"  # pending, won, lost, cancelled
+    actual_result: Optional[str] = None
+    profit_loss: float = 0.0
+    closing_odds: Optional[float] = None
+    clv: float = 0.0
+    mapping_confidence: Optional[Dict] = None
+
+@dataclass
+class PaperTradingState:
+    """Current state of paper trading"""
+    starting_bankroll: float
+    current_bankroll: float
+    total_trades: int
+    winning_trades: int
+    total_wagered: float
+    total_profit: float
+    max_drawdown: float
+    max_bankroll: float
+    trades: List[PaperTrade]
+    last_update: str
+
+class EnhancedPandaScoreAPI:
+    """Enhanced PandaScore API interface with better error handling"""
+    
+    def __init__(self, api_token: str):
+        self.api_token = api_token
+        self.base_url = "https://api.pandascore.co"
+        self.headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Accept": "application/json"
+        }
+        self.request_delay = 1.0  # Delay between requests to avoid rate limits
+        
+    def _make_request(self, url: str, params: Dict = None) -> Optional[Dict]:
+        """Make a rate-limited request with error handling"""
+        try:
+            time.sleep(self.request_delay)  # Rate limiting
+            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 429:  # Rate limited
+                print(f"⏱️ Rate limited, waiting 30 seconds...")
+                time.sleep(30)
+                return self._make_request(url, params)  # Retry once
+            else:
+                print(f"❌ HTTP {response.status_code}: {response.text[:200]}")
+                return None
+                
+        except requests.exceptions.Timeout:
+            print(f"⏰ Request timeout for {url}")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request error: {e}")
+            return None
+        
+    def get_upcoming_matches(self, hours_ahead: int = 24) -> List[Dict]:
+        """Get upcoming Valorant matches with improved filtering"""
+        try:
+            now = datetime.now(timezone.utc)
+            end_time = now + timedelta(hours=hours_ahead)
+            
+            print(f"🔍 Searching for matches between {now.isoformat()} and {end_time.isoformat()}")
+            
+            # Try different endpoints
+            endpoints_to_try = [
+                f"{self.base_url}/valorant/matches/upcoming",
+                f"{self.base_url}/valorant/matches",
+                f"{self.base_url}/matches"
+            ]
+            
+            for endpoint in endpoints_to_try:
+                try:
+                    print(f"🌐 Trying endpoint: {endpoint}")
+                    
+                    if "upcoming" in endpoint:
+                        params = {
+                            "sort": "begin_at",
+                            "per_page": 50
+                        }
+                    else:
+                        params = {
+                            "filter[status]": "not_started",
+                            "sort": "begin_at", 
+                            "per_page": 50
+                        }
+                    
+                    data = self._make_request(endpoint, params)
+                    if not data:
+                        continue
+                        
+                    print(f"📊 Response received")
+                    
+                    # Handle different response formats
+                    if isinstance(data, list):
+                        matches = data
+                    elif isinstance(data, dict) and 'data' in data:
+                        matches = data['data']
+                    else:
+                        matches = []
+                    
+                    # Filter for upcoming matches in time window
+                    upcoming = []
+                    for match in matches:
+                        if self._is_upcoming_match(match, now, end_time):
+                            upcoming.append(match)
+                    
+                    print(f"📡 Found {len(upcoming)} upcoming matches in next {hours_ahead} hours")
+                    return self._filter_quality_matches(upcoming)
+                        
+                except Exception as e:
+                    print(f"❌ Error with endpoint {endpoint}: {e}")
+                    continue
+            
+            print("❌ All endpoints failed")
+            return []
+            
+        except Exception as e:
+            print(f"❌ Error fetching upcoming matches: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+    
+    def _is_upcoming_match(self, match: Dict, start_time: datetime, end_time: datetime) -> bool:
+        """Check if match is in the upcoming time window"""
+        try:
+            begin_at = match.get('begin_at')
+            if not begin_at:
+                return False
+                
+            # Parse the begin_at time
+            match_time = datetime.fromisoformat(begin_at.replace('Z', '+00:00'))
+            return start_time <= match_time <= end_time
+            
+        except Exception as e:
+            print(f"❌ Error parsing match time: {e}")
+            return False
+    
+    def _filter_quality_matches(self, matches: List[Dict]) -> List[Dict]:
+        """Filter matches for quality and completeness"""
+        quality_matches = []
+        
+        for match in matches:
+            try:
+                # Skip canceled/postponed matches
+                status = match.get('status', '').lower()
+                if status in ['canceled', 'cancelled', 'postponed']:
+                    print(f"⚠️ Skipping {status} match: {match.get('id')}")
+                    continue
+                
+                # Check if match has proper team data
+                team1, team2 = self.get_team_names_from_match(match)
+                if not team1 or not team2 or team1 == team2:
+                    print(f"⚠️ Skipping match with incomplete team data: {match.get('id')}")
+                    continue
+                
+                # Check if match has reasonable start time
+                begin_at = match.get('begin_at')
+                if not begin_at:
+                    print(f"⚠️ Skipping match without start time: {match.get('id')}")
+                    continue
+                
+                # Check if it's a Valorant match
+                videogame = match.get('videogame', {})
+                if isinstance(videogame, dict) and videogame.get('name', '').lower() != 'valorant':
+                    print(f"⚠️ Skipping non-Valorant match: {match.get('id')}")
+                    continue
+                
+                quality_matches.append(match)
+                
+            except Exception as e:
+                print(f"❌ Error filtering match {match.get('id', 'unknown')}: {e}")
+                continue
+        
+        print(f"✅ Quality filtered: {len(quality_matches)} matches")
+        return quality_matches
+    
+    def get_team_names_from_match(self, match: Dict) -> Tuple[str, str]:
+        """Enhanced team name extraction with multiple fallbacks"""
+        try:
+            # Primary method: opponents structure
+            if 'opponents' in match and match['opponents'] and len(match['opponents']) >= 2:
+                try:
+                    team1 = match['opponents'][0]['opponent']['name']
+                    team2 = match['opponents'][1]['opponent']['name']
+                    if team1 and team2 and team1 != team2:
+                        return team1, team2
+                except (KeyError, TypeError, IndexError):
+                    pass
+            
+            # Fallback 1: teams array
+            if 'teams' in match and len(match['teams']) >= 2:
+                try:
+                    team1 = match['teams'][0]['name']
+                    team2 = match['teams'][1]['name']
+                    if team1 and team2 and team1 != team2:
+                        return team1, team2
+                except (KeyError, TypeError, IndexError):
+                    pass
+            
+            # Fallback 2: participants
+            if 'participants' in match and len(match['participants']) >= 2:
+                try:
+                    team1 = match['participants'][0]['name']
+                    team2 = match['participants'][1]['name']
+                    if team1 and team2 and team1 != team2:
+                        return team1, team2
+                except (KeyError, TypeError, IndexError):
+                    pass
+            
+            # Debug logging for failed extractions
+            print(f"❌ No team names found in match {match.get('id', 'unknown')}")
+            available_keys = list(match.keys())
+            print(f"Available keys: {available_keys[:10]}...")  # First 10 keys
+            
+            return None, None
+            
+        except Exception as e:
+            print(f"❌ Error extracting team names: {e}")
+            return None, None
+    
+    def get_finished_matches(self, hours_back: int = 6) -> List[Dict]:
+        """Get recently finished matches with improved error handling"""
+        try:
+            now = datetime.now(timezone.utc)
+            start_time = now - timedelta(hours=hours_back)
+            
+            print(f"🔍 Searching for finished matches between {start_time.isoformat()} and {now.isoformat()}")
+            
+            # Use simpler approach - get all recent matches and filter locally
+            endpoints_to_try = [
+                f"{self.base_url}/valorant/matches",
+                f"{self.base_url}/matches"
+            ]
+            
+            for endpoint in endpoints_to_try:
+                try:
+                    # Use broader parameters to avoid 400 errors
+                    params = {
+                        "sort": "-end_at",
+                        "per_page": 100  # Get more matches to filter locally
+                    }
+                    
+                    data = self._make_request(endpoint, params)
+                    if not data:
+                        continue
+                    
+                    # Handle different response formats
+                    if isinstance(data, list):
+                        all_matches = data
+                    elif isinstance(data, dict) and 'data' in data:
+                        all_matches = data['data']
+                    else:
+                        all_matches = []
+                    
+                    # Filter for finished matches in time window
+                    finished_matches = []
+                    for match in all_matches:
+                        if (match.get('status') == 'finished' and 
+                            self._is_finished_match(match, start_time, now)):
+                            finished_matches.append(match)
+                    
+                    print(f"✅ Found {len(finished_matches)} finished matches in last {hours_back} hours")
+                    return finished_matches
+                        
+                except Exception as e:
+                    print(f"❌ Error with endpoint {endpoint}: {e}")
+                    continue
+            
+            return []
+            
+        except Exception as e:
+            print(f"❌ Error fetching finished matches: {e}")
+            return []
+    
+    def _is_finished_match(self, match: Dict, start_time: datetime, end_time: datetime) -> bool:
+        """Check if match finished in the time window"""
+        try:
+            if match.get('status') != 'finished':
+                return False
+                
+            end_at = match.get('end_at')
+            if not end_at:
+                return False
+                
+            match_end = datetime.fromisoformat(end_at.replace('Z', '+00:00'))
+            return start_time <= match_end <= end_time
+            
+        except Exception as e:
+            return False
+
+class EnhancedTeamMapper:
+    """Enhanced team name mapper with confidence scoring"""
+    
+    def __init__(self):
+        # Comprehensive team mappings
+        self.name_mappings = {
+            # Major teams - exact mappings
+            'LOUD': 'LOUD',
+            'Sentinels': 'SEN',
+            'Cloud9': 'C9',
+            'Team Liquid': 'TL',
+            'FunPlus Phoenix': 'FPX',
+            'OpTic Gaming': 'OPTIC',
+            'Paper Rex': 'PRX',
+            'DRX': 'DRX',
+            'Fnatic': 'FNC',
+            'NAVI': 'NAVI',
+            'Team Heretics': 'TH',
+            'EDward Gaming': 'EDG',
+            'Gen.G Esports': 'GENG',
+            'Leviatán': 'LEV',
+            'NRG Esports': 'NRG',
+            'Evil Geniuses': 'EG',
+            'KRÜ Esports': 'KRU',
+            '100 Thieves': '100T',
+            'FURIA Esports': 'FUR',
+            'Team Vitality': 'VIT',
+            'Giants Gaming': 'GIA',
+            'Karmine Corp': 'KC',
+            'BBL Esports': 'BBL',
+            'Fut Esports': 'FUT',
+            'MIBR': 'MIBR',
+            'MIBR Academy': 'MIBR Academy',
+            '2GAME Esports': '2GAME',
+            'Bon Bon Bum Contra': 'Contra'
+        }
+        
+        # Confidence-based mappings
+        self.confidence_mappings = {
+            'high': {
+                'LOUD': 'LOUD',
+                'Sentinels': 'SEN',
+                'Cloud9': 'C9',
+                'Team Liquid': 'TL',
+                'NAVI': 'NAVI',
+                'Fnatic': 'FNC',
+                'DRX': 'DRX',
+                'MIBR': 'MIBR'
+            },
+            'medium': {
+                'liquid': 'TL',
+                'cloud': 'C9',
+                'fnatic': 'FNC',
+                'sentinels': 'SEN',
+                'optic': 'OPTIC',
+                'paper rex': 'PRX',
+                'heretics': 'TH',
+                'edward gaming': 'EDG',
+                'gen.g': 'GENG',
+                'leviatan': 'LEV',
+                'evil geniuses': 'EG',
+                'kru': 'KRU',
+                '100 thieves': '100T',
+                'furia': 'FUR',
+                'vitality': 'VIT',
+                'giants': 'GIA',
+                'karmine': 'KC',
+                'contra': 'Contra'
+            },
+            'low': {
+                'sen': 'SEN',
+                'c9': 'C9',
+                'tl': 'TL',
+                'fpx': 'FPX',
+                'prx': 'PRX',
+                'fnc': 'FNC',
+                'th': 'TH',
+                'edg': 'EDG',
+                'geng': 'GENG',
+                'lev': 'LEV',
+                'nrg': 'NRG',
+                'eg': 'EG',
+                'kru': 'KRU',
+                '100t': '100T',
+                'fur': 'FUR',
+                'vit': 'VIT',
+                'gia': 'GIA',
+                'kc': 'KC',
+                'bbl': 'BBL',
+                'fut': 'FUT'
+            }
+        }
+        
+        # Reverse mapping for lookup
+        self.reverse_mappings = {v: k for k, v in self.name_mappings.items()}
+    
+    def map_with_confidence(self, pandascore_name: str) -> Tuple[str, str]:
+        """Map team name and return confidence level"""
+        if not pandascore_name:
+            return pandascore_name, 'none'
+        
+        # Check exact mappings first
+        if pandascore_name in self.name_mappings:
+            return self.name_mappings[pandascore_name], 'high'
+        
+        # Check high confidence mappings
+        if pandascore_name in self.confidence_mappings['high']:
+            return self.confidence_mappings['high'][pandascore_name], 'high'
+        
+        # Check medium confidence (case insensitive, partial matches)
+        name_lower = pandascore_name.lower().strip()
+        for key, value in self.confidence_mappings['medium'].items():
+            if key in name_lower or name_lower in key:
+                return value, 'medium'
+        
+        # Check low confidence (abbreviations and fuzzy matches)
+        for key, value in self.confidence_mappings['low'].items():
+            if key in name_lower:
+                return value, 'low'
+        
+        # No mapping found
+        return pandascore_name, 'none'
+    
+    def suggest_mappings_for_unknown_team(self, team_name: str) -> List[str]:
+        """Suggest possible mappings for unknown teams"""
+        suggestions = []
+        name_parts = team_name.lower().replace('-', ' ').split()
+        
+        # Try different combinations
+        if len(name_parts) > 1:
+            # Last word
+            suggestions.append(name_parts[-1].title())
+            # First word  
+            suggestions.append(name_parts[0].title())
+            # Acronym from significant words
+            significant_words = [w for w in name_parts if w not in ['esports', 'gaming', 'team', 'club', 'academy']]
+            if len(significant_words) >= 2:
+                acronym = ''.join(word[0].upper() for word in significant_words)
+                suggestions.append(acronym)
+        else:
+            # Single word - try as is and abbreviated
+            suggestions.append(name_parts[0].title())
+            if len(name_parts[0]) > 3:
+                suggestions.append(name_parts[0][:3].upper())
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_suggestions = []
+        for suggestion in suggestions:
+            if suggestion not in seen and suggestion != team_name:
+                seen.add(suggestion)
+                unique_suggestions.append(suggestion)
+        
+        return unique_suggestions[:3]
+    
+    def add_mapping(self, pandascore_name: str, local_name: str):
+        """Add a new mapping discovered during runtime"""
+        self.name_mappings[pandascore_name] = local_name
+        print(f"➕ Added mapping: '{pandascore_name}' -> '{local_name}'")
+        
+        # Save to file for persistence
+        try:
+            mappings_file = Path("paper_trading_data") / "team_mappings.json"
+            mappings_file.parent.mkdir(exist_ok=True)
+            
+            with open(mappings_file, 'w') as f:
+                json.dump(self.name_mappings, f, indent=2)
+        except Exception as e:
+            print(f"❌ Could not save mapping: {e}")
+    
+    def load_saved_mappings(self):
+        """Load previously saved mappings"""
+        try:
+            mappings_file = Path("paper_trading_data") / "team_mappings.json"
+            if mappings_file.exists():
+                with open(mappings_file, 'r') as f:
+                    saved_mappings = json.load(f)
+                    self.name_mappings.update(saved_mappings)
+                    print(f"📚 Loaded {len(saved_mappings)} saved team mappings")
+        except Exception as e:
+            print(f"❌ Could not load saved mappings: {e}")
+
+class EnhancedPaperTradingBot:
+    """Enhanced paper trading bot with improved prediction and error handling"""
+    
+    def __init__(self, starting_bankroll: float = 500.0, data_dir: str = "paper_trading_data"):
+        self.starting_bankroll = starting_bankroll
+        self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(exist_ok=True)
+        
+        # Initialize enhanced components
+        self.team_mapper = EnhancedTeamMapper()
+        self.team_mapper.load_saved_mappings()
+        
+        # Initialize API with rate limiting
+        self.api = EnhancedPandaScoreAPI("ZrEdZx53byJC1dqBJB3JJ9bUoAZFRllj3eBY2kuTkKnc4La963E")
+        
+        # Load or initialize state
+        self.state_file = self.data_dir / "trading_state.json"
+        self.state = self.load_state()
+        
+        # Load prediction models
+        print("🤖 Loading prediction models...")
+        try:
+            self.ensemble_models, self.selected_features = load_backtesting_models()
+            if not self.ensemble_models or not self.selected_features:
+                raise RuntimeError("Models loaded but empty")
+            print("✅ Prediction models loaded successfully")
+        except Exception as e:
+            print(f"❌ Failed to load prediction models: {e}")
+            raise RuntimeError("Failed to load prediction models. Run training first.")
+        
+        # Setup enhanced logging
+        log_file = self.data_dir / f"paper_trading_{datetime.now().strftime('%Y%m%d')}.log"
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(log_file),
+                logging.StreamHandler()
+            ]
+        )
+        self.logger = logging.getLogger(__name__)
+        
+        # Processed matches to avoid duplicates
+        self.processed_matches = set()
+        
+        # Statistics
+        self.session_stats = {
+            'matches_processed': 0,
+            'predictions_made': 0,
+            'trades_placed': 0,
+            'trades_updated': 0,
+            'errors': 0
+        }
+        
+    def load_state(self) -> PaperTradingState:
+        """Load trading state from file or create new"""
+        if self.state_file.exists():
+            try:
+                with open(self.state_file, 'r') as f:
+                    data = json.load(f)
+                
+                # Convert trades back to PaperTrade objects
+                trades = []
+                for trade_data in data['trades']:
+                    # Handle new fields that might not exist in old saves
+                    if 'mapping_confidence' not in trade_data:
+                        trade_data['mapping_confidence'] = None
+                    trades.append(PaperTrade(**trade_data))
+                
+                state = PaperTradingState(
+                    starting_bankroll=data['starting_bankroll'],
+                    current_bankroll=data['current_bankroll'],
+                    total_trades=data['total_trades'],
+                    winning_trades=data['winning_trades'],
+                    total_wagered=data['total_wagered'],
+                    total_profit=data['total_profit'],
+                    max_drawdown=data['max_drawdown'],
+                    max_bankroll=data['max_bankroll'],
+                    trades=trades,
+                    last_update=data['last_update']
+                )
+                
+                print(f"📊 Loaded existing state: ${state.current_bankroll:.2f} bankroll, {len(trades)} trades")
+                return state
+                
+            except Exception as e:
+                print(f"⚠️ Error loading state, creating new: {e}")
+        
+        # Create new state
+        return PaperTradingState(
+            starting_bankroll=self.starting_bankroll,
+            current_bankroll=self.starting_bankroll,
+            total_trades=0,
+            winning_trades=0,
+            total_wagered=0.0,
+            total_profit=0.0,
+            max_drawdown=0.0,
+            max_bankroll=self.starting_bankroll,
+            trades=[],
+            last_update=datetime.now().isoformat()
+        )
+    
+    def save_state(self):
+        """Save current trading state to file"""
+        try:
+            # Convert to serializable format
+            data = asdict(self.state)
+            data['trades'] = [asdict(trade) for trade in self.state.trades]
+            
+            with open(self.state_file, 'w') as f:
+                json.dump(data, f, indent=2)
+                
+        except Exception as e:
+            self.logger.error(f"Error saving state: {e}")
+    
+    def make_enhanced_prediction(self, team1: str, team2: str) -> Optional[Dict]:
+        """Enhanced prediction with confidence-based team mapping"""
+        try:
+            # Map teams with confidence assessment
+            local_team1, conf1 = self.team_mapper.map_with_confidence(team1)
+            local_team2, conf2 = self.team_mapper.map_with_confidence(team2)
+            
+            self.logger.info(f"🎯 Team mapping: {team1} -> {local_team1} ({conf1}), {team2} -> {local_team2} ({conf2})")
+            
+            # Skip prediction if both teams have no confident mapping
+            if conf1 == 'none' and conf2 == 'none':
+                self.logger.warning(f"❌ Skipping prediction - both teams unmapped")
+                self._suggest_mappings_for_failed_prediction(team1, team2, conf1, conf2)
+                return None
+            
+            # Skip if confidence is too low for both teams
+            if conf1 in ['none', 'low'] and conf2 in ['none', 'low']:
+                self.logger.warning(f"⚠️ Skipping prediction - low confidence mapping for both teams")
+                self._suggest_mappings_for_failed_prediction(team1, team2, conf1, conf2)
+                return None
+            
+            # Make prediction
+            prediction_results = predict_with_consistent_ordering_enhanced(
+                local_team1, local_team2,
+                self.ensemble_models,
+                self.selected_features,
+                use_cache=True
+            )
+            
+            if 'error' in prediction_results:
+                self.logger.warning(f"Prediction error: {prediction_results['error']}")
+                self._suggest_mappings_for_failed_prediction(team1, team2, conf1, conf2)
+                return None
+            
+            # Add metadata to prediction
+            prediction_results['original_team1'] = team1
+            prediction_results['original_team2'] = team2
+            prediction_results['mapped_team1'] = local_team1
+            prediction_results['mapped_team2'] = local_team2
+            prediction_results['mapping_confidence'] = {
+                'team1': conf1,
+                'team2': conf2
+            }
+            
+            self.logger.info(f"✅ Prediction complete: {local_team1} {prediction_results['win_probability']:.2%} vs {local_team2}")
+            self.session_stats['predictions_made'] += 1
+            
+            return prediction_results
+            
+        except Exception as e:
+            self.logger.error(f"Error making prediction: {e}")
+            self.session_stats['errors'] += 1
+            return None
+    
+    def _suggest_mappings_for_failed_prediction(self, team1: str, team2: str, conf1: str, conf2: str):
+        """Suggest mappings for failed predictions"""
+        print(f"\n🔍 PREDICTION FAILURE ANALYSIS:")
+        print(f"Teams: {team1} vs {team2}")
+        print(f"Mapping confidence: {conf1}, {conf2}")
+        
+        if conf1 in ['none', 'low']:
+            suggestions = self.team_mapper.suggest_mappings_for_unknown_team(team1)
+            print(f"💡 Suggestions for '{team1}': {suggestions}")
+        
+        if conf2 in ['none', 'low']:
+            suggestions = self.team_mapper.suggest_mappings_for_unknown_team(team2)
+            print(f"💡 Suggestions for '{team2}': {suggestions}")
+        
+        print(f"📝 To add mapping: python {sys.argv[0]} --add-mapping")
+    
+    def simulate_market_odds(self, win_probability: float, match_format: str = 'bo3') -> Dict:
+        """Simulate realistic betting odds with error handling"""
+        try:
+            odds_data = simulate_odds(
+                win_probability, 
+                vig=0.045,  # 4.5% vig
+                market_efficiency=0.92,  # 92% market efficiency
+                match_format=match_format
+            )
+            
+            self.logger.debug(f"Simulated odds: {odds_data}")
+            return odds_data
+            
+        except Exception as e:
+            self.logger.error(f"Error simulating odds: {e}")
+            return {}
+    
+    def analyze_betting_opportunities(self, prediction: Dict, odds_data: Dict) -> Dict:
+        """Analyze betting opportunities with error handling"""
+        try:
+            betting_analysis = analyze_betting_edge_for_backtesting(
+                prediction['win_probability'],
+                1 - prediction['win_probability'],
+                odds_data,
+                prediction['confidence'],
+                self.state.current_bankroll
+            )
+            
+            optimal_bets = select_optimal_bets_conservative(
+                betting_analysis,
+                prediction['mapped_team1'],  # Use mapped names
+                prediction['mapped_team2'],
+                self.state.current_bankroll,
+                max_bets=2,
+                max_total_risk=BettingConstants.MAX_TOTAL_RISK_PCT
+            )
+            
+            return optimal_bets
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing betting opportunities: {e}")
+            return {}
+    
+    def place_paper_trade(self, team1: str, team2: str, bet_type: str, 
+                         bet_amount: float, odds: float, predicted_prob: float,
+                         edge: float, confidence: float, match_id: str, 
+                         match_start_time: str, mapping_confidence: Dict = None) -> str:
+        """Place a paper trade with enhanced data"""
+        
+        # Check if we have enough bankroll
+        if bet_amount > self.state.current_bankroll:
+            self.logger.warning(f"Insufficient bankroll for {bet_type}: ${bet_amount:.2f} > ${self.state.current_bankroll:.2f}")
+            return None
+        
+        trade_id = f"PT_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(self.state.trades)}"
+        
+        trade = PaperTrade(
+            trade_id=trade_id,
+            timestamp=datetime.now().isoformat(),
+            team1=team1,
+            team2=team2,
+            bet_type=bet_type,
+            bet_amount=bet_amount,
+            odds=odds,
+            predicted_prob=predicted_prob,
+            edge=edge,
+            confidence=confidence,
+            match_id=match_id,
+            match_start_time=match_start_time,
+            mapping_confidence=mapping_confidence
+        )
+        
+        # Update bankroll (reserve the bet amount)
+        self.state.current_bankroll -= bet_amount
+        self.state.total_wagered += bet_amount
+        self.state.total_trades += 1
+        self.state.trades.append(trade)
+        
+        self.logger.info(f"📝 Placed paper trade: {bet_type} ${bet_amount:.2f} @ {odds:.2f} ({edge:.2%} edge)")
+        self.save_state()
+        self.session_stats['trades_placed'] += 1
+        
+        return trade_id
+    
+    def process_upcoming_matches(self):
+        """Enhanced processing of upcoming matches"""
+        self.logger.info("🔍 Scanning for upcoming matches...")
+        
+        # Try different time windows if no matches found
+        time_windows = [6, 12, 24, 48, 72]  # hours
+        
+        upcoming_matches = []
+        for hours in time_windows:
+            upcoming_matches = self.api.get_upcoming_matches(hours_ahead=hours)
+            if upcoming_matches:
+                self.logger.info(f"✅ Found matches in {hours}h window")
+                break
+            else:
+                self.logger.info(f"❌ No matches in {hours}h window, trying longer...")
+        
+        if not upcoming_matches:
+            self.logger.info("❌ No upcoming matches found in any time window")
+            return 0
+        
+        trades_placed = 0
+        for match in upcoming_matches:
+            try:
+                match_id = str(match.get('id'))
+                
+                # Skip if already processed
+                if match_id in self.processed_matches:
+                    continue
+                
+                self.session_stats['matches_processed'] += 1
+                
+                # Get team names
+                team1, team2 = self.api.get_team_names_from_match(match)
+                if not team1 or not team2:
+                    self.logger.warning(f"Could not extract team names from match {match_id}")
+                    self.processed_matches.add(match_id)
+                    continue
+                
+                match_start = match.get('begin_at', '')
+                self.logger.info(f"🎮 Processing match: {team1} vs {team2} (ID: {match_id})")
+                
+                # Make enhanced prediction
+                prediction = self.make_enhanced_prediction(team1, team2)
+                if not prediction:
+                    self.logger.warning(f"Skipping {team1} vs {team2} - prediction failed")
+                    self.processed_matches.add(match_id)
+                    continue
+                
+                # Detect match format
+                match_format = self._detect_match_format(match)
+                
+                # Simulate market odds
+                odds_data = self.simulate_market_odds(prediction['win_probability'], match_format)
+                if not odds_data:
+                    self.logger.warning(f"Skipping {team1} vs {team2} - odds simulation failed")
+                    self.processed_matches.add(match_id)
+                    continue
+                
+                # Analyze betting opportunities
+                optimal_bets = self.analyze_betting_opportunities(prediction, odds_data)
+                
+                if optimal_bets:
+                    self.logger.info(f"💰 Found {len(optimal_bets)} betting opportunities")
+                    
+                    for bet_type, analysis in optimal_bets.items():
+                        trade_id = self.place_paper_trade(
+                            team1=team1,  # Use original names for display
+                            team2=team2,
+                            bet_type=bet_type,
+                            bet_amount=analysis['bet_amount'],
+                            odds=analysis['odds'],
+                            predicted_prob=analysis['probability'],
+                            edge=analysis['edge'],
+                            confidence=prediction['confidence'],
+                            match_id=match_id,
+                            match_start_time=match_start,
+                            mapping_confidence=prediction.get('mapping_confidence')
+                        )
+                        
+                        if trade_id:
+                            trades_placed += 1
+                else:
+                    self.logger.info(f"✅ No qualifying bets for {team1} vs {team2} (model correctly avoiding -EV)")
+                
+                self.processed_matches.add(match_id)
+                
+            except Exception as e:
+                self.logger.error(f"Error processing match {match.get('id', 'unknown')}: {e}")
+                self.session_stats['errors'] += 1
+                continue
+        
+        self.logger.info(f"📊 Scan complete: {trades_placed} new paper trades placed")
+        return trades_placed
+    
+    def _detect_match_format(self, match: Dict) -> str:
+        """Detect if match is BO3, BO5, etc."""
+        try:
+            # Check number of games
+            num_games = match.get('number_of_games', 3)
+            if num_games >= 5:
+                return 'bo5'
+            elif num_games >= 3:
+                return 'bo3'
+            else:
+                return 'bo1'
+                
+        except Exception:
+            return 'bo3'  # Default
+    
+    def update_finished_trades(self):
+        """Enhanced update of finished trades"""
+        self.logger.info("🔄 Updating finished trades...")
+        
+        # Get recently finished matches
+        finished_matches = self.api.get_finished_matches(hours_back=24)  # Look back 24h
+        
+        updates = 0
+        for match in finished_matches:
+            try:
+                match_id = str(match.get('id'))
+                
+                # Find pending trades for this match
+                pending_trades = [
+                    trade for trade in self.state.trades 
+                    if trade.match_id == match_id and trade.status == "pending"
+                ]
+                
+                if not pending_trades:
+                    continue
+                
+                # Extract match result
+                result = self.extract_match_result(match)
+                if not result:
+                    continue
+                
+                self.logger.info(f"🏆 Updating trades for {result['team1']} vs {result['team2']}: {result['winner']} won {result['score']}")
+                
+                # Update each pending trade
+                for trade in pending_trades:
+                    won = self.evaluate_trade_outcome(trade, result)
+                    
+                    if won:
+                        profit = trade.bet_amount * (trade.odds - 1)
+                        trade.status = "won"
+                        trade.profit_loss = profit
+                        self.state.current_bankroll += trade.bet_amount + profit
+                        self.state.winning_trades += 1
+                        self.state.total_profit += profit
+                        
+                        self.logger.info(f"✅ Trade WON: {trade.bet_type} +${profit:.2f}")
+                    else:
+                        trade.status = "lost"
+                        trade.profit_loss = -trade.bet_amount
+                        self.state.total_profit -= trade.bet_amount
+                        
+                        self.logger.info(f"❌ Trade LOST: {trade.bet_type} -${trade.bet_amount:.2f}")
+                    
+                    trade.actual_result = f"{result['winner']} won {result['score']}"
+                    updates += 1
+                    self.session_stats['trades_updated'] += 1
+                
+            except Exception as e:
+                self.logger.error(f"Error updating trade for match {match.get('id', 'unknown')}: {e}")
+                self.session_stats['errors'] += 1
+                continue
+        
+        # Update statistics
+        self.update_statistics()
+        self.save_state()
+        
+        self.logger.info(f"📈 Updated {updates} trades")
+        return updates
+    
+    def extract_match_result(self, match: Dict) -> Optional[Dict]:
+        """Enhanced match result extraction"""
+        try:
+            if match.get('status') != 'finished':
+                return None
+            
+            # Get team names
+            team1, team2 = self.api.get_team_names_from_match(match)
+            if not team1 or not team2:
+                return None
+            
+            # Get match results - try multiple approaches
+            results = match.get('results', [])
+            if results and len(results) >= 2:
+                team1_score = results[0].get('score', 0)
+                team2_score = results[1].get('score', 0)
+            else:
+                # Try games array if results not available
+                games = match.get('games', [])
+                if games:
+                    # Count wins for each team
+                    team1_wins = sum(1 for game in games if game.get('winner', {}).get('name') == team1)
+                    team2_wins = sum(1 for game in games if game.get('winner', {}).get('name') == team2)
+                    team1_score, team2_score = team1_wins, team2_wins
+                else:
+                    return None
+            
+            winner = team1 if team1_score > team2_score else team2
+            
+            return {
+                'team1': team1,
+                'team2': team2,
+                'team1_score': team1_score,
+                'team2_score': team2_score,
+                'winner': winner,
+                'score': f"{team1_score}-{team2_score}"
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting match result: {e}")
+            return None
+    
+    def evaluate_trade_outcome(self, trade: PaperTrade, result: Dict) -> bool:
+        """Evaluate if a trade won based on the match result"""
+        try:
+            bet_type = trade.bet_type
+            team1_score = result['team1_score']
+            team2_score = result['team2_score']
+            winner = result['winner']
+            
+            # Moneyline bets
+            if bet_type == 'team1_ml':
+                return winner == result['team1']
+            elif bet_type == 'team2_ml':
+                return winner == result['team2']
+            
+            # Spread bets
+            elif bet_type == 'team1_plus_1_5':
+                return team1_score + 1.5 > team2_score
+            elif bet_type == 'team2_plus_1_5':
+                return team2_score + 1.5 > team1_score
+            elif bet_type == 'team1_minus_1_5':
+                return team1_score - 1.5 > team2_score
+            elif bet_type == 'team2_minus_1_5':
+                return team2_score - 1.5 > team1_score
+            
+            # Total bets
+            elif bet_type == 'over_2_5_maps':
+                return team1_score + team2_score > 2.5
+            elif bet_type == 'under_2_5_maps':
+                return team1_score + team2_score < 2.5
+            
+            # BO5 specific bets
+            elif bet_type == 'team1_plus_2_5':
+                return team1_score + 2.5 > team2_score
+            elif bet_type == 'team2_plus_2_5':
+                return team2_score + 2.5 > team1_score
+            elif bet_type == 'over_3_5_maps':
+                return team1_score + team2_score > 3.5
+            elif bet_type == 'under_3_5_maps':
+                return team1_score + team2_score < 3.5
+            elif bet_type == 'over_4_5_maps':
+                return team1_score + team2_score > 4.5
+            elif bet_type == 'under_4_5_maps':
+                return team1_score + team2_score < 4.5
+            
+            else:
+                self.logger.warning(f"Unknown bet type: {bet_type}")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error evaluating trade outcome: {e}")
+            return False
+    
+    def update_statistics(self):
+        """Enhanced statistics calculation"""
+        try:
+            # Calculate max drawdown more accurately
+            running_balance = self.starting_bankroll
+            peak = self.starting_bankroll
+            max_dd = 0
+            
+            completed_trades = [t for t in self.state.trades if t.status in ['won', 'lost']]
+            for trade in completed_trades:
+                running_balance += trade.profit_loss
+                if running_balance > peak:
+                    peak = running_balance
+                drawdown = (peak - running_balance) / peak if peak > 0 else 0
+                max_dd = max(max_dd, drawdown)
+            
+            self.state.max_drawdown = max_dd
+            self.state.max_bankroll = max(self.state.max_bankroll, self.state.current_bankroll)
+            self.state.last_update = datetime.now().isoformat()
+            
+        except Exception as e:
+            self.logger.error(f"Error updating statistics: {e}")
+    
+    def print_enhanced_status(self):
+        """Enhanced status display with session statistics"""
+        roi = (self.state.current_bankroll - self.starting_bankroll) / self.starting_bankroll
+        
+        completed_trades = len([t for t in self.state.trades if t.status in ['won', 'lost']])
+        pending_trades = len([t for t in self.state.trades if t.status == 'pending'])
+        win_rate = self.state.winning_trades / max(1, completed_trades)
+        
+        print(f"\n{'='*70}")
+        print(f"📊 ENHANCED PAPER TRADING STATUS")
+        print(f"{'='*70}")
+        print(f"💰 Bankroll: ${self.state.current_bankroll:.2f} (started with ${self.starting_bankroll:.2f})")
+        print(f"📈 P&L: ${self.state.current_bankroll - self.starting_bankroll:.2f} ({roi:.2%} ROI)")
+        print(f"🎯 Trades: {completed_trades} completed, {pending_trades} pending")
+        print(f"🏆 Win Rate: {self.state.winning_trades}/{completed_trades} ({win_rate:.2%})")
+        print(f"💸 Total Wagered: ${self.state.total_wagered:.2f}")
+        print(f"📉 Max Drawdown: {self.state.max_drawdown:.2%}")
+        
+        # Session statistics
+        print(f"\n📋 Session Statistics:")
+        print(f"  🔍 Matches Processed: {self.session_stats['matches_processed']}")
+        print(f"  🎯 Predictions Made: {self.session_stats['predictions_made']}")
+        print(f"  📝 Trades Placed: {self.session_stats['trades_placed']}")
+        print(f"  📈 Trades Updated: {self.session_stats['trades_updated']}")
+        print(f"  ❌ Errors: {self.session_stats['errors']}")
+        
+        # Show recent trades with confidence
+        recent_trades = [t for t in self.state.trades if t.status in ['won', 'lost']][-5:]
+        if recent_trades:
+            print(f"\n📋 Recent Trades:")
+            for trade in recent_trades:
+                status_emoji = "✅" if trade.status == "won" else "❌"
+                conf_info = ""
+                if trade.mapping_confidence:
+                    conf1 = trade.mapping_confidence.get('team1', 'unknown')
+                    conf2 = trade.mapping_confidence.get('team2', 'unknown')
+                    conf_info = f" (conf: {conf1}/{conf2})"
+                print(f"  {status_emoji} {trade.team1} vs {trade.team2} | {trade.bet_type} | ${trade.profit_loss:+.2f}{conf_info}")
+        
+        # Show pending trades
+        pending = [t for t in self.state.trades if t.status == 'pending']
+        if pending:
+            print(f"\n⏳ Pending Trades:")
+            for trade in pending[-3:]:
+                conf_info = ""
+                if trade.mapping_confidence:
+                    conf1 = trade.mapping_confidence.get('team1', 'unknown')
+                    conf2 = trade.mapping_confidence.get('team2', 'unknown')
+                    conf_info = f" (conf: {conf1}/{conf2})"
+                print(f"  📝 {trade.team1} vs {trade.team2} | {trade.bet_type} | ${trade.bet_amount:.2f} @ {trade.odds:.2f}{conf_info}")
+        
+        print(f"\n🕐 Last Update: {self.state.last_update}")
+        print(f"{'='*70}\n")
+    
+    def run_once(self):
+        """Enhanced single run with better error handling"""
+        try:
+            print(f"🤖 Enhanced Paper Trading Bot - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            # Reset session stats
+            self.session_stats = {key: 0 for key in self.session_stats}
+            
+            # Process new matches
+            new_trades = self.process_upcoming_matches()
+            
+            # Update finished trades
+            updates = self.update_finished_trades()
+            
+            # Print enhanced status
+            self.print_enhanced_status()
+            
+            if new_trades > 0 or updates > 0:
+                self.logger.info(f"Activity: {new_trades} new trades, {updates} updates")
+            else:
+                self.logger.info("No new activity")
+                
+        except Exception as e:
+            self.logger.error(f"Error in run_once: {e}")
+            self.session_stats['errors'] += 1
+    
+    def run_continuous(self, check_interval_minutes: int = 30):
+        """Enhanced continuous running"""
+        print(f"🚀 Starting enhanced continuous paper trading (checking every {check_interval_minutes} minutes)")
+        print("Press Ctrl+C to stop")
+        
+        # Schedule the bot to run
+        schedule.every(check_interval_minutes).minutes.do(self.run_once)
+        
+        # Run once immediately
+        self.run_once()
+        
+        try:
+            while True:
+                schedule.run_pending()
+                time.sleep(60)  # Check every minute
+                
+        except KeyboardInterrupt:
+            print("\n🛑 Stopping enhanced paper trading bot...")
+            self.generate_enhanced_report()
+            print("Final status:")
+            self.print_enhanced_status()
+    
+    def generate_enhanced_report(self) -> str:
+        """Generate enhanced detailed trading report"""
+        report_file = self.data_dir / f"enhanced_paper_trading_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        # Calculate detailed statistics
+        completed_trades = [t for t in self.state.trades if t.status in ['won', 'lost']]
+        pending_trades = [t for t in self.state.trades if t.status == 'pending']
+        
+        # Performance by mapping confidence
+        confidence_performance = {}
+        for trade in completed_trades:
+            if trade.mapping_confidence:
+                conf_key = f"{trade.mapping_confidence.get('team1', 'unknown')}-{trade.mapping_confidence.get('team2', 'unknown')}"
+                if conf_key not in confidence_performance:
+                    confidence_performance[conf_key] = {'count': 0, 'wins': 0, 'profit': 0}
+                confidence_performance[conf_key]['count'] += 1
+                if trade.status == 'won':
+                    confidence_performance[conf_key]['wins'] += 1
+                confidence_performance[conf_key]['profit'] += trade.profit_loss
+        
+        # Other statistics
+        if completed_trades:
+            profits = [t.profit_loss for t in completed_trades]
+            avg_profit = np.mean(profits)
+            profit_std = np.std(profits)
+            
+            winning_trades = [t for t in completed_trades if t.status == 'won']
+            losing_trades = [t for t in completed_trades if t.status == 'lost']
+            
+            avg_win = np.mean([t.profit_loss for t in winning_trades]) if winning_trades else 0
+            avg_loss = np.mean([t.profit_loss for t in losing_trades]) if losing_trades else 0
+            
+            bet_types = {}
+            for trade in completed_trades:
+                if trade.bet_type not in bet_types:
+                    bet_types[trade.bet_type] = {'count': 0, 'wins': 0, 'profit': 0}
+                bet_types[trade.bet_type]['count'] += 1
+                if trade.status == 'won':
+                    bet_types[trade.bet_type]['wins'] += 1
+                bet_types[trade.bet_type]['profit'] += trade.profit_loss
+        else:
+            avg_profit = avg_win = avg_loss = profit_std = 0
+            bet_types = {}
+        
+        report = {
+            'timestamp': datetime.now().isoformat(),
+            'summary': {
+                'starting_bankroll': self.starting_bankroll,
+                'current_bankroll': self.state.current_bankroll,
+                'total_profit': self.state.current_bankroll - self.starting_bankroll,
+                'roi': (self.state.current_bankroll - self.starting_bankroll) / self.starting_bankroll,
+                'total_trades': len(completed_trades),
+                'pending_trades': len(pending_trades),
+                'winning_trades': len(winning_trades) if 'winning_trades' in locals() else 0,
+                'win_rate': len(winning_trades) / max(1, len(completed_trades)) if 'winning_trades' in locals() else 0,
+                'total_wagered': self.state.total_wagered,
+                'max_drawdown': self.state.max_drawdown,
+                'avg_profit_per_trade': avg_profit,
+                'profit_std': profit_std,
+                'avg_winning_trade': avg_win,
+                'avg_losing_trade': avg_loss
+            },
+            'session_stats': self.session_stats,
+            'confidence_performance': confidence_performance,
+            'bet_type_performance': bet_types,
+            'all_trades': [asdict(trade) for trade in self.state.trades]
+        }
+        
+        with open(report_file, 'w') as f:
+            json.dump(report, f, indent=2)
+        
+        print(f"📄 Enhanced report saved to: {report_file}")
+        return str(report_file)
+
+# Enhanced testing and utility functions
+def test_enhanced_api():
+    """Enhanced API testing with more detailed exploration"""
+    print("🧪 Testing Enhanced PandaScore API...")
+    
+    api = EnhancedPandaScoreAPI("ZrEdZx53byJC1dqBJB3JJ9bUoAZFRllj3eBY2kuTkKnc4La963E")
+    
+    # Test basic connectivity
+    print("\n1. Testing basic connectivity...")
+    data = api._make_request(f"{api.base_url}/valorant/tournaments", {"per_page": 5})
+    if data:
+        print(f"✅ API Connection successful!")
+        print(f"🏆 Found {len(data)} recent tournaments")
+    else:
+        print("❌ API connection failed")
+        return False
+    
+    # Test upcoming matches with filtering
+    print("\n2. Testing enhanced upcoming matches...")
+    upcoming = api.get_upcoming_matches(hours_ahead=72)
+    print(f"📅 Quality upcoming matches: {len(upcoming)}")
+    
+    if upcoming:
+        sample_match = upcoming[0]
+        team1, team2 = api.get_team_names_from_match(sample_match)
+        print(f"📋 Sample match: {team1} vs {team2}")
+        print(f"   Status: {sample_match.get('status')}")
+        print(f"   Start: {sample_match.get('begin_at')}")
+    
+    # Test team mapping
+    print("\n3. Testing enhanced team mapping...")
+    mapper = EnhancedTeamMapper()
+    
+    test_teams = ["LOUD", "Sentinels", "Cloud9 Blue", "Team Liquid Brazil", "Unknown Team"]
+    for team in test_teams:
+        mapped, confidence = mapper.map_with_confidence(team)
+        print(f"   {team} -> {mapped} (confidence: {confidence})")
+        
+        if confidence == 'none':
+            suggestions = mapper.suggest_mappings_for_unknown_team(team)
+            print(f"     Suggestions: {suggestions}")
+    
+    print("\n✅ Enhanced API testing complete")
+    return True
+
+def interactive_team_mapping():
+    """Interactive team mapping utility"""
+    print("🔄 Interactive Team Mapping Utility")
+    print("This helps you build comprehensive team mappings")
+    
+    mapper = EnhancedTeamMapper()
+    mapper.load_saved_mappings()
+    
+    while True:
+        print(f"\nOptions:")
+        print("1. Test team mapping")
+        print("2. Add new mapping")
+        print("3. View all mappings")
+        print("4. Get suggestions for team")
+        print("5. Exit")
+        
+        choice = input("\nEnter choice (1-5): ").strip()
+        
+        if choice == '1':
+            team = input("Enter team name to test: ").strip()
+            if team:
+                mapped, confidence = mapper.map_with_confidence(team)
+                print(f"Result: '{team}' -> '{mapped}' (confidence: {confidence})")
+                if confidence in ['none', 'low']:
+                    suggestions = mapper.suggest_mappings_for_unknown_team(team)
+                    print(f"Suggestions: {suggestions}")
+        
+        elif choice == '2':
+            pandascore_name = input("Enter PandaScore team name: ").strip()
+            local_name = input("Enter local API team name: ").strip()
+            if pandascore_name and local_name:
+                mapper.add_mapping(pandascore_name, local_name)
+        
+        elif choice == '3':
+            print(f"\nAll mappings ({len(mapper.name_mappings)}):")
+            for ps_name, local_name in sorted(mapper.name_mappings.items()):
+                print(f"  {ps_name} -> {local_name}")
+        
+        elif choice == '4':
+            team = input("Enter team name for suggestions: ").strip()
+            if team:
+                suggestions = mapper.suggest_mappings_for_unknown_team(team)
+                print(f"Suggestions for '{team}': {suggestions}")
+        
+        elif choice == '5':
+            break
+        else:
+            print("Invalid choice")
+
+def main():
+    """Enhanced main function with more options"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Enhanced Valorant Paper Trading Bot")
+    parser.add_argument("--bankroll", type=float, default=500.0, help="Starting bankroll (default: $500)")
+    parser.add_argument("--continuous", action="store_true", help="Run continuously")
+    parser.add_argument("--interval", type=int, default=30, help="Check interval in minutes (default: 30)")
+    parser.add_argument("--once", action="store_true", help="Run once and exit")
+    parser.add_argument("--status", action="store_true", help="Show current status and exit")
+    parser.add_argument("--report", action="store_true", help="Generate enhanced report and exit")
+    parser.add_argument("--data-dir", type=str, default="paper_trading_data", help="Data directory")
+    parser.add_argument("--test-api", action="store_true", help="Test enhanced API functionality")
+    parser.add_argument("--add-mapping", action="store_true", help="Interactive team mapping utility")
+    parser.add_argument("--view-mappings", action="store_true", help="View current team mappings")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    
+    args = parser.parse_args()
+    
+    # Set debug logging if requested
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
+    try:
+        if args.test_api:
+            test_enhanced_api()
+            return 0
+        elif args.add_mapping:
+            interactive_team_mapping()
+            return 0
+        elif args.view_mappings:
+            mapper = EnhancedTeamMapper()
+            mapper.load_saved_mappings()
+            print(f"📚 Current Team Mappings ({len(mapper.name_mappings)}):")
+            print(f"\n{'PandaScore Name':<30} | {'Local API Name':<20} | {'Confidence'}")
+            print("-" * 65)
+            for ps_name, local_name in sorted(mapper.name_mappings.items()):
+                _, confidence = mapper.map_with_confidence(ps_name)
+                print(f"{ps_name:<30} | {local_name:<20} | {confidence}")
+            return 0
+            
+        # Initialize enhanced bot
+        bot = EnhancedPaperTradingBot(starting_bankroll=args.bankroll, data_dir=args.data_dir)
+        
+        if args.status:
+            bot.print_enhanced_status()
+        elif args.report:
+            bot.generate_enhanced_report()
+        elif args.once:
+            bot.run_once()
+        elif args.continuous:
+            bot.run_continuous(check_interval_minutes=args.interval)
+        else:
+            print("Enhanced Valorant Paper Trading Bot")
+            print("Usage:")
+            print("  --test-api       Test enhanced API functionality")
+            print("  --add-mapping    Interactive team mapping utility")
+            print("  --view-mappings  View all current team mappings with confidence")
+            print("  --once           Run once and exit")
+            print("  --continuous     Run continuously with enhanced features")
+            print("  --status         Show enhanced status")
+            print("  --report         Generate enhanced report")
+            print("  --debug          Enable debug logging")
+            print("  --bankroll 500   Set starting bankroll")
+            print("  --interval 30    Set check interval (minutes)")
+            print("\nExample workflow:")
+            print("1. python enhanced_bot.py --test-api")
+            print("2. python enhanced_bot.py --add-mapping")
+            print("3. python enhanced_bot.py --once --debug")
+            print("4. python enhanced_bot.py --continuous")
+    
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+    
+    return 0
+
+if __name__ == "__main__":
+    exit(main())
