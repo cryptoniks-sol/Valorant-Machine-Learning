@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Valorant Paper Trading Bot - Enhanced Version with PandaScore + Local API Integration
+FIXED: Proper trade update functionality
 """
 
 import os
@@ -54,6 +55,11 @@ class PaperTrade:
     closing_odds: Optional[float] = None
     clv: float = 0.0
     mapping_confidence: Optional[Dict] = None
+    # NEW: Store team mapping for better match updates
+    pandascore_team1: Optional[str] = None
+    pandascore_team2: Optional[str] = None
+    local_team1: Optional[str] = None
+    local_team2: Optional[str] = None
 
 @dataclass
 class PaperTradingState:
@@ -549,6 +555,7 @@ class EnhancedPandaScoreAPI:
             for endpoint in endpoints_to_try:
                 try:
                     params = {
+                        "filter[status]": "finished",
                         "sort": "-end_at",
                         "per_page": 100
                     }
@@ -593,6 +600,13 @@ class EnhancedPandaScoreAPI:
                 
             end_at = match.get('end_at')
             if not end_at:
+                # If no end_at, check begin_at + some reasonable match duration
+                begin_at = match.get('begin_at')
+                if begin_at:
+                    match_start = datetime.fromisoformat(begin_at.replace('Z', '+00:00'))
+                    # Assume matches can last up to 3 hours
+                    estimated_end = match_start + timedelta(hours=3)
+                    return start_time <= estimated_end <= end_time
                 return False
                 
             match_end = datetime.fromisoformat(end_at.replace('Z', '+00:00'))
@@ -600,6 +614,15 @@ class EnhancedPandaScoreAPI:
             
         except Exception as e:
             return False
+
+    def get_match_by_id(self, match_id: str) -> Optional[Dict]:
+        """Get a specific match by its ID"""
+        try:
+            url = f"{self.base_url}/matches/{match_id}"
+            return self._make_request(url)
+        except Exception as e:
+            print(f"❌ Error fetching match {match_id}: {e}")
+            return None
 
 class EnhancedPaperTradingBot:
     """Enhanced paper trading bot with PandaScore + Local API integration"""
@@ -697,6 +720,17 @@ class EnhancedPaperTradingBot:
                     # Handle new fields that might not exist in old saves
                     if 'mapping_confidence' not in trade_data:
                         trade_data['mapping_confidence'] = None
+                    
+                    # Handle new team name fields for better matching
+                    if 'pandascore_team1' not in trade_data:
+                        trade_data['pandascore_team1'] = trade_data.get('team1')
+                    if 'pandascore_team2' not in trade_data:
+                        trade_data['pandascore_team2'] = trade_data.get('team2')
+                    if 'local_team1' not in trade_data:
+                        trade_data['local_team1'] = None
+                    if 'local_team2' not in trade_data:
+                        trade_data['local_team2'] = None
+                        
                     trades.append(PaperTrade(**trade_data))
                 
                 state = PaperTradingState(
@@ -824,7 +858,8 @@ class EnhancedPaperTradingBot:
     def place_paper_trade(self, team1: str, team2: str, bet_type: str, 
                          bet_amount: float, odds: float, predicted_prob: float,
                          edge: float, confidence: float, match_id: str, 
-                         match_start_time: str, mapping_confidence: Dict = None) -> str:
+                         match_start_time: str, mapping_confidence: Dict = None,
+                         local_team1: str = None, local_team2: str = None) -> str:
         """Place a paper trade with enhanced data"""
         
         # Check if we have enough bankroll
@@ -847,7 +882,11 @@ class EnhancedPaperTradingBot:
             confidence=confidence,
             match_id=match_id,
             match_start_time=match_start_time,
-            mapping_confidence=mapping_confidence
+            mapping_confidence=mapping_confidence,
+            pandascore_team1=team1,  # Store PandaScore team names
+            pandascore_team2=team2,
+            local_team1=local_team1,  # Store local team names for prediction reference
+            local_team2=local_team2
         )
         
         # Update bankroll (reserve the bet amount)
@@ -947,7 +986,9 @@ class EnhancedPaperTradingBot:
                                 'pandascore_to_local': enhanced_match['team_mapping'],
                                 'mapping_confidence': enhanced_match['mapping_confidence'],
                                 'prediction_teams': f"{local_team1} vs {local_team2}"
-                            }
+                            },
+                            local_team1=local_team1,  # Store local team names
+                            local_team2=local_team2
                         )
                         if trade_id:
                             trades_placed += 1
@@ -965,58 +1006,97 @@ class EnhancedPaperTradingBot:
         return trades_placed
     
     def update_finished_trades(self):
-        """Update finished trades based on match results"""
+        """Update finished trades based on match results - ENHANCED VERSION"""
         self._log_safe('info', "🔄 Updating finished trades...")
         
-        finished_matches = self.api.get_finished_matches(hours_back=24)
+        # Get pending trades
+        pending_trades = [
+            trade for trade in self.state.trades 
+            if trade.status == "pending"
+        ]
+        
+        if not pending_trades:
+            self._log_safe('info', "No pending trades to update")
+            return 0
+        
         updates = 0
         
-        for match in finished_matches:
+        # Check each pending trade individually
+        for trade in pending_trades:
             try:
-                match_id = str(match.get('id'))
+                self._log_safe('info', f"🔍 Checking trade {trade.trade_id} for match {trade.match_id}")
                 
-                # Find pending trades for this match
-                pending_trades = [
-                    trade for trade in self.state.trades 
-                    if trade.match_id == match_id and trade.status == "pending"
-                ]
+                # Get the specific match by ID
+                match_data = self.api.get_match_by_id(trade.match_id)
                 
-                if not pending_trades:
+                if not match_data:
+                    # Try to find in recent finished matches
+                    finished_matches = self.api.get_finished_matches(hours_back=72)  # Extended search
+                    match_data = next(
+                        (m for m in finished_matches if str(m.get('id')) == trade.match_id), 
+                        None
+                    )
+                
+                if not match_data:
+                    # Check if match start time has passed significantly (might be cancelled)
+                    try:
+                        match_start = datetime.fromisoformat(trade.match_start_time.replace('Z', '+00:00'))
+                        now = datetime.now(timezone.utc)
+                        
+                        # If match was supposed to start more than 6 hours ago and we can't find it
+                        if (now - match_start).total_seconds() > 6 * 3600:
+                            self._log_safe('warning', f"Match {trade.match_id} appears to be cancelled or missing")
+                            trade.status = "cancelled"
+                            # Return the bet amount to bankroll
+                            self.state.current_bankroll += trade.bet_amount
+                            updates += 1
+                            continue
+                    except:
+                        pass
+                    
+                    self._log_safe('debug', f"No match data found for {trade.match_id}")
+                    continue
+                
+                # Check if match is finished
+                if match_data.get('status') != 'finished':
+                    self._log_safe('debug', f"Match {trade.match_id} not finished yet (status: {match_data.get('status')})")
                     continue
                 
                 # Extract match result
-                result = self.extract_match_result(match)
+                result = self.extract_match_result(match_data)
                 if not result:
+                    self._log_safe('warning', f"Could not extract result for match {trade.match_id}")
                     continue
                 
-                self._log_safe('info', f"🏆 Updating trades for {result['team1']} vs {result['team2']}: {result['winner']} won {result['score']}")
+                self._log_safe('info', f"🏆 Found result for {trade.match_id}: {result['team1']} vs {result['team2']} - {result['winner']} won {result['score']}")
                 
-                # Update each pending trade
-                for trade in pending_trades:
-                    won = self.evaluate_trade_outcome(trade, result)
+                # Evaluate trade outcome using both PandaScore and local team names
+                won = self.evaluate_trade_outcome(trade, result)
+                
+                if won:
+                    profit = trade.bet_amount * (trade.odds - 1)
+                    trade.status = "won"
+                    trade.profit_loss = profit
+                    self.state.current_bankroll += trade.bet_amount + profit
+                    self.state.winning_trades += 1
+                    self.state.total_profit += profit
                     
-                    if won:
-                        profit = trade.bet_amount * (trade.odds - 1)
-                        trade.status = "won"
-                        trade.profit_loss = profit
-                        self.state.current_bankroll += trade.bet_amount + profit
-                        self.state.winning_trades += 1
-                        self.state.total_profit += profit
-                        
-                        self._log_safe('info', f"✅ Trade WON: {trade.bet_type} +${profit:.2f}")
-                    else:
-                        trade.status = "lost"
-                        trade.profit_loss = -trade.bet_amount
-                        self.state.total_profit -= trade.bet_amount
-                        
-                        self._log_safe('info', f"❌ Trade LOST: {trade.bet_type} -${trade.bet_amount:.2f}")
+                    self._log_safe('info', f"✅ Trade WON: {trade.bet_type} +${profit:.2f}")
+                else:
+                    trade.status = "lost"
+                    trade.profit_loss = -trade.bet_amount
+                    self.state.total_profit -= trade.bet_amount
                     
-                    trade.actual_result = f"{result['winner']} won {result['score']}"
-                    updates += 1
-                    self.session_stats['trades_updated'] += 1
+                    self._log_safe('info', f"❌ Trade LOST: {trade.bet_type} -${trade.bet_amount:.2f}")
+                
+                trade.actual_result = f"{result['winner']} won {result['score']}"
+                updates += 1
+                self.session_stats['trades_updated'] += 1
                 
             except Exception as e:
-                self._log_safe('error', f"Error updating trade for match {match.get('id', 'unknown')}: {e}")
+                self._log_safe('error', f"Error updating trade {trade.trade_id}: {e}")
+                import traceback
+                traceback.print_exc()
                 continue
         
         # Update statistics
@@ -1027,62 +1107,158 @@ class EnhancedPaperTradingBot:
         return updates
     
     def extract_match_result(self, match: Dict) -> Optional[Dict]:
-        """Extract match result from finished match"""
+        """Extract match result from finished match - ENHANCED VERSION"""
         try:
             if match.get('status') != 'finished':
                 return None
             
-            # Get team names
+            # Get team names using the same method as when processing matches
             team1, team2 = self.api.get_team_names_from_match(match)
             if not team1 or not team2:
+                print(f"❌ Could not extract team names from finished match {match.get('id')}")
                 return None
             
-            # Get match results
+            # Method 1: Try results array
             results = match.get('results', [])
             if results and len(results) >= 2:
-                team1_score = results[0].get('score', 0)
-                team2_score = results[1].get('score', 0)
-            else:
-                # Try games array
-                games = match.get('games', [])
-                if games:
-                    team1_wins = sum(1 for game in games if game.get('winner', {}).get('name') == team1)
-                    team2_wins = sum(1 for game in games if game.get('winner', {}).get('name') == team2)
-                    team1_score, team2_score = team1_wins, team2_wins
-                else:
-                    return None
+                try:
+                    team1_score = results[0].get('score', 0)
+                    team2_score = results[1].get('score', 0)
+                    
+                    if team1_score != team2_score:  # Valid result
+                        winner = team1 if team1_score > team2_score else team2
+                        return {
+                            'team1': team1,
+                            'team2': team2,
+                            'team1_score': team1_score,
+                            'team2_score': team2_score,
+                            'winner': winner,
+                            'score': f"{team1_score}-{team2_score}"
+                        }
+                except (KeyError, TypeError):
+                    pass
             
-            winner = team1 if team1_score > team2_score else team2
+            # Method 2: Try games array
+            games = match.get('games', [])
+            if games:
+                try:
+                    team1_wins = 0
+                    team2_wins = 0
+                    
+                    for game in games:
+                        winner_info = game.get('winner', {})
+                        if isinstance(winner_info, dict):
+                            winner_name = winner_info.get('name', '')
+                            if winner_name == team1:
+                                team1_wins += 1
+                            elif winner_name == team2:
+                                team2_wins += 1
+                    
+                    if team1_wins != team2_wins:  # Valid result
+                        winner = team1 if team1_wins > team2_wins else team2
+                        return {
+                            'team1': team1,
+                            'team2': team2,
+                            'team1_score': team1_wins,
+                            'team2_score': team2_wins,
+                            'winner': winner,
+                            'score': f"{team1_wins}-{team2_wins}"
+                        }
+                except (KeyError, TypeError):
+                    pass
             
-            return {
-                'team1': team1,
-                'team2': team2,
-                'team1_score': team1_score,
-                'team2_score': team2_score,
-                'winner': winner,
-                'score': f"{team1_score}-{team2_score}"
-            }
+            # Method 3: Try winner field directly
+            winner_info = match.get('winner', {})
+            if isinstance(winner_info, dict) and 'name' in winner_info:
+                winner_name = winner_info['name']
+                if winner_name in [team1, team2]:
+                    # Assume 2-1 or 2-0 score if we don't have exact scores
+                    return {
+                        'team1': team1,
+                        'team2': team2,
+                        'team1_score': 2 if winner_name == team1 else 1,
+                        'team2_score': 1 if winner_name == team1 else 2,
+                        'winner': winner_name,
+                        'score': "2-1" if winner_name == team1 else "1-2"
+                    }
+            
+            print(f"❌ Could not extract match result for {match.get('id')} - no valid score data")
+            print(f"Available keys: {list(match.keys())}")
+            if 'results' in match:
+                print(f"Results: {match['results']}")
+            if 'games' in match:
+                print(f"Games count: {len(match.get('games', []))}")
+            
+            return None
             
         except Exception as e:
-            self._log_safe('error', f"Error extracting match result: {e}")
+            print(f"❌ Error extracting match result: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def evaluate_trade_outcome(self, trade: PaperTrade, result: Dict) -> bool:
-        """Evaluate if a trade won based on the match result"""
+        """Evaluate if a trade won based on the match result - ENHANCED VERSION"""
         try:
             bet_type = trade.bet_type
             team1_score = result['team1_score']
             team2_score = result['team2_score']
-            winner = result['winner']
+            winner_name = result['winner']
             
-            # Moneyline bets
+            # Get trade team names (could be PandaScore or local names)
+            trade_team1 = trade.team1  # This should be PandaScore team name
+            trade_team2 = trade.team2
+            
+            # Map result teams to trade teams using similarity matching
+            result_team1 = result['team1']
+            result_team2 = result['team2']
+            
+            # Try exact match first
+            team1_matches_result_team1 = self._teams_match(trade_team1, result_team1)
+            team1_matches_result_team2 = self._teams_match(trade_team1, result_team2)
+            team2_matches_result_team1 = self._teams_match(trade_team2, result_team1)
+            team2_matches_result_team2 = self._teams_match(trade_team2, result_team2)
+            
+            # Determine the correct mapping
+            if team1_matches_result_team1 and team2_matches_result_team2:
+                # trade_team1 -> result_team1, trade_team2 -> result_team2
+                trade_team1_winner = (winner_name == result_team1)
+                trade_team2_winner = (winner_name == result_team2)
+            elif team1_matches_result_team2 and team2_matches_result_team1:
+                # trade_team1 -> result_team2, trade_team2 -> result_team1
+                trade_team1_winner = (winner_name == result_team2)
+                trade_team2_winner = (winner_name == result_team1)
+                # Swap scores for consistency
+                team1_score, team2_score = team2_score, team1_score
+            else:
+                self._log_safe('warning', f"Could not map trade teams to result teams: {trade_team1}/{trade_team2} vs {result_team1}/{result_team2}")
+                return False
+            
+            # Evaluate bet types
             if bet_type == 'team1_ml':
-                return winner == result['team1']
+                return trade_team1_winner
             elif bet_type == 'team2_ml':
-                return winner == result['team2']
+                return trade_team2_winner
             
-            # Add more bet types as needed
-            # Spread bets, totals, etc.
+            # Spread bets
+            elif bet_type == 'team1_plus_1_5':
+                # Team1 covers +1.5 spread if they win OR lose by 1
+                return trade_team1_winner or (team1_score + 1.5 > team2_score)
+            elif bet_type == 'team1_minus_1_5':
+                # Team1 covers -1.5 spread if they win by 2+
+                return trade_team1_winner and (team1_score - 1.5 > team2_score)
+            elif bet_type == 'team2_plus_1_5':
+                return trade_team2_winner or (team2_score + 1.5 > team1_score)
+            elif bet_type == 'team2_minus_1_5':
+                return trade_team2_winner and (team2_score - 1.5 > team1_score)
+            
+            # Total bets
+            elif bet_type == 'over_2_5_maps':
+                total_maps = team1_score + team2_score
+                return total_maps > 2.5
+            elif bet_type == 'under_2_5_maps':
+                total_maps = team1_score + team2_score
+                return total_maps < 2.5
             
             else:
                 self._log_safe('warning', f"Unknown bet type: {bet_type}")
@@ -1090,7 +1266,60 @@ class EnhancedPaperTradingBot:
                 
         except Exception as e:
             self._log_safe('error', f"Error evaluating trade outcome: {e}")
+            import traceback
+            traceback.print_exc()
             return False
+    
+    def _teams_match(self, team1: str, team2: str) -> bool:
+        """Check if two team names refer to the same team"""
+        if not team1 or not team2:
+            return False
+        
+        # Exact match
+        if team1 == team2:
+            return True
+        
+        # Case-insensitive match
+        if team1.lower() == team2.lower():
+            return True
+        
+        # Normalize and compare
+        team1_norm = self._normalize_team_name_for_matching(team1)
+        team2_norm = self._normalize_team_name_for_matching(team2)
+        
+        if team1_norm == team2_norm:
+            return True
+        
+        # Substring match
+        if team1_norm in team2_norm or team2_norm in team1_norm:
+            return True
+        
+        return False
+    
+    def _normalize_team_name_for_matching(self, name: str) -> str:
+        """Normalize team name for matching purposes"""
+        name = name.lower().strip()
+        
+        # Remove common suffixes/prefixes
+        for word in ['esports', 'gaming', 'team', 'club', 'gg', 'gc', 'academy', 'valkyries']:
+            name = name.replace(f' {word}', '').replace(f'{word} ', '')
+        
+        # Handle common abbreviations
+        abbreviations = {
+            'generation g': 'gen.g',
+            'geng': 'gen.g',
+            'gen g': 'gen.g',
+            'sentinels': 'sen',
+            'cloud9': 'c9',
+            'team liquid': 'tl',
+            'fnatic': 'fnc'
+        }
+        
+        for full, abbrev in abbreviations.items():
+            if full in name:
+                name = name.replace(full, abbrev)
+        
+        return name.strip()
     
     def update_statistics(self):
         """Update trading statistics"""
@@ -1121,6 +1350,7 @@ class EnhancedPaperTradingBot:
         
         completed_trades = len([t for t in self.state.trades if t.status in ['won', 'lost']])
         pending_trades = len([t for t in self.state.trades if t.status == 'pending'])
+        cancelled_trades = len([t for t in self.state.trades if t.status == 'cancelled'])
         win_rate = self.state.winning_trades / max(1, completed_trades)
         
         print(f"\n{'='*70}")
@@ -1128,7 +1358,7 @@ class EnhancedPaperTradingBot:
         print(f"{'='*70}")
         print(f"💰 Bankroll: ${self.state.current_bankroll:.2f} (started with ${self.starting_bankroll:.2f})")
         print(f"📈 P&L: ${self.state.current_bankroll - self.starting_bankroll:.2f} ({roi:.2%} ROI)")
-        print(f"🎯 Trades: {completed_trades} completed, {pending_trades} pending")
+        print(f"🎯 Trades: {completed_trades} completed, {pending_trades} pending, {cancelled_trades} cancelled")
         print(f"🏆 Win Rate: {self.state.winning_trades}/{completed_trades} ({win_rate:.2%})")
         print(f"💸 Total Wagered: ${self.state.total_wagered:.2f}")
         print(f"📉 Max Drawdown: {self.state.max_drawdown:.2%}")
@@ -1142,6 +1372,15 @@ class EnhancedPaperTradingBot:
         print(f"  📈 Trades Updated: {self.session_stats['trades_updated']}")
         print(f"  ❌ Errors: {self.session_stats['errors']}")
         
+        # Show recent trades
+        if self.state.trades:
+            print(f"\n📝 Recent Trades:")
+            recent_trades = sorted(self.state.trades, key=lambda x: x.timestamp, reverse=True)[:5]
+            for trade in recent_trades:
+                status_emoji = "✅" if trade.status == "won" else "❌" if trade.status == "lost" else "⏳" if trade.status == "pending" else "🚫"
+                profit_str = f"${trade.profit_loss:+.2f}" if trade.status in ['won', 'lost'] else "N/A"
+                print(f"  {status_emoji} {trade.team1} vs {trade.team2} | {trade.bet_type} | ${trade.bet_amount:.2f} @ {trade.odds:.2f} | {profit_str}")
+        
         print(f"\n🕐 Last Update: {self.state.last_update}")
         print(f"{'='*70}\n")
     
@@ -1153,11 +1392,11 @@ class EnhancedPaperTradingBot:
             # Reset session stats
             self.session_stats = {key: 0 for key in self.session_stats}
             
-            # Process new matches
-            new_trades = self.process_upcoming_matches()
-            
-            # Update finished trades
+            # Update finished trades FIRST (this is important!)
             updates = self.update_finished_trades()
+            
+            # Then process new matches
+            new_trades = self.process_upcoming_matches()
             
             # Print status
             self.print_enhanced_status()
@@ -1169,6 +1408,8 @@ class EnhancedPaperTradingBot:
                 
         except Exception as e:
             self._log_safe('error', f"Error in run_once: {e}")
+            import traceback
+            traceback.print_exc()
             self.session_stats['errors'] += 1
     
     def run_continuous(self, check_interval_minutes: int = 30):
@@ -1205,6 +1446,7 @@ def main():
     parser.add_argument("--data-dir", type=str, default="paper_trading_data", help="Data directory")
     parser.add_argument("--local-api", type=str, default="http://localhost:5000/api/v1", help="Local API URL")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--update-trades", action="store_true", help="Force update all pending trades")
     
     args = parser.parse_args()
     
@@ -1222,6 +1464,11 @@ def main():
         
         if args.status:
             bot.print_enhanced_status()
+        elif args.update_trades:
+            print("🔄 Forcing update of all pending trades...")
+            updates = bot.update_finished_trades()
+            print(f"✅ Updated {updates} trades")
+            bot.print_enhanced_status()
         elif args.once:
             bot.run_once()
         elif args.continuous:
@@ -1232,16 +1479,19 @@ def main():
             print("  --once           Run once and exit")
             print("  --continuous     Run continuously")
             print("  --status         Show status")
+            print("  --update-trades  Force update all pending trades")
             print("  --bankroll 500   Set starting bankroll")
             print("  --interval 30    Set check interval (minutes)")
             print("  --local-api URL  Set local API URL (default: http://localhost:5000/api/v1)")
             print("\nExample:")
             print("  python paper.py --continuous --interval 300 --local-api http://localhost:5000/api/v1")
+            print("  python paper.py --update-trades  # Force check for finished matches")
             print("\nThe bot will:")
             print("  1. Get upcoming matches from PandaScore")
             print("  2. Map team names to your local API teams")
             print("  3. Use local team names for predictions")
             print("  4. Use PandaScore odds for paper trading")
+            print("  5. Automatically update trades when matches finish")
     
     except Exception as e:
         print(f"❌ Error: {e}")
