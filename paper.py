@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Valorant Paper Trading Bot - Enhanced Version with PandaScore + Local API Integration
-FIXED: Proper trade update functionality
+Valorant Paper Trading Bot - Enhanced Version with Optimized Team Mapping
+Complete implementation with PandaScore + Local API Integration
 """
 
 import os
@@ -11,12 +11,15 @@ import time
 import logging
 import requests
 import schedule
+import re
+import difflib
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass, asdict
 from pathlib import Path
+from collections import defaultdict
 
 # Import your prediction pipeline
 try:
@@ -33,6 +36,15 @@ except ImportError as e:
     print(f"❌ Error importing prediction pipeline: {e}")
     print("Make sure train.py is in the same directory")
     sys.exit(1)
+
+@dataclass
+class TeamMapping:
+    pandascore_name: str
+    local_name: str
+    confidence: float
+    mapping_type: str  # exact, abbrev, fuzzy, manual, etc.
+    last_used: str
+    usage_count: int = 0
 
 @dataclass
 class PaperTrade:
@@ -55,7 +67,7 @@ class PaperTrade:
     closing_odds: Optional[float] = None
     clv: float = 0.0
     mapping_confidence: Optional[Dict] = None
-    # NEW: Store team mapping for better match updates
+    # Store team mapping for better match updates
     pandascore_team1: Optional[str] = None
     pandascore_team2: Optional[str] = None
     local_team1: Optional[str] = None
@@ -75,6 +87,499 @@ class PaperTradingState:
     trades: List[PaperTrade]
     last_update: str
 
+class EnhancedTeamMapper:
+    """Optimized team name mapping with multiple strategies"""
+    
+    def __init__(self, data_dir: Path = None):
+        self.data_dir = data_dir or Path("paper_trading_data")
+        self.data_dir.mkdir(exist_ok=True)
+        
+        # Core mapping data
+        self.verified_mappings: Dict[str, TeamMapping] = {}
+        self.rejection_cache: Set[Tuple[str, str]] = set()
+        
+        # Performance tracking
+        self.mapping_stats = {
+            'exact_matches': 0,
+            'fuzzy_matches': 0,
+            'manual_mappings': 0,
+            'cache_hits': 0,
+            'rejections': 0,
+            'org_pattern_matches': 0
+        }
+        
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        
+        # Load existing data
+        self.load_mappings()
+        self.init_team_knowledge_base()
+        self.load_rejection_cache()
+    
+    def init_team_knowledge_base(self):
+        """Initialize comprehensive team knowledge base"""
+        
+        # Known team organizations and their various names
+        self.team_orgs = {
+            # Tier 1 International Teams
+            'sentinels': ['sentinels', 'sen', 'sentinels esports', 'sen valorant'],
+            'fnatic': ['fnatic', 'fnc', 'fnatic valorant', 'fnatic team'],
+            'cloud9': ['cloud9', 'c9', 'cloud9 blue', 'c9 blue', 'cloud 9'],
+            'team_liquid': ['team liquid', 'tl', 'liquid', 'team liquid valorant', 'liquid valorant'],
+            'geng': ['gen.g', 'geng', 'generation g', 'gen g', 'generation gaming'],
+            'drx': ['drx', 'dragon x', 'drx korea', 'drx valorant'],
+            'paper_rex': ['paper rex', 'prx', 'paper rex singapore', 'prx valorant'],
+            'loud': ['loud', 'loud esports', 'loud brazil', 'loud valorant'],
+            'nrg': ['nrg esports', 'nrg', 'optic gaming', 'optic'],
+            'acend': ['acend', 'acend team', 'acend esports'],
+            'gambit': ['gambit esports', 'gambit', 'm3 champions', 'gambit valorant'],
+            
+            # EMEA Teams
+            'karmine_corp': ['karmine corp', 'kc', 'karmine corp gc', 'karmine', 'karmine corp valorant'],
+            'vitality': ['team vitality', 'vitality', 'vit', 'vitality valorant'],
+            'g2': ['g2 esports', 'g2', 'g2 valorant', 'g2 team'],
+            'guild': ['guild esports', 'guild', 'guild valorant'],
+            'fpx': ['funplus phoenix', 'fpx', 'fpx valorant'],
+            'navi': ['natus vincere', 'navi', 'na\'vi', 'navi valorant'],
+            'fut': ['fut esports', 'fut', 'futbolist'],
+            'liquid': ['team liquid', 'liquid', 'tl'],
+            'giants': ['giants gaming', 'giants', 'giants valorant'],
+            'koi': ['koi', 'koi valorant'],
+            'heretics': ['team heretics', 'heretics', 'th'],
+            'bbl': ['bbl esports', 'bbl', 'bigboss layf'],
+            
+            # Americas Teams
+            'eg': ['evil geniuses', 'eg', 'evil geniuses valorant'],
+            '100t': ['100 thieves', '100t', 'hundred thieves'],
+            'c9': ['cloud9', 'c9', 'cloud9 valorant'],
+            'sen': ['sentinels', 'sen', 'sentinels valorant'],
+            'nrg': ['nrg esports', 'nrg', 'nrg valorant'],
+            'furia': ['furia', 'furia esports', 'furia valorant'],
+            'mibr': ['mibr', 'made in brazil', 'mibr valorant'],
+            'lev': ['leviatan', 'lev', 'leviatan valorant'],
+            'kru': ['kru esports', 'kru', 'kru valorant'],
+            '2g': ['2game esports', '2g', '2game'],
+            
+            # APAC Teams
+            'prx': ['paper rex', 'prx', 'paper rex valorant'],
+            'drx': ['drx', 'dragon x', 'drx valorant'],
+            'geng': ['gen.g', 'geng', 'generation g'],
+            'rrq': ['rex regum qeon', 'rrq', 'rrq valorant'],
+            'ts': ['team secret', 'ts', 'secret valorant'],
+            'talon': ['talon esports', 'talon', 'talon valorant'],
+            'zeta': ['zeta division', 'zeta', 'zeta valorant'],
+            'dfm': ['detonation focusme', 'dfm', 'detonation'],
+            
+            # China Teams
+            'edg': ['edward gaming', 'edg', 'edg valorant'],
+            'blg': ['bilibili gaming', 'blg', 'bili bili gaming'],
+            'fpx_china': ['fpx', 'funplus phoenix china', 'fpx china'],
+            'te': ['trace esports', 'te', 'trace'],
+            'wolves': ['wolves esports', 'wolves', 'wolves valorant'],
+            
+            # Game Changers Teams
+            'sen_gc': ['sentinels gc', 'sen gc', 'sentinels game changers'],
+            'c9_white': ['cloud9 white', 'c9 white', 'c9w', 'cloud9 gc'],
+            'shopify': ['shopify rebellion', 'shopify rebellion gc', 'sr gc', 'shopify gc'],
+            'g2_gozen': ['g2 gozen', 'gozen', 'g2 gc'],
+            'liquid_brazil_gc': ['liquid brazil gc', 'liquid gc', 'tl gc'],
+            'giantx_gc': ['giantx gc', 'giants gc', 'gx gc'],
+            'karmine_corp_gc': ['karmine corp gc', 'kc gc', 'karmine gc'],
+            'blvkhvnd': ['blvkhvnd', 'blvk hvnd', 'black hand'],
+            
+            # Academy Teams
+            'furia_academy': ['furia academy', 'furia aca', 'furia fem'],
+            'mibr_academy': ['mibr academy', 'mibr aca'],
+            'tl_academy': ['team liquid academy', 'tl academy', 'liquid academy'],
+            'c9_academy': ['cloud9 academy', 'c9 academy'],
+            '2game_academy': ['2game academy', '2g academy'],
+            
+            # Regional/Challengers Teams
+            'eternal_fire': ['eternal fire', 'ef', 'eternal fire valorant'],
+            'galatasaray': ['galatasaray esports', 'galatasaray', 'gs'],
+            'supermassive': ['papara supermassive', 'supermassive', 'sup'],
+            'team_nvus': ['team nvus', 'nvus', 'nvus esports'],
+            'revenant_xspark': ['revenant xspark', 'rxs', 'revenant'],
+            'reckoning_esports': ['reckoning esports', 'rge', 'reckoning'],
+            'team_raad': ['team ra\'ad', 'team raad', 'raad'],
+            'baam_esports': ['baam esports', 'baam'],
+            'gamax_esports': ['gamax esports', 'gamax'],
+            'one_more_esports': ['one more esports', 'one more'],
+            'twisted_minds': ['twisted minds', 'tm'],
+            'fraggerz': ['fraggerz', 'fraggerz esports'],
+            'the_ultimates': ['the ultimates', 'ultimates'],
+            'rvn': ['rvn', 'rvn esports'],
+            'yung': ['yung', 'yung esports'],
+            'nobles': ['nobles', 'nobles esports'],
+            'team_gb': ['team gb', 'gb'],
+            'rafha_esports': ['rafha esports', 'rafha'],
+            'gng_esports': ['gng esports', 'gng'],
+            '3bl_esports': ['3bl esports', '3bl'],
+            'villanarc': ['villianarc', 'villian arc', 'villanarc'],
+            'alqadsiah': ['alqadsiah esports', 'alqadsiah'],
+            'red_canids': ['red canids', 'red', 'canids'],
+            'agropesca_jacare': ['agropesca jacare', 'jacare', 'agropesca'],
+            'sagaz': ['sagaz', 'sagaz esports'],
+            'los_grandes': ['los grandes', 'grandes'],
+            'tbk_esports': ['tbk esports', 'tbk'],
+            'corinthians': ['corinthians esports', 'corinthians'],
+            'peek': ['peek', 'peek esports'],
+            'elevate': ['elevate', 'elevate esports'],
+            'stellae_gaming': ['stellae gaming', 'stellae'],
+            'diretoria': ['diretoria', 'diretoria esports'],
+            'f4tality': ['f4tality', 'fatality']
+        }
+        
+        # Common org suffixes/prefixes to normalize
+        self.org_tokens = {
+            'suffixes': ['esports', 'gaming', 'team', 'club', 'gg', 'gc', 'academy', 
+                        'valorant', 'white', 'blue', 'red', 'black', 'fem', 'aca'],
+            'prefixes': ['team', 'clan'],
+            'game_changers': ['gc', 'game changers', 'changers']
+        }
+        
+        # Regional indicators
+        self.regional_indicators = {
+            'korea': ['kr', 'korea', 'korean'],
+            'japan': ['jp', 'japan', 'japanese'],
+            'na': ['na', 'north america', 'usa', 'us', 'canada'],
+            'eu': ['eu', 'europe', 'european'],
+            'brazil': ['br', 'brazil', 'brazilian'],
+            'latam': ['latam', 'latin america', 'latin'],
+            'apac': ['apac', 'asia pacific', 'asia'],
+            'mena': ['mena', 'middle east'],
+            'china': ['cn', 'china', 'chinese']
+        }
+        
+        # Common abbreviation expansions
+        self.abbreviations = {
+            'gen g': 'generation g',
+            'gen.g': 'generation g', 
+            'tl': 'team liquid',
+            'fnc': 'fnatic',
+            'sen': 'sentinels',
+            'c9': 'cloud9',
+            'prx': 'paper rex',
+            'drx': 'dragon x',
+            'kc': 'karmine corp',
+            'vit': 'vitality',
+            'fpx': 'funplus phoenix',
+            'edg': 'edward gaming',
+            'eg': 'evil geniuses',
+            '100t': '100 thieves',
+            'nrg': 'nrg esports',
+            'lev': 'leviatan',
+            'kru': 'kru esports',
+            'rrq': 'rex regum qeon',
+            'ts': 'team secret',
+            'dfm': 'detonation focusme',
+            'blg': 'bilibili gaming',
+            'te': 'trace esports'
+        }
+    
+    def load_mappings(self):
+        """Load existing mappings with enhanced data structure"""
+        try:
+            mappings_file = self.data_dir / "enhanced_team_mappings.json"
+            if mappings_file.exists():
+                with open(mappings_file, 'r') as f:
+                    data = json.load(f)
+                
+                for ps_name, mapping_data in data.items():
+                    if isinstance(mapping_data, str):
+                        # Convert old format
+                        self.verified_mappings[ps_name] = TeamMapping(
+                            pandascore_name=ps_name,
+                            local_name=mapping_data,
+                            confidence=1.0,
+                            mapping_type="legacy",
+                            last_used="unknown",
+                            usage_count=1
+                        )
+                    else:
+                        # New format
+                        self.verified_mappings[ps_name] = TeamMapping(**mapping_data)
+                
+                self.logger.info(f"Loaded {len(self.verified_mappings)} verified team mappings")
+        
+        except Exception as e:
+            self.logger.error(f"Error loading mappings: {e}")
+    
+    def load_rejection_cache(self):
+        """Load rejection cache from file"""
+        try:
+            rejections_file = self.data_dir / "mapping_rejections.json"
+            if rejections_file.exists():
+                with open(rejections_file, 'r') as f:
+                    rejections_list = json.load(f)
+                    self.rejection_cache = set(tuple(pair) for pair in rejections_list)
+                self.logger.info(f"Loaded {len(self.rejection_cache)} mapping rejections")
+        except Exception as e:
+            self.logger.error(f"Error loading rejections: {e}")
+    
+    def normalize_team_name(self, name: str, aggressive: bool = False) -> str:
+        """Enhanced team name normalization with multiple levels"""
+        if not name:
+            return ""
+        
+        original = name
+        name = name.lower().strip()
+        
+        # Remove special characters and normalize spacing
+        name = re.sub(r'[^\w\s-]', '', name)
+        name = ' '.join(name.split())  # Normalize whitespace
+        
+        # Handle common abbreviation patterns
+        name = self.expand_abbreviations(name)
+        
+        if aggressive:
+            # More aggressive normalization for fuzzy matching
+            
+            # Remove org tokens
+            for suffix in self.org_tokens['suffixes']:
+                # Remove as whole word
+                name = re.sub(rf'\b{re.escape(suffix)}\b', '', name).strip()
+            
+            for prefix in self.org_tokens['prefixes']:
+                # Remove as whole word at start
+                name = re.sub(rf'^\b{re.escape(prefix)}\b\s*', '', name).strip()
+            
+            # Remove regional indicators if they don't help distinguish
+            for region, indicators in self.regional_indicators.items():
+                for indicator in indicators:
+                    name = re.sub(rf'\b{re.escape(indicator)}\b', '', name).strip()
+            
+            # Handle numbers and special cases
+            name = re.sub(r'\b(v2|2\.0|ii)\b', '2', name)
+            name = re.sub(r'\bthe\b', '', name)
+        
+        return ' '.join(name.split())  # Final whitespace cleanup
+    
+    def expand_abbreviations(self, name: str) -> str:
+        """Expand known abbreviations"""
+        for abbrev, full in self.abbreviations.items():
+            if name == abbrev or name.startswith(f"{abbrev} ") or name.endswith(f" {abbrev}"):
+                name = name.replace(abbrev, full)
+        
+        return name
+    
+    def calculate_similarity_score(self, name1: str, name2: str) -> Tuple[float, str]:
+        """Enhanced similarity calculation with detailed reasoning"""
+        
+        if not name1 or not name2:
+            return 0.0, "empty_input"
+        
+        # Exact match
+        if name1 == name2:
+            self.mapping_stats['exact_matches'] += 1
+            return 1.0, "exact_match"
+        
+        # Case-insensitive exact match
+        if name1.lower() == name2.lower():
+            self.mapping_stats['exact_matches'] += 1
+            return 0.95, "case_insensitive_exact"
+        
+        # Normalize both names
+        norm1 = self.normalize_team_name(name1, aggressive=False)
+        norm2 = self.normalize_team_name(name2, aggressive=False)
+        
+        if norm1 == norm2:
+            return 0.9, "normalized_exact"
+        
+        # Check org patterns
+        org_score = self.check_org_patterns(name1, name2)
+        if org_score > 0.8:
+            self.mapping_stats['org_pattern_matches'] += 1
+            return org_score, "org_pattern_match"
+        
+        # Aggressive normalization for fuzzy matching
+        agg_norm1 = self.normalize_team_name(name1, aggressive=True)
+        agg_norm2 = self.normalize_team_name(name2, aggressive=True)
+        
+        if agg_norm1 == agg_norm2:
+            return 0.8, "aggressive_normalized"
+        
+        # Substring matching (longer substring = higher score)
+        if agg_norm1 in agg_norm2 or agg_norm2 in agg_norm1:
+            longer = max(agg_norm1, agg_norm2, key=len)
+            shorter = min(agg_norm1, agg_norm2, key=len)
+            if len(shorter) >= 3:  # Minimum length for meaningful substring
+                return 0.6 + (len(shorter) / len(longer)) * 0.2, "substring_match"
+        
+        # Word overlap analysis
+        words1 = set(agg_norm1.split())
+        words2 = set(agg_norm2.split())
+        
+        if words1 and words2:
+            intersection = words1 & words2
+            union = words1 | words2
+            
+            if intersection:
+                overlap_ratio = len(intersection) / len(union)
+                # Bonus for meaningful words (length > 2)
+                meaningful_overlap = sum(1 for word in intersection if len(word) > 2)
+                meaningful_total = sum(1 for word in union if len(word) > 2)
+                
+                if meaningful_total > 0:
+                    weighted_ratio = meaningful_overlap / meaningful_total
+                    final_score = (overlap_ratio + weighted_ratio) / 2
+                    
+                    if final_score > 0.5:
+                        return min(0.7, final_score), "word_overlap"
+        
+        # Fuzzy string matching as last resort
+        similarity = difflib.SequenceMatcher(None, agg_norm1, agg_norm2).ratio()
+        if similarity > 0.6:
+            self.mapping_stats['fuzzy_matches'] += 1
+            return similarity * 0.6, "fuzzy_match"  # Scale down fuzzy matches
+        
+        return 0.0, "no_match"
+    
+    def check_org_patterns(self, name1: str, name2: str) -> float:
+        """Check if names belong to same organization using knowledge base"""
+        norm1 = self.normalize_team_name(name1, aggressive=True)
+        norm2 = self.normalize_team_name(name2, aggressive=True)
+        
+        for org_key, aliases in self.team_orgs.items():
+            norm_aliases = [self.normalize_team_name(alias, aggressive=True) for alias in aliases]
+            
+            match1 = any(norm1 == alias or norm1 in alias or alias in norm1 for alias in norm_aliases)
+            match2 = any(norm2 == alias or norm2 in alias or alias in norm2 for alias in norm_aliases)
+            
+            if match1 and match2:
+                return 0.85  # High confidence for org pattern match
+        
+        return 0.0
+    
+    def find_best_match(self, pandascore_name: str, local_teams: List[str], 
+                       time_similarity: float = 0.0) -> Optional[Dict]:
+        """Find best matching local team with enhanced scoring"""
+        
+        # Check cache first
+        cache_key = pandascore_name.lower()
+        if cache_key in self.verified_mappings:
+            mapping = self.verified_mappings[cache_key]
+            if mapping.local_name in local_teams:
+                mapping.usage_count += 1
+                mapping.last_used = datetime.now().isoformat()
+                self.mapping_stats['cache_hits'] += 1
+                return {
+                    'local_name': mapping.local_name,
+                    'confidence': mapping.confidence,
+                    'mapping_type': 'cached',
+                    'reasoning': f"Previously verified mapping (used {mapping.usage_count} times)"
+                }
+        
+        # Filter out rejected mappings and TBD teams
+        available_teams = []
+        for local_team in local_teams:
+            if 'tbd' in local_team.lower():
+                continue
+            if (pandascore_name.lower(), local_team.lower()) in self.rejection_cache:
+                continue
+            available_teams.append(local_team)
+        
+        if not available_teams:
+            return None
+        
+        best_match = None
+        best_score = 0.0
+        
+        for local_team in available_teams:
+            score, reasoning = self.calculate_similarity_score(pandascore_name, local_team)
+            
+            # Apply time bonus if provided
+            if time_similarity > 0:
+                score = score * 0.8 + time_similarity * 0.2
+                reasoning += f" + time_bonus({time_similarity:.2f})"
+            
+            if score > best_score:
+                best_score = score
+                best_match = {
+                    'local_name': local_team,
+                    'confidence': score,
+                    'mapping_type': reasoning,
+                    'reasoning': f"Best similarity match: {reasoning}"
+                }
+        
+        # Only return matches above threshold
+        if best_match and best_score >= 0.6:
+            return best_match
+        
+        return None
+    
+    def save_verified_mapping(self, pandascore_name: str, local_name: str, 
+                            confidence: float, mapping_type: str):
+        """Save a verified mapping for future use"""
+        
+        mapping = TeamMapping(
+            pandascore_name=pandascore_name,
+            local_name=local_name,
+            confidence=confidence,
+            mapping_type=mapping_type,
+            last_used=datetime.now().isoformat(),
+            usage_count=1
+        )
+        
+        self.verified_mappings[pandascore_name.lower()] = mapping
+        self.save_mappings_to_file()
+    
+    def save_mappings_to_file(self):
+        """Save verified mappings to file"""
+        try:
+            mappings_file = self.data_dir / "enhanced_team_mappings.json"
+            data = {}
+            
+            for key, mapping in self.verified_mappings.items():
+                data[key] = {
+                    'pandascore_name': mapping.pandascore_name,
+                    'local_name': mapping.local_name,
+                    'confidence': mapping.confidence,
+                    'mapping_type': mapping.mapping_type,
+                    'last_used': mapping.last_used,
+                    'usage_count': mapping.usage_count
+                }
+            
+            with open(mappings_file, 'w') as f:
+                json.dump(data, f, indent=2)
+                
+        except Exception as e:
+            self.logger.error(f"Error saving mappings: {e}")
+    
+    def save_rejection_cache(self):
+        """Save rejection cache to file"""
+        try:
+            rejections_file = self.data_dir / "mapping_rejections.json"
+            rejections_list = list(self.rejection_cache)
+            
+            with open(rejections_file, 'w') as f:
+                json.dump(rejections_list, f, indent=2)
+                
+        except Exception as e:
+            self.logger.error(f"Error saving rejections: {e}")
+    
+    def print_mapping_stats(self):
+        """Print mapping statistics and performance metrics"""
+        print(f"\n{'='*60}")
+        print(f"📊 TEAM MAPPING STATISTICS")
+        print(f"{'='*60}")
+        print(f"🎯 Verified Mappings: {len(self.verified_mappings)}")
+        print(f"🚫 Rejection Cache: {len(self.rejection_cache)}")
+        print(f"📈 Performance Stats:")
+        for stat, count in self.mapping_stats.items():
+            print(f"  {stat.replace('_', ' ').title()}: {count}")
+        
+        # Show most used mappings
+        if self.verified_mappings:
+            print(f"\n🏆 Most Used Mappings:")
+            sorted_mappings = sorted(
+                self.verified_mappings.values(), 
+                key=lambda x: x.usage_count, 
+                reverse=True
+            )[:5]
+            
+            for mapping in sorted_mappings:
+                print(f"  {mapping.pandascore_name} -> {mapping.local_name} ({mapping.usage_count} uses)")
+
 class LocalAPI:
     """Local API client for getting match data and team mappings"""
     
@@ -85,6 +590,9 @@ class LocalAPI:
         
         # Setup logging
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        
+        # Initialize enhanced team mapper
+        self.team_mapper = EnhancedTeamMapper(data_dir)
         
         # Test connection and cache local matches
         self.local_matches = self._fetch_local_matches()
@@ -116,134 +624,79 @@ class LocalAPI:
     
     def find_match_by_teams_and_time(self, pandascore_team1: str, pandascore_team2: str, 
                                    pandascore_time: str) -> Optional[Dict]:
-        """Find matching local match by team names and approximate time"""
+        """Find matching local match using enhanced team mapping"""
         try:
             # Parse PandaScore time
             ps_time = datetime.fromisoformat(pandascore_time.replace('Z', '+00:00'))
             
-            best_match = None
-            best_score = 0
+            # Get all local teams for mapping
+            local_teams = list(self.get_local_team_names())
             
+            # Find best matches for both teams
+            team1_match = self.team_mapper.find_best_match(pandascore_team1, local_teams)
+            team2_match = self.team_mapper.find_best_match(pandascore_team2, local_teams)
+            
+            if not team1_match or not team2_match:
+                return None
+            
+            # Find local match with these teams
             for local_match in self.local_matches:
                 if 'teams' not in local_match or len(local_match['teams']) < 2:
                     continue
                 
-                local_team1 = local_match['teams'][0]['name']
-                local_team2 = local_match['teams'][1]['name']
+                local_team1_name = local_match['teams'][0]['name']
+                local_team2_name = local_match['teams'][1]['name']
                 
-                # Skip if one team is TBD
-                if 'TBD' in [local_team1, local_team2]:
-                    continue
-                
-                # Calculate team name similarity
-                team_score = self._calculate_team_similarity(
-                    pandascore_team1, pandascore_team2, 
-                    local_team1, local_team2
-                )
-                
-                if team_score > 0.3:  # Minimum similarity threshold
-                    # Check time similarity (within 6 hours)
+                # Check if this match uses our mapped teams (either order)
+                if ((local_team1_name == team1_match['local_name'] and 
+                     local_team2_name == team2_match['local_name']) or
+                    (local_team1_name == team2_match['local_name'] and 
+                     local_team2_name == team1_match['local_name'])):
+                    
+                    # Verify time similarity
                     try:
                         local_time = datetime.fromisoformat(local_match['utc'].replace('Z', '+00:00'))
                         time_diff = abs((ps_time - local_time).total_seconds())
                         
                         if time_diff <= 6 * 3600:  # Within 6 hours
-                            # Combine team and time scores
-                            time_score = max(0, 1 - (time_diff / (6 * 3600)))
-                            total_score = team_score * 0.7 + time_score * 0.3
+                            # Calculate combined confidence
+                            team_confidence = (team1_match['confidence'] + team2_match['confidence']) / 2
+                            time_confidence = max(0, 1 - (time_diff / (6 * 3600)))
+                            overall_confidence = team_confidence * 0.8 + time_confidence * 0.2
                             
-                            if total_score > best_score:
-                                best_score = total_score
-                                best_match = {
-                                    'local_match': local_match,
-                                    'mapping': {
-                                        'pandascore_team1': pandascore_team1,
-                                        'pandascore_team2': pandascore_team2,
-                                        'local_team1': local_team1,
-                                        'local_team2': local_team2
-                                    },
-                                    'confidence': total_score
+                            # Save verified mappings
+                            self.team_mapper.save_verified_mapping(
+                                pandascore_team1, team1_match['local_name'], 
+                                team1_match['confidence'], team1_match['mapping_type']
+                            )
+                            self.team_mapper.save_verified_mapping(
+                                pandascore_team2, team2_match['local_name'], 
+                                team2_match['confidence'], team2_match['mapping_type']
+                            )
+                            
+                            return {
+                                'local_match': local_match,
+                                'mapping': {
+                                    'pandascore_team1': pandascore_team1,
+                                    'pandascore_team2': pandascore_team2,
+                                    'local_team1': team1_match['local_name'],
+                                    'local_team2': team2_match['local_name']
+                                },
+                                'confidence': overall_confidence,
+                                'mapping_details': {
+                                    'team1_mapping': team1_match,
+                                    'team2_mapping': team2_match,
+                                    'time_confidence': time_confidence
                                 }
+                            }
                     except:
                         continue
             
-            return best_match
+            return None
             
         except Exception as e:
             self.logger.error(f"Error finding local match: {e}")
             return None
-    
-    def _calculate_team_similarity(self, ps_team1: str, ps_team2: str, 
-                                 local_team1: str, local_team2: str) -> float:
-        """Calculate similarity between PandaScore and local team names"""
-        
-        # Try both orderings (team1->team1, team2->team2) and (team1->team2, team2->team1)
-        score1 = (
-            self._team_name_similarity(ps_team1, local_team1) + 
-            self._team_name_similarity(ps_team2, local_team2)
-        ) / 2
-        
-        score2 = (
-            self._team_name_similarity(ps_team1, local_team2) + 
-            self._team_name_similarity(ps_team2, local_team1)
-        ) / 2
-        
-        return max(score1, score2)
-    
-    def _team_name_similarity(self, name1: str, name2: str) -> float:
-        """Calculate similarity between two team names"""
-        if not name1 or not name2:
-            return 0
-        
-        name1_clean = self._normalize_team_name(name1)
-        name2_clean = self._normalize_team_name(name2)
-        
-        # Exact match
-        if name1_clean == name2_clean:
-            return 1.0
-        
-        # Substring match
-        if name1_clean in name2_clean or name2_clean in name1_clean:
-            return 0.8
-        
-        # Word overlap
-        words1 = set(name1_clean.split())
-        words2 = set(name2_clean.split())
-        
-        if words1 and words2:
-            overlap = len(words1 & words2) / len(words1 | words2)
-            return overlap * 0.6
-        
-        # Fuzzy match
-        try:
-            import difflib
-            return difflib.SequenceMatcher(None, name1_clean, name2_clean).ratio() * 0.5
-        except:
-            return 0
-    
-    def _normalize_team_name(self, name: str) -> str:
-        """Normalize team name for comparison"""
-        name = name.lower().strip()
-        
-        # Remove common words
-        remove_words = ['esports', 'gaming', 'team', 'club', 'gg', 'gc', 'academy']
-        for word in remove_words:
-            name = name.replace(f' {word}', '').replace(f'{word} ', '')
-        
-        # Handle specific mappings
-        mappings = {
-            'karmine corp': 'karmine corp',
-            'fnatic': 'fnc',
-            'sentinels': 'sen',
-            'cloud9': 'c9',
-            'team liquid': 'tl',
-        }
-        
-        for original, replacement in mappings.items():
-            if original in name:
-                name = name.replace(original, replacement)
-        
-        return name.strip()
 
 class EnhancedPandaScoreAPI:
     def __init__(self, api_token: str, data_dir: Path = None, local_api: LocalAPI = None):
@@ -260,9 +713,6 @@ class EnhancedPandaScoreAPI:
         
         # Setup logging
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        
-        # Load saved mappings
-        self.saved_team_mappings = self.load_saved_team_mappings()
 
     def get_upcoming_matches_with_local_mapping(self, hours_ahead: int = 72) -> List[Dict]:
         """Get PandaScore matches and map them to local API teams"""
@@ -310,10 +760,6 @@ class EnhancedPandaScoreAPI:
                     
                     mapped_matches.append(enhanced_match)
                     
-                    # Save this mapping for future use
-                    self.save_team_mapping(ps_team1, mapping['local_team1'])
-                    self.save_team_mapping(ps_team2, mapping['local_team2'])
-                    
                 else:
                     print(f"❌ No local match found for: {ps_team1} vs {ps_team2}")
                     
@@ -323,33 +769,6 @@ class EnhancedPandaScoreAPI:
         
         print(f"🎯 Successfully mapped {len(mapped_matches)} matches")
         return mapped_matches
-    
-    def save_team_mapping(self, pandascore_name: str, local_name: str):
-        """Save a team mapping for future use"""
-        if pandascore_name not in self.saved_team_mappings:
-            self.saved_team_mappings[pandascore_name] = local_name
-            
-            # Save to file
-            try:
-                mappings_file = self.data_dir / "pandascore_to_local_mappings.json"
-                with open(mappings_file, 'w') as f:
-                    json.dump(self.saved_team_mappings, f, indent=2)
-            except Exception as e:
-                self.logger.error(f"Error saving team mapping: {e}")
-
-    def load_saved_team_mappings(self):
-        """Load previously saved team mappings"""
-        try:
-            mappings_file = self.data_dir / "pandascore_to_local_mappings.json"
-            if mappings_file.exists():
-                with open(mappings_file, 'r') as f:
-                    mappings = json.load(f)
-                self.logger.info(f"📚 Loaded {len(mappings)} saved PandaScore->Local mappings")
-                return mappings
-            return {}
-        except Exception as e:
-            self.logger.error(f"Error loading saved team mappings: {e}")
-            return {}
 
     def _make_request(self, url: str, params: Dict = None) -> Optional[Dict]:
         """Make a rate-limited request with error handling"""
@@ -528,11 +947,6 @@ class EnhancedPandaScoreAPI:
                 except (KeyError, TypeError, IndexError):
                     pass
             
-            # Debug logging for failed extractions
-            print(f"❌ No team names found in match {match.get('id', 'unknown')}")
-            available_keys = list(match.keys())
-            print(f"Available keys: {available_keys[:10]}...")
-            
             return None, None
             
         except Exception as e:
@@ -625,7 +1039,7 @@ class EnhancedPandaScoreAPI:
             return None
 
 class EnhancedPaperTradingBot:
-    """Enhanced paper trading bot with PandaScore + Local API integration"""
+    """Enhanced paper trading bot with optimized team mapping"""
     
     def __init__(self, starting_bankroll: float = 500.0, data_dir: str = "paper_trading_data", 
                  local_api_url: str = "http://localhost:5000/api/v1"):
@@ -675,7 +1089,7 @@ class EnhancedPaperTradingBot:
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
         
-        # Create formatter (without emojis for file, with emojis for console)
+        # Create formatter
         file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         
@@ -703,9 +1117,6 @@ class EnhancedPaperTradingBot:
             'errors': 0,
             'mappings_found': 0
         }
-        
-        # Add bankruptcy check
-        self.bankruptcy_check = {'max_bet_size': self.state.current_bankroll * 0.05}
         
     def load_state(self) -> PaperTradingState:
         """Load trading state from file or create new"""
@@ -903,7 +1314,7 @@ class EnhancedPaperTradingBot:
     
     def process_upcoming_matches(self):
         """Process upcoming matches using PandaScore + Local API integration"""
-        self._log_safe('info', "🔍 Scanning for upcoming matches with PandaScore + Local API integration...")
+        self._log_safe('info', "🔍 Scanning for upcoming matches with optimized team mapping...")
         
         # Get mapped matches (PandaScore matches mapped to local API teams)
         mapped_matches = self.api.get_upcoming_matches_with_local_mapping(hours_ahead=72)
@@ -1183,12 +1594,6 @@ class EnhancedPaperTradingBot:
                     }
             
             print(f"❌ Could not extract match result for {match.get('id')} - no valid score data")
-            print(f"Available keys: {list(match.keys())}")
-            if 'results' in match:
-                print(f"Results: {match['results']}")
-            if 'games' in match:
-                print(f"Games count: {len(match.get('games', []))}")
-            
             return None
             
         except Exception as e:
@@ -1275,51 +1680,9 @@ class EnhancedPaperTradingBot:
         if not team1 or not team2:
             return False
         
-        # Exact match
-        if team1 == team2:
-            return True
-        
-        # Case-insensitive match
-        if team1.lower() == team2.lower():
-            return True
-        
-        # Normalize and compare
-        team1_norm = self._normalize_team_name_for_matching(team1)
-        team2_norm = self._normalize_team_name_for_matching(team2)
-        
-        if team1_norm == team2_norm:
-            return True
-        
-        # Substring match
-        if team1_norm in team2_norm or team2_norm in team1_norm:
-            return True
-        
-        return False
-    
-    def _normalize_team_name_for_matching(self, name: str) -> str:
-        """Normalize team name for matching purposes"""
-        name = name.lower().strip()
-        
-        # Remove common suffixes/prefixes
-        for word in ['esports', 'gaming', 'team', 'club', 'gg', 'gc', 'academy', 'valkyries']:
-            name = name.replace(f' {word}', '').replace(f'{word} ', '')
-        
-        # Handle common abbreviations
-        abbreviations = {
-            'generation g': 'gen.g',
-            'geng': 'gen.g',
-            'gen g': 'gen.g',
-            'sentinels': 'sen',
-            'cloud9': 'c9',
-            'team liquid': 'tl',
-            'fnatic': 'fnc'
-        }
-        
-        for full, abbrev in abbreviations.items():
-            if full in name:
-                name = name.replace(full, abbrev)
-        
-        return name.strip()
+        # Use the enhanced team mapper for consistency
+        score, reasoning = self.local_api.team_mapper.calculate_similarity_score(team1, team2)
+        return score >= 0.8  # High confidence threshold for match evaluation
     
     def update_statistics(self):
         """Update trading statistics"""
@@ -1345,7 +1708,7 @@ class EnhancedPaperTradingBot:
             self._log_safe('error', f"Error updating statistics: {e}")
     
     def print_enhanced_status(self):
-        """Print enhanced trading status"""
+        """Print enhanced trading status with team mapping stats"""
         roi = (self.state.current_bankroll - self.starting_bankroll) / self.starting_bankroll
         
         completed_trades = len([t for t in self.state.trades if t.status in ['won', 'lost']])
@@ -1372,6 +1735,13 @@ class EnhancedPaperTradingBot:
         print(f"  📈 Trades Updated: {self.session_stats['trades_updated']}")
         print(f"  ❌ Errors: {self.session_stats['errors']}")
         
+        # Show team mapping statistics
+        if self.local_api and self.local_api.team_mapper:
+            print(f"\n🔗 Team Mapping Performance:")
+            stats = self.local_api.team_mapper.mapping_stats
+            for stat, count in stats.items():
+                print(f"  {stat.replace('_', ' ').title()}: {count}")
+        
         # Show recent trades
         if self.state.trades:
             print(f"\n📝 Recent Trades:")
@@ -1379,15 +1749,26 @@ class EnhancedPaperTradingBot:
             for trade in recent_trades:
                 status_emoji = "✅" if trade.status == "won" else "❌" if trade.status == "lost" else "⏳" if trade.status == "pending" else "🚫"
                 profit_str = f"${trade.profit_loss:+.2f}" if trade.status in ['won', 'lost'] else "N/A"
-                print(f"  {status_emoji} {trade.team1} vs {trade.team2} | {trade.bet_type} | ${trade.bet_amount:.2f} @ {trade.odds:.2f} | {profit_str}")
+                
+                # Show mapping info if available
+                mapping_info = ""
+                if trade.mapping_confidence and 'mapping_confidence' in trade.mapping_confidence:
+                    conf = trade.mapping_confidence['mapping_confidence']
+                    mapping_info = f" (map: {conf:.2f})"
+                
+                print(f"  {status_emoji} {trade.team1} vs {trade.team2}{mapping_info} | {trade.bet_type} | ${trade.bet_amount:.2f} @ {trade.odds:.2f} | {profit_str}")
         
         print(f"\n🕐 Last Update: {self.state.last_update}")
         print(f"{'='*70}\n")
+        
+        # Print team mapping stats
+        if self.local_api and self.local_api.team_mapper:
+            self.local_api.team_mapper.print_mapping_stats()
     
     def run_once(self):
         """Run a single iteration of the trading bot"""
         try:
-            print(f"🤖 Enhanced Paper Trading Bot - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"🤖 Enhanced Paper Trading Bot with Optimized Team Mapping - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             
             # Reset session stats
             self.session_stats = {key: 0 for key in self.session_stats}
@@ -1414,7 +1795,7 @@ class EnhancedPaperTradingBot:
     
     def run_continuous(self, check_interval_minutes: int = 30):
         """Run the trading bot continuously"""
-        print(f"🚀 Starting enhanced continuous paper trading (checking every {check_interval_minutes} minutes)")
+        print(f"🚀 Starting enhanced continuous paper trading with optimized team mapping (checking every {check_interval_minutes} minutes)")
         print("Press Ctrl+C to stop")
         
         # Schedule the bot to run
@@ -1437,7 +1818,7 @@ def main():
     """Main function with command line arguments"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Enhanced Valorant Paper Trading Bot with PandaScore + Local API")
+    parser = argparse.ArgumentParser(description="Enhanced Valorant Paper Trading Bot with Optimized Team Mapping")
     parser.add_argument("--bankroll", type=float, default=500.0, help="Starting bankroll (default: $500)")
     parser.add_argument("--continuous", action="store_true", help="Run continuously")
     parser.add_argument("--interval", type=int, default=30, help="Check interval in minutes (default: 30)")
@@ -1447,6 +1828,9 @@ def main():
     parser.add_argument("--local-api", type=str, default="http://localhost:5000/api/v1", help="Local API URL")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("--update-trades", action="store_true", help="Force update all pending trades")
+    parser.add_argument("--mapping-stats", action="store_true", help="Show team mapping statistics")
+    parser.add_argument("--add-mapping", nargs=2, metavar=('PANDASCORE_NAME', 'LOCAL_NAME'), 
+                       help="Manually add a team mapping")
     
     args = parser.parse_args()
     
@@ -1455,43 +1839,60 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     
     try:
-        # Initialize bot with local API integration
+        # Initialize bot with optimized team mapping
         bot = EnhancedPaperTradingBot(
             starting_bankroll=args.bankroll, 
             data_dir=args.data_dir,
             local_api_url=args.local_api
         )
         
-        if args.status:
+        if args.add_mapping:
+            pandascore_name, local_name = args.add_mapping
+            bot.local_api.team_mapper.save_verified_mapping(pandascore_name, local_name, 1.0, "manual")
+            print(f"✅ Added manual mapping: {pandascore_name} -> {local_name}")
+            
+        elif args.mapping_stats:
+            bot.local_api.team_mapper.print_mapping_stats()
+            
+        elif args.status:
             bot.print_enhanced_status()
+            
         elif args.update_trades:
             print("🔄 Forcing update of all pending trades...")
             updates = bot.update_finished_trades()
             print(f"✅ Updated {updates} trades")
             bot.print_enhanced_status()
+            
         elif args.once:
             bot.run_once()
+            
         elif args.continuous:
             bot.run_continuous(check_interval_minutes=args.interval)
+            
         else:
-            print("Enhanced Valorant Paper Trading Bot with PandaScore + Local API Integration")
+            print("Enhanced Valorant Paper Trading Bot with Optimized Team Mapping")
             print("Usage:")
-            print("  --once           Run once and exit")
-            print("  --continuous     Run continuously")
-            print("  --status         Show status")
-            print("  --update-trades  Force update all pending trades")
-            print("  --bankroll 500   Set starting bankroll")
-            print("  --interval 30    Set check interval (minutes)")
-            print("  --local-api URL  Set local API URL (default: http://localhost:5000/api/v1)")
-            print("\nExample:")
-            print("  python paper.py --continuous --interval 300 --local-api http://localhost:5000/api/v1")
-            print("  python paper.py --update-trades  # Force check for finished matches")
-            print("\nThe bot will:")
-            print("  1. Get upcoming matches from PandaScore")
-            print("  2. Map team names to your local API teams")
-            print("  3. Use local team names for predictions")
-            print("  4. Use PandaScore odds for paper trading")
-            print("  5. Automatically update trades when matches finish")
+            print("  --once                     Run once and exit")
+            print("  --continuous               Run continuously")
+            print("  --status                   Show status")
+            print("  --update-trades            Force update all pending trades")
+            print("  --mapping-stats            Show team mapping statistics")
+            print("  --add-mapping PS_NAME LOCAL_NAME  Add manual team mapping")
+            print("  --bankroll 500             Set starting bankroll")
+            print("  --interval 30              Set check interval (minutes)")
+            print("  --local-api URL            Set local API URL")
+            print("\nExamples:")
+            print("  python paper.py --continuous --interval 300")
+            print("  python paper.py --update-trades")
+            print("  python paper.py --add-mapping 'Sentinels' 'SEN'")
+            print("  python paper.py --mapping-stats")
+            print("\nNew Features:")
+            print("  ✅ Optimized team name mapping with knowledge base")
+            print("  ✅ Verified mapping cache with usage tracking")
+            print("  ✅ Rejection cache to avoid bad suggestions")
+            print("  ✅ Enhanced similarity scoring (exact > org > fuzzy)")
+            print("  ✅ Comprehensive team organization database")
+            print("  ✅ Performance statistics and monitoring")
     
     except Exception as e:
         print(f"❌ Error: {e}")

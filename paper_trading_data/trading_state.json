@@ -1,12 +1,12 @@
 {
   "starting_bankroll": 500.0,
-  "current_bankroll": 529.48,
+  "current_bankroll": 545.5500000000001,
   "total_trades": 8,
-  "winning_trades": 6,
+  "winning_trades": 8,
   "total_wagered": 44.0,
-  "total_profit": 36.480000000000004,
+  "total_profit": 45.55,
   "max_drawdown": 0,
-  "max_bankroll": 533.48,
+  "max_bankroll": 545.5500000000001,
   "trades": [
     {
       "trade_id": "PT_20250531_225252_0",
@@ -219,9 +219,9 @@
       "confidence": 0.8851585779711153,
       "match_id": "1183574",
       "match_start_time": "2025-06-08T19:00:00Z",
-      "status": "pending",
-      "actual_result": null,
-      "profit_loss": 0.0,
+      "status": "won",
+      "actual_result": "Gen.G Esports won 2-0",
+      "profit_loss": 3.87,
       "closing_odds": null,
       "clv": 0.0,
       "mapping_confidence": {
@@ -252,9 +252,9 @@
       "confidence": 0.8851585779711153,
       "match_id": "1183574",
       "match_start_time": "2025-06-08T19:00:00Z",
-      "status": "pending",
-      "actual_result": null,
-      "profit_loss": 0.0,
+      "status": "won",
+      "actual_result": "Gen.G Esports won 2-0",
+      "profit_loss": 5.199999999999999,
       "closing_odds": null,
       "clv": 0.0,
       "mapping_confidence": {
@@ -273,5 +273,5 @@
       "local_team2": "MIBR"
     }
   ],
-  "last_update": "2025-06-07T21:17:08.855397"
+  "last_update": "2025-06-08T14:21:02.798152"
 }
