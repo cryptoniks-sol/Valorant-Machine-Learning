@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Valorant Paper Trading Bot - Enhanced Version with Optimized Team Mapping
+Valorant Paper Trading Bot - Enhanced Version with Optimized Team Mapping and Tournament Debugging
 Complete implementation with PandaScore + Local API Integration
 """
 
@@ -175,6 +175,7 @@ class EnhancedTeamMapper:
             'fpx_china': ['fpx', 'funplus phoenix china', 'fpx china'],
             'te': ['trace esports', 'te', 'trace'],
             'wolves': ['wolves esports', 'wolves', 'wolves valorant'],
+            'xi_lai': ['xi lai gaming', 'xi lai', 'xilai gaming', 'xilai'],
             
             # Game Changers Teams
             'sen_gc': ['sentinels gc', 'sen gc', 'sentinels game changers'],
@@ -226,7 +227,9 @@ class EnhancedTeamMapper:
             'elevate': ['elevate', 'elevate esports'],
             'stellae_gaming': ['stellae gaming', 'stellae'],
             'diretoria': ['diretoria', 'diretoria esports'],
-            'f4tality': ['f4tality', 'fatality']
+            'f4tality': ['f4tality', 'fatality'],
+            'ulf_esports': ['ulf esports', 'ulf', 'ulf valorant'],
+            'bbl_pcific': ['bbl pcific', 'bbl pacific', 'bigboss layf pacific'],
         }
         
         # Common org suffixes/prefixes to normalize
@@ -583,10 +586,11 @@ class EnhancedTeamMapper:
 class LocalAPI:
     """Local API client for getting match data and team mappings"""
     
-    def __init__(self, base_url: str = "http://localhost:5000/api/v1", data_dir: Path = None):
+    def __init__(self, base_url: str = "http://localhost:5000/api/v1", data_dir: Path = None, debug: bool = False):
         self.base_url = base_url
         self.data_dir = data_dir or Path("paper_trading_data")
         self.data_dir.mkdir(exist_ok=True)
+        self.debug = debug
         
         # Setup logging
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -596,6 +600,10 @@ class LocalAPI:
         
         # Test connection and cache local matches
         self.local_matches = self._fetch_local_matches()
+        
+        # Debug local API content
+        if self.debug:
+            self._debug_local_api_content()
         
     def _fetch_local_matches(self):
         """Fetch and cache matches from local API"""
@@ -613,6 +621,46 @@ class LocalAPI:
             print(f"❌ Could not connect to local API: {e}")
             return []
     
+    def _debug_local_api_content(self):
+        """Debug what's available in the local API"""
+        print(f"\n🔍 LOCAL API DEBUG ANALYSIS:")
+        print("=" * 50)
+        print(f"📊 Total Local Matches: {len(self.local_matches)}")
+        
+        if self.local_matches:
+            # Show sample match structure
+            sample_match = self.local_matches[0]
+            print(f"📋 Sample Local Match Structure:")
+            print(f"   Keys: {list(sample_match.keys())}")
+            if 'teams' in sample_match:
+                print(f"   Teams structure: {sample_match['teams']}")
+            
+            # List all unique team names
+            local_teams = self.get_local_team_names()
+            print(f"\n👥 Available Local Teams ({len(local_teams)}):")
+            for i, team in enumerate(sorted(local_teams), 1):
+                print(f"   {i:2d}. {team}")
+            
+            # Show upcoming matches with times
+            print(f"\n📅 Local Matches by Time:")
+            for match in self.local_matches[:10]:  # Show first 10
+                try:
+                    teams = match.get('teams', [])
+                    if len(teams) >= 2:
+                        team1 = teams[0].get('name', 'Unknown')
+                        team2 = teams[1].get('name', 'Unknown')
+                        time = match.get('utc', 'No time')
+                        print(f"   {time}: {team1} vs {team2}")
+                except:
+                    continue
+        else:
+            print("❌ No local matches found")
+            print("🔍 Possible issues:")
+            print("   - Local API is not running")
+            print("   - Local API has no data")
+            print("   - API endpoint is incorrect")
+            print("   - API response format is different")
+    
     def get_local_team_names(self) -> set:
         """Get all unique team names from local API"""
         teams = set()
@@ -624,19 +672,54 @@ class LocalAPI:
     
     def find_match_by_teams_and_time(self, pandascore_team1: str, pandascore_team2: str, 
                                    pandascore_time: str) -> Optional[Dict]:
-        """Find matching local match using enhanced team mapping"""
+        """Find matching local match using enhanced team mapping with debugging"""
         try:
+            if self.debug:
+                print(f"\n🔗 TEAM MAPPING DEBUG:")
+                print(f"   PandaScore Teams: {pandascore_team1} vs {pandascore_team2}")
+                print(f"   PandaScore Time: {pandascore_time}")
+            
             # Parse PandaScore time
             ps_time = datetime.fromisoformat(pandascore_time.replace('Z', '+00:00'))
             
             # Get all local teams for mapping
             local_teams = list(self.get_local_team_names())
             
+            if self.debug:
+                print(f"   Available Local Teams: {len(local_teams)}")
+            
             # Find best matches for both teams
             team1_match = self.team_mapper.find_best_match(pandascore_team1, local_teams)
             team2_match = self.team_mapper.find_best_match(pandascore_team2, local_teams)
             
+            if self.debug:
+                print(f"   Team1 Mapping: {team1_match}")
+                print(f"   Team2 Mapping: {team2_match}")
+            
             if not team1_match or not team2_match:
+                if self.debug:
+                    print(f"❌ Could not map teams to local API")
+                    print(f"   Trying fuzzy matching with all local teams...")
+                    
+                    # Show best similarity scores for debugging
+                    print(f"   Best matches for '{pandascore_team1}':")
+                    scores1 = []
+                    for local_team in local_teams[:10]:  # Top 10
+                        score, reason = self.team_mapper.calculate_similarity_score(pandascore_team1, local_team)
+                        scores1.append((score, local_team, reason))
+                    scores1.sort(reverse=True)
+                    for score, team, reason in scores1[:5]:
+                        print(f"     {score:.3f}: {team} ({reason})")
+                    
+                    print(f"   Best matches for '{pandascore_team2}':")
+                    scores2 = []
+                    for local_team in local_teams[:10]:  # Top 10
+                        score, reason = self.team_mapper.calculate_similarity_score(pandascore_team2, local_team)
+                        scores2.append((score, local_team, reason))
+                    scores2.sort(reverse=True)
+                    for score, team, reason in scores2[:5]:
+                        print(f"     {score:.3f}: {team} ({reason})")
+                
                 return None
             
             # Find local match with these teams
@@ -658,7 +741,7 @@ class LocalAPI:
                         local_time = datetime.fromisoformat(local_match['utc'].replace('Z', '+00:00'))
                         time_diff = abs((ps_time - local_time).total_seconds())
                         
-                        if time_diff <= 6 * 3600:  # Within 6 hours
+                        if time_diff <= 24 * 3600:  # Within 6 hours
                             # Calculate combined confidence
                             team_confidence = (team1_match['confidence'] + team2_match['confidence']) / 2
                             time_confidence = max(0, 1 - (time_diff / (6 * 3600)))
@@ -695,11 +778,15 @@ class LocalAPI:
             return None
             
         except Exception as e:
+            if self.debug:
+                print(f"❌ Error in team mapping: {e}")
+                import traceback
+                traceback.print_exc()
             self.logger.error(f"Error finding local match: {e}")
             return None
 
 class EnhancedPandaScoreAPI:
-    def __init__(self, api_token: str, data_dir: Path = None, local_api: LocalAPI = None):
+    def __init__(self, api_token: str, data_dir: Path = None, local_api: LocalAPI = None, debug: bool = False):
         self.api_token = api_token
         self.base_url = "https://api.pandascore.co"
         self.headers = {
@@ -710,9 +797,299 @@ class EnhancedPandaScoreAPI:
         self.data_dir = data_dir or Path("paper_trading_data")
         self.data_dir.mkdir(exist_ok=True)
         self.local_api = local_api
+        self.debug = debug
         
         # Setup logging
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
+    def debug_tournaments_and_matches(self, hours_ahead: int = 72):
+        """Debug what tournaments and matches are available from PandaScore"""
+        try:
+            print(f"\n🔍 PANDASCORE TOURNAMENT & MATCH ANALYSIS")
+            print("=" * 60)
+            
+            # Get matches from different endpoints with more filters
+            endpoints_and_filters = [
+                ("valorant/matches/upcoming", {"sort": "begin_at", "per_page": 100}),
+                ("valorant/matches", {"filter[status]": "not_started", "sort": "begin_at", "per_page": 100}),
+                ("matches", {"videogame": "valorant", "filter[status]": "not_started", "sort": "begin_at", "per_page": 100}),
+            ]
+            
+            all_matches = []
+            
+            for endpoint, params in endpoints_and_filters:
+                try:
+                    print(f"\n🌐 Endpoint: {self.base_url}/{endpoint}")
+                    print(f"📋 Params: {params}")
+                    
+                    data = self._make_request(f"{self.base_url}/{endpoint}", params)
+                    if not data:
+                        print("❌ No data returned")
+                        continue
+                    
+                    matches = data.get('data', data) if isinstance(data, dict) else data
+                    print(f"📊 Found {len(matches)} matches")
+                    
+                    # Analyze tournaments and leagues
+                    tournaments = {}
+                    leagues = {}
+                    
+                    for match in matches:
+                        # Tournament analysis
+                        tournament = match.get('tournament', {})
+                        if tournament:
+                            t_id = tournament.get('id')
+                            t_name = tournament.get('name', 'Unknown')
+                            if t_id not in tournaments:
+                                tournaments[t_id] = {
+                                    'name': t_name,
+                                    'matches': 0,
+                                    'sample_teams': set()
+                                }
+                            tournaments[t_id]['matches'] += 1
+                            
+                            # Get sample teams
+                            team1, team2 = self.get_team_names_from_match(match)
+                            if team1 and team2:
+                                tournaments[t_id]['sample_teams'].add(team1)
+                                tournaments[t_id]['sample_teams'].add(team2)
+                        
+                        # League analysis
+                        league = match.get('league', {})
+                        if league:
+                            l_id = league.get('id')
+                            l_name = league.get('name', 'Unknown')
+                            if l_id not in leagues:
+                                leagues[l_id] = {
+                                    'name': l_name,
+                                    'matches': 0,
+                                    'sample_teams': set()
+                                }
+                            leagues[l_id]['matches'] += 1
+                            
+                            # Get sample teams
+                            team1, team2 = self.get_team_names_from_match(match)
+                            if team1 and team2:
+                                leagues[l_id]['sample_teams'].add(team1)
+                                leagues[l_id]['sample_teams'].add(team2)
+                    
+                    all_matches.extend(matches)
+                    
+                    # Print tournament summary
+                    if tournaments:
+                        print(f"\n🏆 Tournaments from this endpoint:")
+                        for t_id, info in tournaments.items():
+                            sample_teams = list(info['sample_teams'])[:4]  # Show first 4 teams
+                            print(f"   {t_id}: {info['name']} ({info['matches']} matches)")
+                            if sample_teams:
+                                print(f"      Teams: {', '.join(sample_teams)}")
+                    
+                    # Print league summary
+                    if leagues:
+                        print(f"\n🏅 Leagues from this endpoint:")
+                        for l_id, info in leagues.items():
+                            sample_teams = list(info['sample_teams'])[:4]  # Show first 4 teams
+                            print(f"   {l_id}: {info['name']} ({info['matches']} matches)")
+                            if sample_teams:
+                                print(f"      Teams: {', '.join(sample_teams)}")
+                    
+                except Exception as e:
+                    print(f"❌ Error with endpoint {endpoint}: {e}")
+                    continue
+            
+            # Search for specific teams in all matches
+            target_teams = ["G2 Esports", "Paper Rex", "Xi Lai Gaming", "Sentinels", "G2", "PRX", "SEN"]
+            
+            print(f"\n🎯 SEARCHING FOR TARGET TEAMS:")
+            print(f"Looking for: {', '.join(target_teams)}")
+            print("-" * 40)
+            
+            found_matches = []
+            
+            for match in all_matches:
+                team1, team2 = self.get_team_names_from_match(match)
+                if team1 and team2:
+                    # Check if either team matches our targets
+                    for target in target_teams:
+                        if (target.lower() in team1.lower() or target.lower() in team2.lower() or
+                            team1.lower() in target.lower() or team2.lower() in target.lower()):
+                            
+                            tournament = match.get('tournament', {})
+                            league = match.get('league', {})
+                            
+                            match_info = {
+                                'match_id': match.get('id'),
+                                'team1': team1,
+                                'team2': team2,
+                                'begin_at': match.get('begin_at'),
+                                'tournament': tournament.get('name', 'Unknown'),
+                                'league': league.get('name', 'Unknown'),
+                                'status': match.get('status')
+                            }
+                            found_matches.append(match_info)
+                            break
+            
+            if found_matches:
+                print(f"✅ Found {len(found_matches)} matches with target teams:")
+                for match_info in found_matches:
+                    print(f"   🎮 {match_info['team1']} vs {match_info['team2']}")
+                    print(f"      📅 {match_info['begin_at']}")
+                    print(f"      🏆 {match_info['tournament']} / {match_info['league']}")
+                    print(f"      📊 {match_info['status']}")
+                    print()
+            else:
+                print("❌ No matches found with target teams")
+                print("\n🔍 Available teams in PandaScore (first 20):")
+                all_teams = set()
+                for match in all_matches[:50]:  # Sample first 50 matches
+                    team1, team2 = self.get_team_names_from_match(match)
+                    if team1:
+                        all_teams.add(team1)
+                    if team2:
+                        all_teams.add(team2)
+                
+                for i, team in enumerate(sorted(all_teams)[:20], 1):
+                    print(f"   {i:2d}. {team}")
+                
+                if len(all_teams) > 20:
+                    print(f"   ... and {len(all_teams) - 20} more")
+            
+            return found_matches
+            
+        except Exception as e:
+            print(f"❌ Error in tournament analysis: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def search_matches_by_teams(self, team_names: List[str], hours_ahead: int = 168):
+        """Search for matches containing specific team names"""
+        try:
+            print(f"\n🔍 SEARCHING FOR MATCHES WITH SPECIFIC TEAMS")
+            print(f"Target teams: {', '.join(team_names)}")
+            print("=" * 50)
+            
+            # Try multiple search strategies
+            strategies = [
+                {"filter[status]": "not_started", "sort": "begin_at", "per_page": 200},
+                {"sort": "begin_at", "per_page": 200},  # No status filter
+                {"filter[status]": "not_started,running", "sort": "begin_at", "per_page": 200},
+            ]
+            
+            all_matches = []
+            
+            for i, params in enumerate(strategies, 1):
+                print(f"\n🔄 Strategy {i}: {params}")
+                
+                endpoints = [
+                    f"{self.base_url}/valorant/matches",
+                    f"{self.base_url}/matches",
+                    f"{self.base_url}/valorant/matches/upcoming"
+                ]
+                
+                for endpoint in endpoints:
+                    try:
+                        data = self._make_request(endpoint, params)
+                        if data:
+                            matches = data.get('data', data) if isinstance(data, dict) else data
+                            all_matches.extend(matches)
+                            print(f"   {endpoint}: {len(matches)} matches")
+                    except Exception as e:
+                        print(f"   {endpoint}: Error - {e}")
+            
+            # Remove duplicates based on match ID
+            unique_matches = {}
+            for match in all_matches:
+                match_id = match.get('id')
+                if match_id and match_id not in unique_matches:
+                    unique_matches[match_id] = match
+            
+            print(f"\n📊 Total unique matches found: {len(unique_matches)}")
+            
+            # Search for target teams
+            found_matches = []
+            
+            for match in unique_matches.values():
+                team1, team2 = self.get_team_names_from_match(match)
+                if team1 and team2:
+                    # Check if any target team matches
+                    for target_team in team_names:
+                        if (self._fuzzy_team_match(target_team, team1) or 
+                            self._fuzzy_team_match(target_team, team2)):
+                            
+                            found_matches.append({
+                                'match_id': match.get('id'),
+                                'team1': team1,
+                                'team2': team2,
+                                'begin_at': match.get('begin_at'),
+                                'status': match.get('status'),
+                                'tournament': match.get('tournament', {}).get('name', 'Unknown'),
+                                'league': match.get('league', {}).get('name', 'Unknown'),
+                                'match_data': match
+                            })
+                            break
+            
+            if found_matches:
+                print(f"\n✅ Found {len(found_matches)} matches with target teams:")
+                for match in found_matches:
+                    print(f"   🎮 {match['team1']} vs {match['team2']}")
+                    print(f"      📅 {match['begin_at']}")
+                    print(f"      🏆 {match['tournament']} / {match['league']}")
+                    print(f"      📊 {match['status']} (ID: {match['match_id']})")
+                    print()
+            else:
+                print("❌ No matches found with target teams")
+            
+            return found_matches
+            
+        except Exception as e:
+            print(f"❌ Error searching for specific teams: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def _fuzzy_team_match(self, target: str, team: str) -> bool:
+        """Check if target team matches the actual team name with fuzzy logic"""
+        if not target or not team:
+            return False
+        
+        target_lower = target.lower()
+        team_lower = team.lower()
+        
+        # Exact match
+        if target_lower == team_lower:
+            return True
+        
+        # Substring match
+        if target_lower in team_lower or team_lower in target_lower:
+            return True
+        
+        # Common abbreviations
+        abbreviations = {
+            'g2': 'g2 esports',
+            'g2 esports': 'g2',
+            'paper rex': 'prx',
+            'prx': 'paper rex',
+            'sentinels': 'sen',
+            'sen': 'sentinels'
+        }
+        
+        if target_lower in abbreviations and abbreviations[target_lower] == team_lower:
+            return True
+        if team_lower in abbreviations and abbreviations[team_lower] == target_lower:
+            return True
+        
+        # Word overlap (at least 50% of words match)
+        target_words = set(target_lower.split())
+        team_words = set(team_lower.split())
+        
+        if target_words and team_words:
+            overlap = len(target_words & team_words)
+            min_words = min(len(target_words), len(team_words))
+            if overlap / min_words >= 0.5:
+                return True
+        
+        return False
 
     def get_upcoming_matches_with_local_mapping(self, hours_ahead: int = 72) -> List[Dict]:
         """Get PandaScore matches and map them to local API teams"""
@@ -876,81 +1253,258 @@ class EnhancedPandaScoreAPI:
             return False
     
     def _filter_quality_matches(self, matches: List[Dict]) -> List[Dict]:
-        """Filter matches for quality and completeness"""
+        """Filter matches for quality and completeness with detailed debugging"""
         quality_matches = []
         
-        for match in matches:
+        print(f"\n🔍 QUALITY FILTERING {len(matches)} MATCHES:")
+        print("=" * 50)
+        
+        for i, match in enumerate(matches, 1):
+            match_id = match.get('id', 'unknown')
+            print(f"\n📋 MATCH {i}/{len(matches)} (ID: {match_id})")
+            print("-" * 30)
+            
             try:
-                # Skip canceled/postponed matches
+                # Check canceled/postponed status
                 status = match.get('status', '').lower()
+                print(f"📊 Status: '{status}'")
+                
                 if status in ['canceled', 'cancelled', 'postponed']:
-                    print(f"⚠️ Skipping {status} match: {match.get('id')}")
+                    print(f"❌ SKIPPED: Match is {status}")
                     continue
                 
-                # Check if match has proper team data
-                team1, team2 = self.get_team_names_from_match(match)
-                if not team1 or not team2 or team1 == team2:
-                    print(f"⚠️ Skipping match with incomplete team data: {match.get('id')}")
-                    continue
-                
-                # Check if match has reasonable start time
-                begin_at = match.get('begin_at')
-                if not begin_at:
-                    print(f"⚠️ Skipping match without start time: {match.get('id')}")
-                    continue
-                
-                # Check if it's a Valorant match
+                # Check videogame
                 videogame = match.get('videogame', {})
-                if isinstance(videogame, dict) and videogame.get('name', '').lower() != 'valorant':
-                    print(f"⚠️ Skipping non-Valorant match: {match.get('id')}")
+                print(f"🎮 Videogame: {videogame}")
+                
+                if isinstance(videogame, dict):
+                    vg_name = videogame.get('name', '').lower()
+                    print(f"🎮 Videogame Name: '{vg_name}'")
+                    if vg_name != 'valorant':
+                        print(f"❌ SKIPPED: Not Valorant (is '{vg_name}')")
+                        continue
+                elif isinstance(videogame, str):
+                    if videogame.lower() != 'valorant':
+                        print(f"❌ SKIPPED: Not Valorant (is '{videogame}')")
+                        continue
+                else:
+                    print(f"⚠️ WARNING: Unexpected videogame type: {type(videogame)}")
+                
+                # Check start time
+                begin_at = match.get('begin_at')
+                print(f"⏰ Begin At: {begin_at}")
+                
+                if not begin_at:
+                    print(f"❌ SKIPPED: No start time")
                     continue
                 
+                # Check team data (with detailed debugging if enabled)
+                team1, team2 = self.get_team_names_from_match(match)
+                print(f"👥 Teams: '{team1}' vs '{team2}'")
+                
+                if not team1 or not team2 or team1 == team2:
+                    print(f"❌ SKIPPED: Incomplete team data (team1='{team1}', team2='{team2}')")
+                    
+                    # Additional debugging for team data
+                    if self.debug:
+                        print(f"🔍 DEBUGGING TEAM EXTRACTION:")
+                        print(f"   Match structure keys: {list(match.keys())}")
+                        
+                        # Look for any team-related fields
+                        team_fields = {}
+                        for key, value in match.items():
+                            if any(word in key.lower() for word in ['team', 'opponent', 'participant']):
+                                team_fields[key] = value
+                        
+                        if team_fields:
+                            print(f"   Team-related fields found:")
+                            for key, value in team_fields.items():
+                                print(f"     {key}: {value}")
+                        else:
+                            print(f"   No team-related fields found")
+                    
+                    continue
+                
+                print(f"✅ PASSED: All quality checks")
                 quality_matches.append(match)
                 
             except Exception as e:
-                print(f"❌ Error filtering match {match.get('id', 'unknown')}: {e}")
+                print(f"❌ ERROR filtering match {match_id}: {e}")
+                if self.debug:
+                    import traceback
+                    traceback.print_exc()
                 continue
         
-        print(f"✅ Quality filtered: {len(quality_matches)} matches")
+        print(f"\n✅ Quality filtering complete: {len(quality_matches)}/{len(matches)} matches passed")
         return quality_matches
     
     def get_team_names_from_match(self, match: Dict) -> Tuple[str, str]:
-        """Enhanced team name extraction with multiple fallbacks"""
+        """Enhanced team name extraction with detailed debugging"""
         try:
-            # Primary method: opponents structure
-            if 'opponents' in match and match['opponents'] and len(match['opponents']) >= 2:
-                try:
-                    team1 = match['opponents'][0]['opponent']['name']
-                    team2 = match['opponents'][1]['opponent']['name']
-                    if team1 and team2 and team1 != team2:
-                        return team1, team2
-                except (KeyError, TypeError, IndexError):
-                    pass
+            if self.debug:
+                print(f"\n🔍 DEBUGGING MATCH {match.get('id', 'unknown')}:")
+                print(f"📊 Match Keys: {list(match.keys())}")
+                print(f"📋 Status: {match.get('status', 'unknown')}")
+                print(f"🎮 Videogame: {match.get('videogame', 'unknown')}")
+                print(f"⏰ Begin At: {match.get('begin_at', 'unknown')}")
+                
+                # Show raw match structure (truncated)
+                print(f"📄 Raw Match Data (first 500 chars):")
+                print(json.dumps(match, indent=2)[:500] + "...")
+            
+            # Primary method: opponents structure (ENHANCED)
+            if 'opponents' in match:
+                opponents = match['opponents']
+                if self.debug:
+                    print(f"🔄 Method 1 - Opponents structure:")
+                    print(f"   Opponents type: {type(opponents)}")
+                    print(f"   Opponents length: {len(opponents) if opponents else 0}")
+                    print(f"   Opponents content: {opponents}")
+                
+                # Check if opponents is not empty and has at least 2 teams
+                if opponents and len(opponents) >= 2:
+                    if self.debug:
+                        for i, opp in enumerate(opponents[:2]):
+                            print(f"   Opponent {i}: {json.dumps(opp, indent=4)}")
+                    
+                    try:
+                        # Check if opponents have the expected structure
+                        team1_data = opponents[0]
+                        team2_data = opponents[1]
+                        
+                        # Handle different opponent structures
+                        team1 = None
+                        team2 = None
+                        
+                        # Structure 1: {"opponent": {"name": "..."}}
+                        if isinstance(team1_data, dict) and 'opponent' in team1_data:
+                            if isinstance(team1_data['opponent'], dict) and 'name' in team1_data['opponent']:
+                                team1 = team1_data['opponent']['name']
+                        
+                        if isinstance(team2_data, dict) and 'opponent' in team2_data:
+                            if isinstance(team2_data['opponent'], dict) and 'name' in team2_data['opponent']:
+                                team2 = team2_data['opponent']['name']
+                        
+                        # Structure 2: {"name": "..."} (direct)
+                        if not team1 and isinstance(team1_data, dict) and 'name' in team1_data:
+                            team1 = team1_data['name']
+                        
+                        if not team2 and isinstance(team2_data, dict) and 'name' in team2_data:
+                            team2 = team2_data['name']
+                        
+                        # Validate teams
+                        if team1 and team2 and team1 != team2 and team1.strip() and team2.strip():
+                            # Check for placeholder names
+                            if not any(placeholder in team1.lower() for placeholder in ['tbd', 'to be determined', 'placeholder']):
+                                if not any(placeholder in team2.lower() for placeholder in ['tbd', 'to be determined', 'placeholder']):
+                                    if self.debug:
+                                        print(f"✅ Method 1 SUCCESS: {team1} vs {team2}")
+                                    return team1, team2
+                        
+                        if self.debug:
+                            print(f"❌ Method 1 FAILED: team1='{team1}', team2='{team2}' (possibly placeholder teams)")
+                            
+                    except (KeyError, TypeError, IndexError) as e:
+                        if self.debug:
+                            print(f"❌ Method 1 EXCEPTION: {e}")
+                else:
+                    if self.debug:
+                        print(f"❌ Method 1 SKIP: Empty opponents array or insufficient teams")
+            elif self.debug:
+                print(f"❌ Method 1 SKIP: opponents key missing")
             
             # Fallback 1: teams array
             if 'teams' in match and len(match['teams']) >= 2:
+                if self.debug:
+                    print(f"🔄 Method 2 - Teams array:")
+                    print(f"   Teams count: {len(match['teams'])}")
+                    for i, team in enumerate(match['teams'][:2]):
+                        print(f"   Team {i}: {json.dumps(team, indent=4)}")
+                
                 try:
                     team1 = match['teams'][0]['name']
                     team2 = match['teams'][1]['name']
                     if team1 and team2 and team1 != team2:
+                        if self.debug:
+                            print(f"✅ Method 2 SUCCESS: {team1} vs {team2}")
                         return team1, team2
-                except (KeyError, TypeError, IndexError):
-                    pass
+                    else:
+                        if self.debug:
+                            print(f"❌ Method 2 FAILED: team1='{team1}', team2='{team2}'")
+                except (KeyError, TypeError, IndexError) as e:
+                    if self.debug:
+                        print(f"❌ Method 2 EXCEPTION: {e}")
+            elif self.debug:
+                print(f"❌ Method 2 SKIP: teams key missing or insufficient")
             
             # Fallback 2: participants
             if 'participants' in match and len(match['participants']) >= 2:
+                if self.debug:
+                    print(f"🔄 Method 3 - Participants:")
+                    print(f"   Participants count: {len(match['participants'])}")
+                    for i, part in enumerate(match['participants'][:2]):
+                        print(f"   Participant {i}: {json.dumps(part, indent=4)}")
+                
                 try:
                     team1 = match['participants'][0]['name']
                     team2 = match['participants'][1]['name']
                     if team1 and team2 and team1 != team2:
+                        if self.debug:
+                            print(f"✅ Method 3 SUCCESS: {team1} vs {team2}")
                         return team1, team2
-                except (KeyError, TypeError, IndexError):
-                    pass
+                    else:
+                        if self.debug:
+                            print(f"❌ Method 3 FAILED: team1='{team1}', team2='{team2}'")
+                except (KeyError, TypeError, IndexError) as e:
+                    if self.debug:
+                        print(f"❌ Method 3 EXCEPTION: {e}")
+            elif self.debug:
+                print(f"❌ Method 3 SKIP: participants key missing or insufficient")
+            
+            # Enhanced debugging for failed extractions
+            if self.debug:
+                print(f"❌ ALL METHODS FAILED for match {match.get('id')}")
+                print(f"📋 Available top-level keys: {list(match.keys())}")
+                
+                # Enhanced team-related field analysis
+                team_related_fields = {}
+                for key, value in match.items():
+                    if any(word in key.lower() for word in ['team', 'opponent', 'participant']):
+                        team_related_fields[key] = value
+                
+                if team_related_fields:
+                    print(f"🔍 Team-related fields analysis:")
+                    for key, value in team_related_fields.items():
+                        print(f"   {key}: {value}")
+                        # Additional analysis for each field
+                        if isinstance(value, list):
+                            print(f"     -> List with {len(value)} items")
+                            if value:
+                                print(f"     -> First item: {value[0]}")
+                        elif isinstance(value, dict):
+                            print(f"     -> Dict with keys: {list(value.keys())}")
+                else:
+                    print(f"   No team-related fields found")
+                
+                # Check if this might be a bracket/playoff match
+                tournament_info = match.get('tournament', {})
+                serie_info = match.get('serie', {})
+                if tournament_info or serie_info:
+                    print(f"🏆 Tournament context:")
+                    if tournament_info:
+                        print(f"   Tournament: {tournament_info.get('name', 'N/A')}")
+                    if serie_info:
+                        print(f"   Serie: {serie_info.get('name', 'N/A')}")
             
             return None, None
             
         except Exception as e:
-            print(f"❌ Error extracting team names: {e}")
+            if self.debug:
+                print(f"❌ CRITICAL ERROR extracting team names: {e}")
+                import traceback
+                traceback.print_exc()
+            else:
+                print(f"❌ Error extracting team names: {e}")
             return None, None
     
     def get_finished_matches(self, hours_back: int = 6) -> List[Dict]:
@@ -1042,21 +1596,23 @@ class EnhancedPaperTradingBot:
     """Enhanced paper trading bot with optimized team mapping"""
     
     def __init__(self, starting_bankroll: float = 500.0, data_dir: str = "paper_trading_data", 
-                 local_api_url: str = "http://localhost:5000/api/v1"):
+                 local_api_url: str = "http://localhost:5000/api/v1", debug: bool = False):
         self.starting_bankroll = starting_bankroll
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok=True)
+        self.debug = debug
         
-        # Initialize Local API first
+        # Initialize Local API first WITH DEBUG FLAG
         print("🔗 Connecting to local API...")
-        self.local_api = LocalAPI(base_url=local_api_url, data_dir=self.data_dir)
+        self.local_api = LocalAPI(base_url=local_api_url, data_dir=self.data_dir, debug=debug)
         
-        # Initialize PandaScore API with local API integration
+        # Initialize PandaScore API with local API integration and debug flag
         print("🌐 Connecting to PandaScore API...")
         self.api = EnhancedPandaScoreAPI(
             "ZrEdZx53byJC1dqBJB3JJ9bUoAZFRllj3eBY2kuTkKnc4La963E",
             data_dir=self.data_dir,
-            local_api=self.local_api
+            local_api=self.local_api,
+            debug=debug
         )
         
         # Load or initialize state
@@ -1317,7 +1873,7 @@ class EnhancedPaperTradingBot:
         self._log_safe('info', "🔍 Scanning for upcoming matches with optimized team mapping...")
         
         # Get mapped matches (PandaScore matches mapped to local API teams)
-        mapped_matches = self.api.get_upcoming_matches_with_local_mapping(hours_ahead=72)
+        mapped_matches = self.api.get_upcoming_matches_with_local_mapping(hours_ahead=96)  # Extended to 1 week
         
         if not mapped_matches:
             self._log_safe('info', "❌ No mapped matches found")
@@ -1815,7 +2371,7 @@ class EnhancedPaperTradingBot:
             self.print_enhanced_status()
 
 def main():
-    """Main function with command line arguments"""
+    """Enhanced main function with tournament debugging"""
     import argparse
     
     parser = argparse.ArgumentParser(description="Enhanced Valorant Paper Trading Bot with Optimized Team Mapping")
@@ -1827,6 +2383,11 @@ def main():
     parser.add_argument("--data-dir", type=str, default="paper_trading_data", help="Data directory")
     parser.add_argument("--local-api", type=str, default="http://localhost:5000/api/v1", help="Local API URL")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--debug-api", action="store_true", help="Enable detailed API debugging")
+    parser.add_argument("--debug-tournaments", action="store_true", help="Debug available tournaments and matches")
+    parser.add_argument("--debug-local", action="store_true", help="Debug local API content")
+    parser.add_argument("--search-teams", nargs='+', help="Search for matches with specific teams")
+    parser.add_argument("--check-teams", action="store_true", help="Show available local teams")
     parser.add_argument("--update-trades", action="store_true", help="Force update all pending trades")
     parser.add_argument("--mapping-stats", action="store_true", help="Show team mapping statistics")
     parser.add_argument("--add-mapping", nargs=2, metavar=('PANDASCORE_NAME', 'LOCAL_NAME'), 
@@ -1839,11 +2400,12 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     
     try:
-        # Initialize bot with optimized team mapping
+        # Initialize bot with optimized team mapping and debug flags
         bot = EnhancedPaperTradingBot(
             starting_bankroll=args.bankroll, 
             data_dir=args.data_dir,
-            local_api_url=args.local_api
+            local_api_url=args.local_api,
+            debug=args.debug_api
         )
         
         if args.add_mapping:
@@ -1856,6 +2418,31 @@ def main():
             
         elif args.status:
             bot.print_enhanced_status()
+            
+        elif args.check_teams:
+            print("📋 Available Local API Teams:")
+            local_teams = bot.local_api.get_local_team_names()
+            for i, team in enumerate(sorted(local_teams), 1):
+                print(f"  {i:2d}. {team}")
+            print(f"\nTotal: {len(local_teams)} teams")
+            
+        elif args.debug_local:
+            bot.local_api._debug_local_api_content()
+            
+        elif args.debug_tournaments:
+            print("🔍 Analyzing PandaScore tournaments and matches...")
+            bot.api.debug_tournaments_and_matches(hours_ahead=168)  # 1 week
+            
+        elif args.search_teams:
+            print(f"🔍 Searching for matches with teams: {args.search_teams}")
+            found_matches = bot.api.search_matches_by_teams(args.search_teams, hours_ahead=168)
+            
+            if found_matches:
+                print(f"\n💡 Suggestion: Try these PandaScore filters:")
+                tournaments = set(m['tournament'] for m in found_matches)
+                leagues = set(m['league'] for m in found_matches)
+                print(f"   Tournaments: {', '.join(tournaments)}")
+                print(f"   Leagues: {', '.join(leagues)}")
             
         elif args.update_trades:
             print("🔄 Forcing update of all pending trades...")
@@ -1881,11 +2468,20 @@ def main():
             print("  --bankroll 500             Set starting bankroll")
             print("  --interval 30              Set check interval (minutes)")
             print("  --local-api URL            Set local API URL")
+            print("  --debug-api                Enable detailed API debugging")
+            print("  --debug-tournaments        Debug available tournaments")
+            print("  --debug-local              Debug local API content")
+            print("  --search-teams TEAM1 TEAM2 Search for specific teams")
+            print("  --check-teams              Show available local teams")
             print("\nExamples:")
             print("  python paper.py --continuous --interval 300")
             print("  python paper.py --update-trades")
             print("  python paper.py --add-mapping 'Sentinels' 'SEN'")
             print("  python paper.py --mapping-stats")
+            print("  python paper.py --once --debug-api  # Debug what's being skipped")
+            print("  python paper.py --debug-tournaments  # See all tournaments")
+            print("  python paper.py --search-teams 'G2 Esports' 'Paper Rex'")
+            print("  python paper.py --check-teams  # See local API teams")
             print("\nNew Features:")
             print("  ✅ Optimized team name mapping with knowledge base")
             print("  ✅ Verified mapping cache with usage tracking")
@@ -1893,6 +2489,9 @@ def main():
             print("  ✅ Enhanced similarity scoring (exact > org > fuzzy)")
             print("  ✅ Comprehensive team organization database")
             print("  ✅ Performance statistics and monitoring")
+            print("  ✅ Detailed API debugging to see what data is returned")
+            print("  ✅ Tournament and league analysis")
+            print("  ✅ Team-specific search functionality")
     
     except Exception as e:
         print(f"❌ Error: {e}")

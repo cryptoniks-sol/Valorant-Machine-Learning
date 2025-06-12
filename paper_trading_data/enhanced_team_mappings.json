@@ -1,0 +1,146 @@
+{
+  "bilibili gaming": {
+    "pandascore_name": "Bilibili Gaming",
+    "local_name": "Bilibili Gaming",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-10T19:25:59.616850",
+    "usage_count": 1
+  },
+  "sentinels": {
+    "pandascore_name": "Sentinels",
+    "local_name": "Sentinels",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.711867",
+    "usage_count": 1
+  },
+  "team heretics": {
+    "pandascore_name": "Team Heretics",
+    "local_name": "Team Heretics",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-08T22:29:57.287846",
+    "usage_count": 1
+  },
+  "wolves esports": {
+    "pandascore_name": "Wolves Esports",
+    "local_name": "Wolves Esports",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.707866",
+    "usage_count": 1
+  },
+  "team liquid": {
+    "pandascore_name": "Team Liquid",
+    "local_name": "Team Liquid",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-10T19:26:01.884821",
+    "usage_count": 1
+  },
+  "mibr": {
+    "pandascore_name": "MIBR",
+    "local_name": "MIBR",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-08T22:29:59.807862",
+    "usage_count": 1
+  },
+  "paper rex": {
+    "pandascore_name": "Paper Rex",
+    "local_name": "Paper Rex",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.710868",
+    "usage_count": 1
+  },
+  "xlg gaming": {
+    "pandascore_name": "XLG Gaming",
+    "local_name": "Xi Lai Gaming",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.711867",
+    "usage_count": 1
+  },
+  "rex regum qeon": {
+    "pandascore_name": "Rex Regum Qeon",
+    "local_name": "Rex Regum Qeon",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.706863",
+    "usage_count": 1
+  },
+  "fnatic": {
+    "pandascore_name": "Fnatic",
+    "local_name": "FNATIC",
+    "confidence": 0.95,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.708866",
+    "usage_count": 1
+  },
+  "gen.g esports": {
+    "pandascore_name": "Gen.G Esports",
+    "local_name": "Gen.G",
+    "confidence": 0.85,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.708866",
+    "usage_count": 1
+  },
+  "g2 esports": {
+    "pandascore_name": "G2 Esports",
+    "local_name": "G2 Esports",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T22:01:19.709864",
+    "usage_count": 1
+  },
+  "sagaz": {
+    "pandascore_name": "SAGAZ",
+    "local_name": "SAGAZ",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T21:58:36.286454",
+    "usage_count": 1
+  },
+  "2game academy": {
+    "pandascore_name": "2GAME Academy",
+    "local_name": "2Game Academy",
+    "confidence": 0.95,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T21:58:36.287454",
+    "usage_count": 1
+  },
+  "agropesca jacare": {
+    "pandascore_name": "Agropesca Jacare",
+    "local_name": "Agropesca Jacare",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T21:58:36.288455",
+    "usage_count": 1
+  },
+  "red canids": {
+    "pandascore_name": "RED Canids",
+    "local_name": "RED Canids",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T21:58:36.288455",
+    "usage_count": 1
+  },
+  "tbk esports": {
+    "pandascore_name": "TBK Esports",
+    "local_name": "TBK Esports",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T21:58:36.289455",
+    "usage_count": 1
+  },
+  "los grandes": {
+    "pandascore_name": "Los Grandes",
+    "local_name": "Los Grandes",
+    "confidence": 1.0,
+    "mapping_type": "cached",
+    "last_used": "2025-06-11T21:58:36.290455",
+    "usage_count": 1
+  }
+}
